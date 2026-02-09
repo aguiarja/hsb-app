@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Íconos - HSB App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        .preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .icon-item {
+            text-align: center;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .instructions {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .instructions h3 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        .instructions ol {
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Generador de Íconos - HSB App</h1>
+        
+        <p>Estos íconos se generarán automáticamente con el logo de HSB App:</p>
+        
+        <div class="preview" id="preview"></div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <button onclick="generateAllIcons()">🎨 Generar Todos los Íconos</button>
+            <button onclick="downloadAll()">📥 Descargar Todos (ZIP)</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Instrucciones:</h3>
+            <ol>
+                <li><strong>Click en "Generar Todos los Íconos"</strong> - Verás la preview de cada tamaño</li>
+                <li><strong>Click derecho en cada ícono</strong> → "Guardar imagen como..."</li>
+                <li><strong>Guárdalos con estos nombres:</strong>
+                    <ul>
+                        <li>icon-72.png</li>
+                        <li>icon-96.png</li>
+                        <li>icon-128.png</li>
+                        <li>icon-144.png</li>
+                        <li>icon-152.png</li>
+                        <li>icon-192.png</li>
+                        <li>icon-384.png</li>
+                        <li>icon-512.png</li>
+                    </ul>
+                </li>
+                <li><strong>Crea una carpeta "icons"</strong> junto a tu archivo hsb-app.html</li>
+                <li><strong>Coloca todos los íconos</strong> dentro de esa carpeta</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const canvases = {};
+        
+        function generateAllIcons() {
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            
+            sizes.forEach(size => {
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                canvas.style.width = '100px';
+                canvas.style.height = '100px';
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Fondo gradiente
+                const gradient = ctx.createLinearGradient(0, 0, size, size);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, size, size);
+                
+                // Borde redondeado (para maskable icons)
+                ctx.globalCompositeOperation = 'destination-in';
+                ctx.beginPath();
+                ctx.roundRect(0, 0, size, size, size * 0.22);
+                ctx.fill();
+                ctx.globalCompositeOperation = 'source-over';
+                
+                // Texto "HSB"
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${size * 0.3}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('HSB', size / 2, size / 2.2);
+                
+                // Ícono de herramienta
+                ctx.font = `${size * 0.25}px Arial`;
+                ctx.fillText('🔧', size / 2, size / 1.5);
+                
+                canvases[size] = canvas;
+                
+                const label = document.createElement('p');
+                label.textContent = `${size}x${size}px`;
+                label.style.marginTop = '10px';
+                label.style.fontSize = '12px';
+                label.style.color = '#666';
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = '📥 Descargar';
+                downloadBtn.style.fontSize = '12px';
+                downloadBtn.style.padding = '6px 12px';
+                downloadBtn.onclick = () => downloadIcon(size);
+                
+                iconItem.appendChild(canvas);
+                iconItem.appendChild(label);
+                iconItem.appendChild(downloadBtn);
+                preview.appendChild(iconItem);
+            });
+        }
+        
+        function downloadIcon(size) {
+            const canvas = canvases[size];
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        function downloadAll() {
+            alert('💡 Tip: Haz click derecho en cada ícono y "Guardar imagen como..."\n\nO usa el botón "Descargar" de cada uno.');
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    downloadIcon(size);
+                }, index * 500);
+            });
+        }
+        
+        // Generar automáticamente al cargar
+        window.addEventListener('load', generateAllIcons);
+    </script>
+</body>
+</html>

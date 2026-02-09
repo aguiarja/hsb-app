@@ -1,0 +1,3793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSB APP - Sistema de Mantenimiento v3.0 Completo</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- Meta tags para PWA -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Sistema de Mantenimiento Preventivo en Tiempo Real">
+    
+    <!-- Meta tags para iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HSB App">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-72.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-72.png">
+    
+    <!-- Firebase SDK - Versión 10.8.0 (más reciente y estable) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    
+    <script>
+        // Verificar inmediatamente si Firebase se está cargando
+        console.log('📦 Scripts de Firebase solicitados desde CDN');
+        window.addEventListener('load', function() {
+            if (typeof firebase === 'undefined') {
+                console.error('❌ Firebase NO se cargó desde el CDN');
+                console.error('🔍 Verifica que no haya bloqueadores o problemas de red');
+            } else {
+                console.log('✅ Firebase disponible desde el CDN');
+            }
+        });
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .login-container {
+            max-width: 450px;
+            margin: 100px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: #1e3c72;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-text h1 {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .header-text p {
+            opacity: 0.9;
+            font-size: 12px;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 1px solid white;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab.active {
+            background: white;
+            color: #1e3c72;
+            border-bottom: 3px solid #1e3c72;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 25px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 13px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input.pending {
+            border-color: #ff9800;
+            background-color: #fff3e0;
+        }
+
+        input.completed {
+            border-color: #4caf50;
+            background-color: #f1f8f4;
+        }
+
+        input.alert {
+            border-color: #dc3545;
+            background-color: #fff5f5;
+        }
+
+        .alert-message {
+            background: #dc3545;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .ok-message {
+            background: #28a745;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .section-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .section-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .section-info h3 {
+            color: #1e3c72;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .section-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            min-width: 80px;
+        }
+
+        .section-icon {
+            font-size: 40px;
+        }
+
+        .section-view {
+            display: none;
+        }
+
+        .section-view.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .section-header h2 {
+            color: #1e3c72;
+            font-size: 22px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-back {
+            background: #6c757d;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 3px;
+        }
+
+        .activity-field {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .activity-field.pending {
+            border-left-color: #ff9800;
+            background: #fff3e0;
+        }
+
+        .activity-field.completed {
+            border-left-color: #4caf50;
+            background: #f1f8f4;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            margin-right: 10px;
+        }
+
+        .photo-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .photo-upload:hover {
+            background: #f8f9fa;
+        }
+
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .photo-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 3% auto;
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .modal-header h2 {
+            color: #1e3c72;
+            font-size: 20px;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .sync-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .sync-indicator.syncing {
+            display: block;
+            color: #667eea;
+        }
+
+        .sync-indicator.synced {
+            display: block;
+            color: #28a745;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .report-summary {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header-left {
+                flex-direction: column;
+            }
+
+            .header-right {
+                margin-top: 10px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Sync Indicator -->
+    <div id="syncIndicator" class="sync-indicator">
+        🔄 Sincronizando...
+    </div>
+
+    <!-- PANTALLA DE LOGIN -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-header">
+            <h1>🧊 HSB APP v3.0 Complete</h1>
+            <p>Sistema de Mantenimiento - Firebase Sync</p>
+        </div>
+        <div id="loginLoading" style="text-align: center; padding: 20px;">
+            <div class="loading-spinner" style="margin: 0 auto;"></div>
+            <p style="margin-top: 15px; color: #666;">Cargando datos desde Firebase...</p>
+        </div>
+        <form id="loginForm" style="display: none;">
+            <div class="form-group">
+                <label>Usuario:</label>
+                <input type="text" id="loginUsername" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="loginPassword" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn">🔐 Iniciar Sesión</button>
+        </form>
+        <div id="loginError" style="color: #dc3545; margin-top: 15px; text-align: center; display: none;"></div>
+    </div>
+
+    <!-- PANTALLA PRINCIPAL -->
+    <div id="mainScreen" class="container hidden">
+        <div class="header">
+            <div class="header-left">
+                <img src="Logo_HSB_APP.png" alt="HSB Logo" style="height: 50px; margin-right: 15px; border-radius: 8px;">
+                <div class="header-text">
+                    <h1>Sistema de Mantenimiento HSB v3.0</h1>
+                    <p>Con sincronización en tiempo real</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <strong id="currentUserName"></strong>
+                    <div><small id="currentUserRole"></small></div>
+                </div>
+                <div id="systemClock" style="background: #667eea; color: white; padding: 8px 15px; border-radius: 8px; font-size: 13px; text-align: center; margin: 10px 0; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="font-weight: bold; font-size: 16px;" id="clockTime">--:--:--</div>
+                    <div style="font-size: 11px; opacity: 0.9;" id="clockDate">Cargando...</div>
+                    <div style="font-size: 10px; margin-top: 3px; opacity: 0.8;" id="clockDay">Día actual: --</div>
+                </div>
+                <button class="btn-logout" onclick="logout()">🚪 Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="tabs" id="mainTabs"></div>
+
+        <!-- TAB: REPORTE DIARIO -->
+        <div id="tab-reporte-diario" class="tab-content">
+            <div class="section-header">
+                <h2>📊 Reporte Diario</h2>
+                <div>
+                    <button onclick="shareReport()" class="btn btn-secondary btn-small">📱 Compartir WhatsApp</button>
+                </div>
+            </div>
+            <div id="reportContent"></div>
+        </div>
+
+        <!-- TAB: MANTENIMIENTO PREVENTIVO -->
+        <div id="tab-mantenimiento-preventivo" class="tab-content">
+            <div id="sectionsList" class="section-list">
+                <div class="section-header">
+                    <h2>🔧 Mantenimiento Preventivo</h2>
+                    <div id="currentDateDisplay" style="font-size: 16px; color: #667eea; font-weight: bold; margin-top: 5px;"></div>
+                </div>
+                <div id="sectionsContainer"></div>
+            </div>
+
+            <div id="sectionDetail" class="section-view">
+                <div class="section-header">
+                    <h2 id="sectionDetailTitle"></h2>
+                    <button onclick="backToSectionsList()" class="btn btn-back">← Volver</button>
+                </div>
+                <div id="sectionDetailContent"></div>
+                <button onclick="saveSectionAndReturn()" class="btn btn-secondary">✓ Guardar y Volver</button>
+            </div>
+        </div>
+
+        <!-- TAB: PLAN -->
+        <div id="tab-plan" class="tab-content">
+            <div class="section-header">
+                <h2>📅 Plan de Mantenimiento</h2>
+                <p style="color: #666; font-size: 13px; margin-top: 5px;">Actividades periódicas que requieren aprobación</p>
+            </div>
+            <div id="planContent"></div>
+        </div>
+
+        <!-- TAB: HISTORIAL -->
+        <div id="tab-historial" class="tab-content">
+            <div class="section-header">
+                <h2>📋 Historial</h2>
+            </div>
+            <div id="historialContent"></div>
+        </div>
+
+        <!-- TAB: CONFIGURACIÓN -->
+        <div id="tab-configuracion" class="tab-content">
+            <h2 style="color: #1e3c72; margin-bottom: 20px;">⚙️ Panel de Configuración</h2>
+            <div id="configContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal para Novedades -->
+    <div id="novedadesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 Reportar Novedades</h2>
+                <span class="close" onclick="closeNovedadesModal()">&times;</span>
+            </div>
+            <div id="novedadesModalContent"></div>
+        </div>
+    </div>
+
+    <!-- MODAL: AGREGAR ACTIVIDAD -->
+    <div id="addActivityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Agregar Nueva Actividad</h2>
+                <span class="close" onclick="closeAddActivityModal()">&times;</span>
+            </div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label>Sección:</label>
+                    <select id="activitySection" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nombre de la Actividad:</label>
+                    <input type="text" id="activityName" placeholder="Ej: Vibración Motor" 
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo de Registro:</label>
+                    <select id="activityType" onchange="toggleActivityFields()" 
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="parametros">Parámetros (valores numéricos)</option>
+                        <option value="chequeo">Chequeo (OK/No OK)</option>
+                        <option value="nivel_aceite">Nivel de Aceite (4 niveles)</option>
+                    </select>
+                </div>
+                
+                <div id="parametrosFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Unidad:</label>
+                        <input type="text" id="activityUnit" placeholder="Ej: PSI, °C, %, A" 
+                               style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Valor Mínimo:</label>
+                            <input type="number" step="0.1" id="activityMin" placeholder="Ej: 50" 
+                                   style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        </div>
+                        
+                        <div class="form-group" style="flex: 1;">
+                            <label>Valor Máximo:</label>
+                            <input type="number" step="0.1" id="activityMax" placeholder="Ej: 100" 
+                                   style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Frecuencia:</label>
+                    <select id="activityFrequency" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        <option value="">-- Seleccionar --</option>
+                        <option value="2 veces al dia">2 veces al día</option>
+                        <option value="Diario">Diario</option>
+                        <option value="semanal">Semanal</option>
+                        <option value="mensual">Mensual</option>
+                        <option value="trimestral">Trimestral</option>
+                    </select>
+                </div>
+                
+                <button onclick="saveNewActivity()" class="btn" style="width: 100%; margin-top: 15px;">
+                    ✓ Guardar Actividad
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL: AGREGAR SECCIÓN -->
+    <div id="addSectionModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>➕ Agregar Nueva Sección</h3>
+                <span class="close" onclick="closeAddSectionModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nombre de la sección:</label>
+                    <input type="text" id="newSectionName" placeholder="Ej: Compresor MYCOM" 
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Emoji/Ícono:</label>
+                    <input type="text" id="newSectionIcon" value="📦" 
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Mostrar en Reporte Diario:</label>
+                    <select id="newSectionShowInSummary" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        <option value="no">No mostrar</option>
+                        <option value="resumido" selected>Resumido (solo % y actividades)</option>
+                        <option value="detalle">Detalle completo (% + valores)</option>
+                    </select>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        <strong>Resumido:</strong> Muestra "Sección: 4/10 (40%)"<br>
+                        <strong>Detalle:</strong> Muestra porcentaje + lista de actividades con valores
+                    </small>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="saveNewSection()" class="btn" style="flex: 1; background: #28a745;">
+                        ✓ Crear Sección
+                    </button>
+                    <button onclick="closeAddSectionModal()" class="btn" style="flex: 1; background: #6c757d;">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL: EDITAR SECCIÓN -->
+    <div id="editSectionModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>✏️ Editar Sección</h3>
+                <span class="close" onclick="closeEditSectionModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nombre de la sección:</label>
+                    <input type="text" id="editSectionName" placeholder="Ej: Compresor MYCOM" 
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Emoji/Ícono:</label>
+                    <input type="text" id="editSectionIcon" 
+                           style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Mostrar en Reporte Diario:</label>
+                    <select id="editSectionShowInSummary" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                        <option value="no">No mostrar</option>
+                        <option value="resumido">Resumido (solo % y actividades)</option>
+                        <option value="detalle">Detalle completo (% + valores)</option>
+                    </select>
+                    <small style="color: #666; display: block; margin-top: 5px;">
+                        <strong>Resumido:</strong> Muestra "Sección: 4/10 (40%)"<br>
+                        <strong>Detalle:</strong> Muestra porcentaje + lista de actividades con valores
+                    </small>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="saveEditedSection()" class="btn" style="flex: 1; background: #28a745;">
+                        ✓ Guardar Cambios
+                    </button>
+                    <button onclick="closeEditSectionModal()" class="btn" style="flex: 1; background: #6c757d;">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIGURATION ====================
+        
+        // Wait for Firebase to load
+        function waitForFirebase() {
+            return new Promise((resolve, reject) => {
+                if (typeof firebase !== 'undefined') {
+                    console.log('✅ Firebase ya está disponible');
+                    resolve();
+                } else {
+                    console.log('⏳ Esperando a que Firebase se cargue...');
+                    let attempts = 0;
+                    const checkFirebase = setInterval(() => {
+                        attempts++;
+                        console.log(`Intento ${attempts}/100 de cargar Firebase...`);
+                        if (typeof firebase !== 'undefined') {
+                            clearInterval(checkFirebase);
+                            console.log('✅ Firebase cargado exitosamente');
+                            resolve();
+                        } else if (attempts > 100) { // 10 segundos
+                            clearInterval(checkFirebase);
+                            console.error('❌ Firebase no se pudo cargar después de 10 segundos');
+                            reject(new Error('Firebase no se pudo cargar. Verifica tu conexión a internet.'));
+                        }
+                    }, 100);
+                }
+            });
+        }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCTMEffJZejx03s5ImhcP7CBPX5cPAv-2M",
+            authDomain: "hsb-app-784ba.firebaseapp.com",
+            databaseURL: "https://hsb-app-784ba-default-rtdb.firebaseio.com",
+            projectId: "hsb-app-784ba",
+            storageBucket: "hsb-app-784ba.firebasestorage.app",
+            messagingSenderId: "493517988093",
+            appId: "1:493517988093:web:b936886501451f47de1e94",
+            measurementId: "G-HN6K1ZZN32"
+        };
+
+        let database;
+        let storage;
+
+        async function initializeFirebase() {
+            try {
+                await waitForFirebase();
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                storage = firebase.storage();
+                initializeRefs(); // Initialize database references
+                console.log('🔥 Firebase initialized successfully!');
+                return true;
+            } catch (error) {
+                console.error('❌ Error loading Firebase:', error);
+                return false;
+            }
+        }
+
+        // ==================== GLOBAL VARIABLES ====================
+        
+        let currentUser = null;
+        let currentSectionId = null;
+        
+        // Función para obtener la fecha operacional (día comienza a las 6:00 AM)
+        function getOperationalDate() {
+            const now = new Date();
+            const hour = now.getHours();
+            
+            // Si son antes de las 06:00 AM, usar el día anterior
+            if (hour < 6) {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                return yesterday.toISOString().split('T')[0];
+            }
+            
+            return now.toISOString().split('T')[0];
+        }
+        
+        let currentDate = getOperationalDate();
+        let accumulatedPhotos = []; // Para acumular fotos en móvil
+
+        // Firebase references (will be initialized after Firebase loads)
+        let usersRef;
+        let tabsRef;
+        let sectionsRef;
+        let activitiesRef;
+        let novedadesPredefinidasRef;
+        let dailyLogsRef;
+        let planActivitiesRef;
+
+        function initializeRefs() {
+            usersRef = database.ref('users');
+            tabsRef = database.ref('tabs');
+            sectionsRef = database.ref('sections');
+            activitiesRef = database.ref('activities');
+            novedadesPredefinidasRef = database.ref('novedadesPredefinidas');
+            dailyLogsRef = database.ref('dailyLogs');
+            planActivitiesRef = database.ref('planActivities');
+        }
+
+        // Local cache
+        let users = [];
+        let tabs = [];
+        let sections = [];
+        let activities = [];
+        let novedadesPredefinidas = [];
+        let dailyLogs = {};
+        let planActivities = [];
+
+        // ==================== FIREBASE HELPERS ====================
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function showSyncIndicator(message, type = 'syncing') {
+            const indicator = document.getElementById('syncIndicator');
+            indicator.textContent = message;
+            indicator.className = 'sync-indicator ' + type;
+            setTimeout(() => {
+                indicator.className = 'sync-indicator';
+            }, 2000);
+        }
+
+        // ==================== DEFAULT DATA ====================
+        
+        const defaultUsers = [
+            { 
+                id: 1, 
+                username: 'admin', 
+                password: 'admin123', 
+                fullName: 'Administrador',
+                role: 'admin',
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion']
+            },
+            { 
+                id: 2, 
+                username: 'supervisor', 
+                password: 'super123', 
+                fullName: 'Supervisor',
+                role: 'supervisor',
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial']
+            },
+            { 
+                id: 3, 
+                username: 'operador', 
+                password: 'operador123', 
+                fullName: 'Operador General',
+                role: 'operador',
+                permissions: ['mantenimiento-preventivo', 'reporte-diario']
+            }
+        ];
+
+        const defaultTabs = [
+            { id: 'reporte-diario', name: '📊 Reporte Diario', order: 1 },
+            { id: 'mantenimiento-preventivo', name: '🔧 Mantenimiento Preventivo', order: 2 },
+            { id: 'plan', name: '📅 Plan', order: 3 },
+            { id: 'historial', name: '📋 Historial', order: 4 },
+            { id: 'configuracion', name: '⚙️ Configuración', order: 5 }
+        ];
+
+        const defaultSections = [
+            { id: 1, name: 'Parámetros Generales', icon: '📊', order: 1 },
+            { id: 2, name: 'Compresor MYCOM', icon: '🔵', order: 2 },
+            { id: 3, name: 'Compresor VILTER', icon: '🟢', order: 3 }
+        ];
+
+        const defaultActivities = [
+            { id: 1, sectionId: 1, name: 'Temperatura Cuba', type: 'parametros', unit: '°C', min: -15, max: -12, frequency: '2 veces al dia', showInSummary: 'detalle', order: 1 },
+            { id: 2, sectionId: 1, name: 'Densidad', type: 'parametros', unit: '%', min: 70, max: 80, frequency: '2 veces al dia', showInSummary: 'detalle', order: 2 },
+            { id: 3, sectionId: 2, name: 'Descarga', type: 'parametros', unit: 'PSI', min: 180, max: 220, frequency: '2 veces al dia', showInSummary: 'detalle', order: 1 },
+            { id: 4, sectionId: 2, name: 'Succión', type: 'parametros', unit: 'PSI', min: 8, max: 18, frequency: '2 veces al dia', showInSummary: 'detalle', order: 2 },
+            { id: 5, sectionId: 2, name: 'Amperaje', type: 'parametros', unit: 'A', min: 60, max: 75, frequency: '2 veces al dia', showInSummary: 'detalle', order: 3 },
+            { id: 6, sectionId: 2, name: 'Nivel de Aceite', type: 'chequeo', frequency: '2 veces al dia', showInSummary: 'estado', order: 4 },
+            { id: 7, sectionId: 2, name: 'Capacidad', type: 'parametros', unit: '%', min: 0, max: 100, frequency: '2 veces al dia', showInSummary: 'detalle', order: 5 },
+            { id: 8, sectionId: 3, name: 'Descarga', type: 'parametros', unit: 'PSI', min: 170, max: 200, frequency: '2 veces al dia', showInSummary: 'detalle', order: 1 },
+            { id: 9, sectionId: 3, name: 'Succión', type: 'parametros', unit: 'PSI', min: 5, max: 15, frequency: '2 veces al dia', showInSummary: 'detalle', order: 2 },
+            { id: 10, sectionId: 3, name: 'Amperaje', type: 'parametros', unit: 'A', min: 45, max: 85, frequency: '2 veces al dia', showInSummary: 'detalle', order: 3 },
+            { id: 11, sectionId: 3, name: 'Nivel de Aceite', type: 'chequeo', frequency: '2 veces al dia', showInSummary: 'estado', order: 4 },
+            { id: 12, sectionId: 3, name: 'Capacidad', type: 'parametros', unit: '%', min: 0, max: 100, frequency: '2 veces al dia', showInSummary: 'detalle', order: 5 },
+            // Actividades periódicas para el Plan
+            { id: 13, sectionId: 2, name: 'Limpieza de Filtros', type: 'chequeo', frequency: 'Semanal', showInSummary: 'estado', order: 6 },
+            { id: 14, sectionId: 2, name: 'Inspección General Compresor', type: 'chequeo', frequency: 'Semanal', showInSummary: 'estado', order: 7 },
+            { id: 15, sectionId: 3, name: 'Revisión de Conexiones Eléctricas', type: 'chequeo', frequency: 'Mensual', showInSummary: 'estado', order: 6 },
+            { id: 16, sectionId: 2, name: 'Cambio de Aceite', type: 'chequeo', frequency: 'Mensual', showInSummary: 'estado', order: 8 },
+            { id: 17, sectionId: 2, name: 'Mantenimiento Preventivo Completo', type: 'chequeo', frequency: 'Trimestral', showInSummary: 'estado', order: 9 },
+            { id: 18, sectionId: 3, name: 'Calibración de Instrumentos', type: 'chequeo', frequency: 'Trimestral', showInSummary: 'estado', order: 7 }
+        ];
+
+        const defaultNovedades = [
+            { id: 1, text: 'Lluvia' },
+            { id: 2, text: 'Sin Luz' },
+            { id: 3, text: 'Falla de Equipos' }
+        ];
+
+        // ==================== INITIALIZE FIREBASE DATA ====================
+        
+        async function initializeFirebaseData() {
+            console.log('🔄 Initializing Firebase data...');
+
+            try {
+                const usersSnapshot = await usersRef.once('value');
+                
+                if (!usersSnapshot.exists()) {
+                    console.log('📝 Creating default data...');
+                    await Promise.all([
+                        usersRef.set(defaultUsers),
+                        tabsRef.set(defaultTabs),
+                        sectionsRef.set(defaultSections),
+                        activitiesRef.set(defaultActivities),
+                        novedadesPredefinidasRef.set(defaultNovedades),
+                        dailyLogsRef.set({}),
+                        planActivitiesRef.set([])
+                    ]);
+                    console.log('✅ Default data created!');
+                }
+
+                await loadDataFromFirebase();
+                
+                // Mostrar formulario de login cuando los datos estén listos
+                document.getElementById('loginLoading').style.display = 'none';
+                document.getElementById('loginForm').style.display = 'block';
+                
+                console.log('✅ Firebase ready - Login enabled');
+                showSyncIndicator('✓ Listo para usar', 'synced');
+            } catch (error) {
+                console.error('❌ Error initializing Firebase:', error);
+                document.getElementById('loginLoading').innerHTML = `
+                    <p style="color: #dc3545;">❌ Error al conectar con Firebase</p>
+                    <p style="font-size: 12px;">${error.message}</p>
+                    <button onclick="location.reload()" class="btn" style="margin-top: 15px;">🔄 Reintentar</button>
+                `;
+            }
+        }
+
+        async function loadDataFromFirebase() {
+            console.log('📥 Loading data from Firebase...');
+
+            try {
+                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap] = await Promise.all([
+                    usersRef.once('value'),
+                    tabsRef.once('value'),
+                    sectionsRef.once('value'),
+                    activitiesRef.once('value'),
+                    novedadesPredefinidasRef.once('value'),
+                    dailyLogsRef.once('value'),
+                    planActivitiesRef.once('value')
+                ]);
+
+                users = usersSnap.val() || [];
+                tabs = tabsSnap.val() || [];
+                sections = sectionsSnap.val() || [];
+                activities = activitiesSnap.val() || [];
+                novedadesPredefinidas = novedadesSnap.val() || [];
+                dailyLogs = logsSnap.val() || {};
+                planActivities = planSnap.val() || [];
+
+                console.log('✅ Data loaded successfully!');
+                
+                // Reparar dailyLogs con secciones faltantes
+                await repairDailyLogs();
+            } catch (error) {
+                console.error('❌ Error loading data:', error);
+            }
+        }
+        
+        async function repairDailyLogs() {
+            console.log('🔧 Reparando dailyLogs con secciones faltantes...');
+            
+            let repaired = false;
+            
+            // Para cada día en dailyLogs
+            for (const [date, log] of Object.entries(dailyLogs)) {
+                if (!log.sections) {
+                    log.sections = {};
+                }
+                
+                // Para cada sección actual del sistema
+                sections.forEach(section => {
+                    // Si esta sección no existe en este día, agregarla
+                    if (!log.sections[section.id]) {
+                        console.log(`  ➕ Agregando sección "${section.name}" (id:${section.id}) al día ${date}`);
+                        
+                        log.sections[section.id] = {
+                            activities: {},
+                            photos: []
+                        };
+                        
+                        // Agregar actividades de esta sección
+                        const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                        sectionActivities.forEach(activity => {
+                            if (activity.frequency === '2 veces al dia') {
+                                log.sections[section.id].activities[`${activity.id}_manana`] = {
+                                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                                };
+                                log.sections[section.id].activities[`${activity.id}_tarde`] = {
+                                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                                };
+                            } else if (activity.frequency === 'Diario') {
+                                log.sections[section.id].activities[activity.id] = {
+                                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                                };
+                            }
+                        });
+                        
+                        repaired = true;
+                    }
+                });
+            }
+            
+            // Si se reparó algo, guardar en Firebase
+            if (repaired) {
+                await dailyLogsRef.set(dailyLogs);
+                console.log('✅ DailyLogs reparados y guardados');
+            } else {
+                console.log('✅ DailyLogs están completos');
+            }
+        }
+
+        // ==================== REAL-TIME SYNC ====================
+        
+        function setupRealTimeSync() {
+            console.log('🔄 Setting up real-time sync...');
+
+            dailyLogsRef.on('value', (snapshot) => {
+                dailyLogs = snapshot.val() || {};
+                console.log('🔄 Daily logs updated');
+                
+                // Re-render current view if needed
+                if (document.getElementById('tab-mantenimiento-preventivo').classList.contains('active')) {
+                    const detailActive = document.getElementById('sectionDetail').classList.contains('active');
+                    if (!detailActive) {
+                        renderSections();
+                    }
+                }
+                
+                showSyncIndicator('✓ Datos actualizados', 'synced');
+            });
+
+            console.log('✅ Real-time sync active!');
+        }
+
+        // ==================== AUTHENTICATION ====================
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            console.log('🔐 Login attempt...');
+            console.log('Users loaded:', users.length);
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (users.length === 0) {
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = '⚠️ Datos aún cargando, intenta nuevamente';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            console.log('User found:', user ? user.username : 'NOT FOUND');
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                showMainScreen();
+            } else {
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = '❌ Usuario o contraseña incorrectos';
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainScreen').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function showMainScreen() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+            document.getElementById('currentUserName').textContent = currentUser.fullName;
+            document.getElementById('currentUserRole').textContent = 
+                currentUser.role === 'admin' ? 'Administrador' : 
+                currentUser.role === 'supervisor' ? 'Supervisor' : 'Operador';
+            
+            renderTabs();
+            initializeDailyLog();
+            
+            // Iniciar reloj del sistema con pequeño delay para asegurar DOM
+            setTimeout(() => {
+                startSystemClock();
+            }, 100);
+        }
+
+        // ==================== TABS ====================
+        
+        function renderTabs() {
+            const tabsContainer = document.getElementById('mainTabs');
+            tabsContainer.innerHTML = '';
+            
+            const userTabs = tabs
+                .filter(tab => currentUser.permissions.includes(tab.id))
+                .sort((a, b) => a.order - b.order);
+            
+            userTabs.forEach((tab, index) => {
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab' + (index === 0 ? ' active' : '');
+                tabButton.textContent = tab.name;
+                tabButton.onclick = function() { showTab(tab.id, this); };
+                tabsContainer.appendChild(tabButton);
+                
+                const tabContent = document.getElementById(`tab-${tab.id}`);
+                if (tabContent) {
+                    tabContent.classList.toggle('active', index === 0);
+                }
+            });
+
+            if (userTabs.length > 0) {
+                showTab(userTabs[0].id);
+            }
+        }
+
+        function showTab(tabId, targetButton) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
+            
+            const tabContent = document.getElementById(`tab-${tabId}`);
+            if (tabContent) {
+                tabContent.classList.add('active');
+                
+                if (tabId === 'mantenimiento-preventivo') {
+                    renderSections();
+                } else if (tabId === 'plan') {
+                    renderPlan();
+                } else if (tabId === 'reporte-diario') {
+                    renderReporteDiario();
+                } else if (tabId === 'historial') {
+                    renderHistorial();
+                } else if (tabId === 'configuracion') {
+                    renderConfiguracion();
+                }
+            }
+        }
+
+        // ==================== DAILY LOG ====================
+        
+        async function initializeDailyLog() {
+            if (!dailyLogs[currentDate]) {
+                console.log('Creating new daily log for', currentDate);
+                
+                const newLog = {
+                    date: currentDate,
+                    sections: {},
+                    novedades: []
+                };
+                
+                sections.forEach(section => {
+                    newLog.sections[section.id] = {
+                        activities: {},
+                        photos: []
+                    };
+                    
+                    const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                    sectionActivities.forEach(activity => {
+                        if (activity.frequency === '2 veces al dia') {
+                            newLog.sections[section.id].activities[`${activity.id}_manana`] = {
+                                value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                            };
+                            newLog.sections[section.id].activities[`${activity.id}_tarde`] = {
+                                value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                            };
+                        } else if (activity.frequency === 'Diario') {
+                            newLog.sections[section.id].activities[activity.id] = {
+                                value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                            };
+                        }
+                    });
+                });
+                
+                await dailyLogsRef.child(currentDate).set(newLog);
+                dailyLogs[currentDate] = newLog;
+                console.log('✅ Daily log created!');
+            }
+        }
+
+        // ==================== RENDER SECTIONS ====================
+        
+        function renderSections() {
+            console.log('=== RENDERING SECTIONS ===');
+            
+            const container = document.getElementById('sectionsContainer');
+            if (!container) {
+                console.error('Container not found!');
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            // Actualizar fecha operacional
+            const dateDisplay = document.getElementById('currentDateDisplay');
+            if (dateDisplay) {
+                const dateObj = new Date(currentDate + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                dateDisplay.textContent = `📅 ${formattedDate}`;
+            }
+
+            if (!dailyLogs[currentDate]) {
+                console.error('No daily log for current date!');
+                container.innerHTML = '<p>Inicializando datos...</p>';
+                return;
+            }
+
+            // Ordenar secciones por campo 'order'
+            const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+            
+            console.log('📊 Secciones a renderizar:', sortedSections.length);
+            sortedSections.forEach(s => console.log(`  - ${s.order}: ${s.name}`));
+
+            sortedSections.forEach(section => {
+                // Verificar que la sección existe en el dailyLog
+                if (!dailyLogs[currentDate].sections[section.id]) {
+                    console.warn(`⚠️ Sección ${section.name} (id:${section.id}) no existe en dailyLog. Skipping.`);
+                    return; // Skip esta sección
+                }
+                
+                let totalFields = 0;
+                let completedFields = 0;
+
+                const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                
+                sectionActivities.forEach(activity => {
+                    if (activity.frequency === '2 veces al dia') {
+                        totalFields += 2;
+                        const activityDataMorning = dailyLogs[currentDate].sections[section.id].activities[`${activity.id}_manana`];
+                        const activityDataAfternoon = dailyLogs[currentDate].sections[section.id].activities[`${activity.id}_tarde`];
+                        
+                        if (activity.type === 'parametros') {
+                            // Cuenta como completado si tiene CUALQUIER valor válido (incluso fuera de rango)
+                            if (activityDataMorning && activityDataMorning.value !== null && activityDataMorning.value !== undefined && activityDataMorning.value !== '' && !isNaN(activityDataMorning.value)) {
+                                completedFields++;
+                            }
+                            if (activityDataAfternoon && activityDataAfternoon.value !== null && activityDataAfternoon.value !== undefined && activityDataAfternoon.value !== '' && !isNaN(activityDataAfternoon.value)) {
+                                completedFields++;
+                            }
+                        } else if (activity.type === 'nivel_aceite') {
+                            // Para nivel de aceite, cuenta si tiene oilLevel seleccionado
+                            if (activityDataMorning && activityDataMorning.oilLevel) completedFields++;
+                            if (activityDataAfternoon && activityDataAfternoon.oilLevel) completedFields++;
+                        } else {
+                            // Para chequeos, solo cuenta si está marcado como OK
+                            if (activityDataMorning && activityDataMorning.status === 'ok') completedFields++;
+                            if (activityDataAfternoon && activityDataAfternoon.status === 'ok') completedFields++;
+                        }
+                    } else if (activity.frequency === 'Diario') {
+                        totalFields += 1;
+                        const activityData = dailyLogs[currentDate].sections[section.id].activities[activity.id];
+                        
+                        if (activity.type === 'parametros') {
+                            // Cuenta como completado si tiene CUALQUIER valor válido (incluso fuera de rango)
+                            if (activityData && activityData.value !== null && activityData.value !== undefined && activityData.value !== '' && !isNaN(activityData.value)) {
+                                completedFields++;
+                            }
+                        } else if (activity.type === 'nivel_aceite') {
+                            // Para nivel de aceite, cuenta si tiene oilLevel seleccionado
+                            if (activityData && activityData.oilLevel) completedFields++;
+                        } else {
+                            // Para chequeos, solo cuenta si está marcado como OK
+                            if (activityData && activityData.status === 'ok') completedFields++;
+                        }
+                    }
+                });
+                
+                const percentage = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+                
+                const sectionCard = document.createElement('div');
+                sectionCard.className = 'section-card';
+                sectionCard.onclick = () => showSectionDetail(section.id);
+                sectionCard.innerHTML = `
+                    <div class="section-info">
+                        <h3>${section.icon} ${section.name}</h3>
+                        <div class="section-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${percentage}%"></div>
+                            </div>
+                            <div class="progress-text">${percentage}% (${completedFields}/${totalFields})</div>
+                        </div>
+                    </div>
+                    <div class="section-icon">${section.icon}</div>
+                `;
+                container.appendChild(sectionCard);
+            });
+
+            // Sección de Novedades
+            const novedadesCount = (dailyLogs[currentDate] && dailyLogs[currentDate].novedades) ? dailyLogs[currentDate].novedades.length : 0;
+            const novedadesCard = document.createElement('div');
+            novedadesCard.className = 'section-card';
+            novedadesCard.onclick = () => openReportNovedadModal();
+            novedadesCard.innerHTML = `
+                <div class="section-info">
+                    <h3>📝 Novedades</h3>
+                    <p style="font-size: 13px; color: #666; margin-top: 5px;">${novedadesCount} novedad(es) reportada(s)</p>
+                </div>
+                <div class="section-icon">📝</div>
+            `;
+            container.appendChild(novedadesCard);
+            
+            console.log('=== SECTIONS RENDERED ===');
+        }
+
+        function showSectionDetail(sectionId) {
+            console.log('=== SHOWING SECTION DETAIL ===', sectionId);
+            
+            currentSectionId = sectionId;
+            const section = sections.find(s => s.id === sectionId);
+            
+            if (!section) {
+                console.error('Section not found!');
+                return;
+            }
+            
+            document.getElementById('sectionsList').style.display = 'none';
+            document.getElementById('sectionDetail').classList.add('active');
+            document.getElementById('sectionDetailTitle').textContent = `${section.icon} ${section.name}`;
+            
+            const content = document.getElementById('sectionDetailContent');
+            content.innerHTML = '';
+            
+            const sectionActivities = activities
+                .filter(a => a.sectionId === sectionId && (a.frequency === '2 veces al dia' || a.frequency === 'Diario'))
+                .sort((a, b) => a.order - b.order);
+            
+            console.log('Section activities:', sectionActivities.length);
+            
+            if (sectionActivities.length === 0) {
+                content.innerHTML = '<p style="padding: 20px; color: #666;">No hay actividades configuradas</p>';
+            } else {
+                // Separar actividades por frecuencia
+                const actividades2Veces = sectionActivities.filter(a => a.frequency === '2 veces al dia');
+                const actividadesOtras = sectionActivities.filter(a => a.frequency !== '2 veces al dia');
+                
+                if (actividades2Veces.length > 0) {
+                    // Header TURNO MAÑANA
+                    const headerManana = document.createElement('div');
+                    headerManana.style.cssText = 'background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%); color: white; padding: 12px 20px; margin: 20px 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
+                    headerManana.innerHTML = '🌅 TURNO MAÑANA';
+                    content.appendChild(headerManana);
+                    
+                    // Todas las actividades de MAÑANA
+                    actividades2Veces.forEach(activity => {
+                        renderActivityField(content, activity, 'manana');
+                    });
+                    
+                    // Header TURNO TARDE
+                    const headerTarde = document.createElement('div');
+                    headerTarde.style.cssText = 'background: linear-gradient(135deg, #5C6BC0 0%, #3F51B5 100%); color: white; padding: 12px 20px; margin: 20px 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
+                    headerTarde.innerHTML = '🌆 TURNO TARDE';
+                    content.appendChild(headerTarde);
+                    
+                    // Todas las actividades de TARDE
+                    actividades2Veces.forEach(activity => {
+                        renderActivityField(content, activity, 'tarde');
+                    });
+                }
+                
+                // Actividades que no son "2 veces al dia"
+                actividadesOtras.forEach(activity => {
+                    renderActivityField(content, activity);
+                });
+            }
+
+            // Fotos de la sección
+            const photosDiv = document.createElement('div');
+            photosDiv.className = 'form-group';
+            photosDiv.innerHTML = `
+                <label>📸 Fotos de esta Sección (Opcional):</label>
+                <input type="file" id="sectionPhotos_${sectionId}" multiple accept="image/*" style="display: none;">
+                <div class="photo-upload" onclick="document.getElementById('sectionPhotos_${sectionId}').click()">
+                    <p>📷 Haz clic para agregar fotos</p>
+                </div>
+                <div id="sectionPhotosPreview_${sectionId}" class="photo-preview"></div>
+            `;
+            content.appendChild(photosDiv);
+
+            document.getElementById(`sectionPhotos_${sectionId}`).addEventListener('change', function(e) {
+                const preview = document.getElementById(`sectionPhotosPreview_${sectionId}`);
+                preview.innerHTML = '';
+                for (let file of e.target.files) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        function renderActivityField(container, activity, turno = null) {
+            if (!dailyLogs[currentDate] || !dailyLogs[currentDate].sections[currentSectionId]) {
+                console.error('Data not initialized!');
+                return;
+            }
+
+            const activityKey = turno ? `${activity.id}_${turno}` : activity.id;
+            
+            if (!dailyLogs[currentDate].sections[currentSectionId].activities[activityKey]) {
+                dailyLogs[currentDate].sections[currentSectionId].activities[activityKey] = {
+                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                };
+            }
+
+            const activityData = dailyLogs[currentDate].sections[currentSectionId].activities[activityKey];
+            
+            const fieldDiv = document.createElement('div');
+            const turnoLabel = turno ? ` (${turno === 'manana' ? 'Mañana' : 'Tarde'})` : '';
+            
+            if (activity.type === 'parametros') {
+                const value = activityData.value;
+                // Verificar que tenga valor válido (no null, no undefined, no NaN, no string vacío)
+                const hasValue = value !== null && value !== undefined && value !== '' && !isNaN(value);
+                const hasAlert = hasValue && activity.min && activity.max && (parseFloat(value) < activity.min || parseFloat(value) > activity.max);
+                
+                // Campo VERDE si tiene valor (incluso fuera de rango), NARANJA si está vacío
+                let fieldClass = hasValue ? 'completed' : 'pending';
+                
+                fieldDiv.className = `activity-field ${fieldClass}`;
+                
+                fieldDiv.innerHTML = `
+                    <label>${activity.name}${turnoLabel} ${activity.unit ? `(${activity.unit})` : ''}:</label>
+                    <input type="number" step="0.1" id="activity_${activityKey}" 
+                           value="${hasValue ? value : ''}" 
+                           class="${hasValue ? 'completed' : 'pending'}"
+                           onchange="updateActivityValue(${activity.id}, '${turno || ''}', this.value)"
+                           onkeypress="handleEnterKey(event, 'activity_${activityKey}')">
+                    ${hasAlert ? `<div class="alert-message">⚠️ Fuera de rango (${activity.min} - ${activity.max} ${activity.unit})</div>` : ''}
+                    ${activity.min && activity.max ? `<small style="color: #666;">Rango normal: ${activity.min} - ${activity.max} ${activity.unit}</small>` : ''}
+                `;
+            } else if (activity.type === 'nivel_aceite') {
+                // Campo especial para Nivel de Aceite con 4 niveles
+                const oilLevel = activityData.oilLevel || '';
+                const isCompleted = oilLevel !== '';
+                const hasAlert = oilLevel === '1/2' || oilLevel === 'vacio';
+                
+                fieldDiv.className = `activity-field ${isCompleted ? 'completed' : 'pending'}`;
+                
+                fieldDiv.innerHTML = `
+                    <label>${activity.name}${turnoLabel}:</label>
+                    <select id="activity_${activityKey}_oil" 
+                            class="${isCompleted ? 'completed' : 'pending'}"
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid ${isCompleted ? '#28a745' : '#ffc107'}; font-size: 14px;"
+                            onchange="updateOilLevel(${activity.id}, '${turno || ''}', this.value)">
+                        <option value="">-- Seleccionar nivel --</option>
+                        <option value="full" ${oilLevel === 'full' ? 'selected' : ''}>🟢 Full (Lleno)</option>
+                        <option value="3/4" ${oilLevel === '3/4' ? 'selected' : ''}>🟡 3/4 (Tres cuartos)</option>
+                        <option value="1/2" ${oilLevel === '1/2' ? 'selected' : ''}>🟠 1/2 (Medio)</option>
+                        <option value="vacio" ${oilLevel === 'vacio' ? 'selected' : ''}>🔴 Vacío</option>
+                    </select>
+                    ${hasAlert ? `<div class="alert-message">⚠️ Nivel bajo - Umbral mínimo</div>` : ''}
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Observaciones:</label>
+                        <input type="text" id="activity_${activityKey}_obs" 
+                               value="${activityData.observations || ''}"
+                               placeholder="Opcional"
+                               onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
+                    </div>
+                `;
+            } else {
+                // Chequeo normal (✓ OK)
+                const status = activityData.status || '';
+                const isCompleted = status === 'ok';
+                
+                fieldDiv.className = `activity-field ${isCompleted ? 'completed' : 'pending'}`;
+                
+                fieldDiv.innerHTML = `
+                    <label>${activity.name}${turnoLabel}:</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="activity_${activityKey}_ok" 
+                               ${status === 'ok' ? 'checked' : ''}
+                               onchange="updateActivityStatus(${activity.id}, '${turno || ''}', 'ok', this.checked)">
+                        <label for="activity_${activityKey}_ok">✓ OK</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones:</label>
+                        <input type="text" id="activity_${activityKey}_obs" 
+                               value="${activityData.observations || ''}"
+                               placeholder="Opcional"
+                               onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
+                    </div>
+                `;
+            }
+            
+            container.appendChild(fieldDiv);
+        }
+        
+        async function updateOilLevel(activityId, turno, level) {
+            const activityKey = turno ? `${activityId}_${turno}` : activityId;
+            const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
+            
+            await database.ref(path).update({
+                oilLevel: level || null,
+                user: level ? currentUser.fullName : null,
+                timestamp: level ? new Date().toISOString() : null
+            });
+            
+            showSyncIndicator('💾 Guardando...', 'syncing');
+            
+            // Actualizar alerta inmediatamente en el DOM
+            const selectElement = document.getElementById(`activity_${activityKey}_oil`);
+            if (selectElement) {
+                const fieldDiv = selectElement.closest('.activity-field');
+                const hasAlert = level === '1/2' || level === 'vacio';
+                
+                // Actualizar clase del fieldDiv (para el color de fondo)
+                if (level) {
+                    fieldDiv.className = 'activity-field completed';
+                } else {
+                    fieldDiv.className = 'activity-field pending';
+                }
+                
+                // Buscar si ya existe un div de alerta
+                let alertDiv = fieldDiv.querySelector('.alert-message');
+                
+                if (hasAlert) {
+                    // Si debe haber alerta y no existe, crearla
+                    if (!alertDiv) {
+                        alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert-message';
+                        alertDiv.textContent = '⚠️ Nivel bajo - Umbral mínimo';
+                        selectElement.insertAdjacentElement('afterend', alertDiv);
+                    }
+                } else {
+                    // Si no debe haber alerta y existe, eliminarla
+                    if (alertDiv) {
+                        alertDiv.remove();
+                    }
+                }
+                
+                // Actualizar borde del select
+                if (level) {
+                    selectElement.style.border = '2px solid #28a745';
+                    selectElement.className = 'completed';
+                } else {
+                    selectElement.style.border = '2px solid #ffc107';
+                    selectElement.className = 'pending';
+                }
+            }
+            
+            // Re-renderizar secciones para actualizar porcentaje
+            setTimeout(() => {
+                renderSections();
+            }, 300);
+        }
+
+        async function updateActivityValue(activityId, turno, value) {
+            const activityKey = turno ? `${activityId}_${turno}` : activityId;
+            const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
+            
+            // Si el campo está vacío, guardar null explícitamente
+            const numValue = value === '' || value === null || value === undefined ? null : parseFloat(value);
+            
+            await database.ref(path).update({
+                value: numValue,
+                user: numValue !== null ? currentUser.fullName : null,
+                timestamp: numValue !== null ? new Date().toISOString() : null
+            });
+            
+            showSyncIndicator('💾 Guardando...', 'syncing');
+            
+            // Re-renderizar tanto secciones como la vista detallada para actualizar colores
+            setTimeout(() => {
+                renderSections();
+                if (currentSectionId) {
+                    showSectionDetail(currentSectionId);
+                }
+            }, 300);
+        }
+
+        async function updateActivityStatus(activityId, turno, status, checked) {
+            const activityKey = turno ? `${activityId}_${turno}` : activityId;
+            const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
+            
+            await database.ref(path).update({
+                status: checked ? status : null,
+                user: currentUser.fullName,
+                timestamp: new Date().toISOString()
+            });
+            
+            showSyncIndicator('💾 Guardando...', 'syncing');
+            
+            // Re-renderizar tanto secciones como la vista detallada para actualizar colores
+            setTimeout(() => {
+                renderSections();
+                if (currentSectionId) {
+                    showSectionDetail(currentSectionId);
+                }
+            }, 300);
+        }
+
+        async function updateActivityObservations(activityId, turno, observations) {
+            const activityKey = turno ? `${activityId}_${turno}` : activityId;
+            const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
+            
+            await database.ref(path).update({
+                observations: observations
+            });
+            
+            showSyncIndicator('💾 Guardando...', 'syncing');
+        }
+
+        function handleEnterKey(event, currentFieldId) {
+            if (event.key === 'Enter' || event.keyCode === 13) {
+                event.preventDefault();
+                
+                // Buscar todos los campos de input numéricos en el contenedor
+                const allInputs = Array.from(document.querySelectorAll('#sectionDetailContent input[type="number"]'));
+                
+                // Encontrar el índice del campo actual
+                const currentIndex = allInputs.findIndex(input => input.id === currentFieldId);
+                
+                // Si encontramos el campo actual y hay un siguiente
+                if (currentIndex !== -1 && currentIndex < allInputs.length - 1) {
+                    const nextInput = allInputs[currentIndex + 1];
+                    
+                    // Dar tiempo para que se guarde el valor actual
+                    setTimeout(() => {
+                        nextInput.focus();
+                        nextInput.select(); // Selecciona el contenido para facilitar sobrescritura
+                    }, 100);
+                }
+            }
+        }
+
+        function backToSectionsList() {
+            document.getElementById('sectionDetail').classList.remove('active');
+            document.getElementById('sectionsList').style.display = 'block';
+            renderSections();
+        }
+
+        function saveSectionAndReturn() {
+            showSyncIndicator('✓ Sección guardada', 'synced');
+            backToSectionsList();
+        }
+
+        // ==================== NOVEDADES ====================
+        
+        function openReportNovedadModal() {
+            const modal = document.getElementById('novedadesModal');
+            const content = document.getElementById('novedadesModalContent');
+            
+            // Resetear fotos acumuladas al abrir modal
+            accumulatedPhotos = [];
+            
+            content.innerHTML = `
+                <div class="form-group">
+                    <label>Novedades Predefinidas:</label>
+                    ${novedadesPredefinidas.map(n => `
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="novedad_${n.id}" value="${n.text}">
+                            <label for="novedad_${n.id}">${n.text}</label>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="form-group">
+                    <label>Otra Novedad (personalizada):</label>
+                    <textarea id="customNovedad" rows="3" placeholder="Escribe aquí..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📷 Fotos (Opcional - Máximo 3):</label>
+                    <input type="file" id="novedadPhotos" accept="image/*" capture="environment" style="display: none;">
+                    <div class="photo-upload" onclick="document.getElementById('novedadPhotos').click()">
+                        <p>📷 Agregar foto (<span id="photoCount">0</span>/3)</p>
+                        <small style="color: #999;">Toca para tomar o seleccionar foto</small>
+                    </div>
+                    <div id="novedadPhotosPreview" class="photo-preview"></div>
+                </div>
+                <button onclick="saveNovedad()" class="btn">💾 Guardar Novedad</button>
+            `;
+            
+            // Event listener para agregar fotos de forma acumulativa
+            document.getElementById('novedadPhotos').addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                
+                // Agregar nuevas fotos sin exceder 3 en total
+                files.forEach(file => {
+                    if (accumulatedPhotos.length < 3) {
+                        accumulatedPhotos.push(file);
+                    }
+                });
+                
+                // Actualizar preview
+                updatePhotosPreview();
+                
+                // Resetear input para permitir seleccionar la misma foto de nuevo
+                e.target.value = '';
+            });
+            
+            modal.style.display = 'block';
+        }
+        
+        function updatePhotosPreview() {
+            const preview = document.getElementById('novedadPhotosPreview');
+            const counter = document.getElementById('photoCount');
+            
+            preview.innerHTML = '';
+            counter.textContent = accumulatedPhotos.length;
+            
+            accumulatedPhotos.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const photoDiv = document.createElement('div');
+                    photoDiv.style.cssText = 'position: relative; display: inline-block; margin: 5px;';
+                    
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.style.cssText = 'width: 100px; height: 100px; object-fit: cover; border-radius: 8px;';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.textContent = '✕';
+                    removeBtn.style.cssText = 'position: absolute; top: -5px; right: -5px; background: red; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 14px;';
+                    removeBtn.onclick = () => removePhoto(index);
+                    
+                    photoDiv.appendChild(img);
+                    photoDiv.appendChild(removeBtn);
+                    preview.appendChild(photoDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function removePhoto(index) {
+            accumulatedPhotos.splice(index, 1);
+            updatePhotosPreview();
+        }
+
+        function closeNovedadesModal() {
+            document.getElementById('novedadesModal').style.display = 'none';
+        }
+
+        async function saveNovedad() {
+            const selectedNovedades = [];
+            
+            novedadesPredefinidas.forEach(n => {
+                const checkbox = document.getElementById(`novedad_${n.id}`);
+                if (checkbox && checkbox.checked) {
+                    selectedNovedades.push(n.text);
+                }
+            });
+            
+            const customNovedad = document.getElementById('customNovedad').value.trim();
+            if (customNovedad) {
+                selectedNovedades.push(customNovedad);
+            }
+            
+            if (selectedNovedades.length > 0) {
+                showSyncIndicator('💾 Guardando novedad...', 'syncing');
+                
+                // Subir fotos acumuladas si hay
+                const photoURLs = [];
+                
+                if (accumulatedPhotos.length > 0) {
+                    showSyncIndicator('📷 Subiendo fotos...', 'syncing');
+                    
+                    for (let i = 0; i < accumulatedPhotos.length; i++) {
+                        const file = accumulatedPhotos[i];
+                        const timestamp = Date.now();
+                        const fileName = `novedades/${currentDate}/${timestamp}_${i}.jpg`;
+                        const storageRef = storage.ref(fileName);
+                        
+                        try {
+                            await storageRef.put(file);
+                            const url = await storageRef.getDownloadURL();
+                            photoURLs.push(url);
+                        } catch (error) {
+                            console.error('Error subiendo foto:', error);
+                        }
+                    }
+                }
+                
+                const currentNovedades = dailyLogs[currentDate].novedades || [];
+                const newNovedad = {
+                    text: selectedNovedades.join(', '),
+                    user: currentUser.fullName,
+                    timestamp: new Date().toISOString(),
+                    photos: photoURLs // Agregar URLs de fotos
+                };
+                
+                currentNovedades.push(newNovedad);
+                
+                await database.ref(`dailyLogs/${currentDate}/novedades`).set(currentNovedades);
+                
+                showSyncIndicator('✓ Novedad guardada', 'synced');
+                closeNovedadesModal();
+                renderSections();
+                
+                // Limpiar fotos acumuladas
+                accumulatedPhotos = [];
+            } else {
+                alert('Por favor selecciona o escribe al menos una novedad');
+            }
+        }
+
+        // ==================== REPORTE DIARIO ====================
+        
+        function renderReporteDiario() {
+            const container = document.getElementById('reportContent');
+            
+            if (!dailyLogs[currentDate]) {
+                container.innerHTML = '<div class="report-summary"><p>No hay datos para el día actual. Completa algunas actividades primero.</p></div>';
+                return;
+            }
+            
+            let fullHTML = '';
+            
+            // SECCIÓN 1: DÍA ACTUAL (En proceso)
+            fullHTML += renderDayReport(currentDate, true);
+            
+            // SECCIÓN 2: DÍA ANTERIOR (Cerrado)
+            const yesterday = new Date(currentDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
+            
+            if (dailyLogs[yesterdayStr]) {
+                fullHTML += renderDayReport(yesterdayStr, false);
+            }
+            
+            container.innerHTML = fullHTML;
+        }
+        
+        function renderDayReport(dateStr, isCurrentDay) {
+            if (!dailyLogs[dateStr]) {
+                return '';
+            }
+            
+            const statusLabel = isCurrentDay ? '🟢 En proceso' : '🔴 Cerrado';
+            const statusColor = isCurrentDay ? '#28a745' : '#dc3545';
+            
+            let totalActivities = 0;
+            let completedActivities = 0;
+            let reportHTML = '';
+
+            // Calcular estadísticas
+            sections.forEach(section => {
+                // Verificar que la sección existe en el dailyLog
+                if (!dailyLogs[dateStr].sections[section.id]) {
+                    console.warn(`Sección ${section.name} (id:${section.id}) no existe en el log de ${dateStr}`);
+                    return; // Skip esta sección
+                }
+                
+                const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                
+                sectionActivities.forEach(activity => {
+                    if (activity.frequency === '2 veces al dia') {
+                        totalActivities += 2;
+                        const dataMorning = dailyLogs[dateStr].sections[section.id].activities[`${activity.id}_manana`];
+                        const dataAfternoon = dailyLogs[dateStr].sections[section.id].activities[`${activity.id}_tarde`];
+                        
+                        if (activity.type === 'parametros') {
+                            // Cuenta como completado si tiene CUALQUIER valor válido (incluso fuera de rango)
+                            if (dataMorning && dataMorning.value !== null && dataMorning.value !== undefined && dataMorning.value !== '' && !isNaN(dataMorning.value)) {
+                                completedActivities++;
+                            }
+                            if (dataAfternoon && dataAfternoon.value !== null && dataAfternoon.value !== undefined && dataAfternoon.value !== '' && !isNaN(dataAfternoon.value)) {
+                                completedActivities++;
+                            }
+                        } else {
+                            // Para chequeos, cuenta si está marcado OK o tiene nivel de aceite
+                            if (dataMorning && (dataMorning.status === 'ok' || dataMorning.oilLevel)) completedActivities++;
+                            if (dataAfternoon && (dataAfternoon.status === 'ok' || dataAfternoon.oilLevel)) completedActivities++;
+                        }
+                    }
+                });
+            });
+
+            const percentage = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
+            const pendingActivities = totalActivities - completedActivities;
+
+            // Encabezado con fecha y estado
+            reportHTML = `
+                <div class="report-summary" style="border-left: 4px solid ${statusColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="color: #1e3c72; margin: 0;">
+                            ${new Date(dateStr + 'T00:00:00').toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}
+                        </h3>
+                        <span style="background: ${statusColor}; color: white; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold;">
+                            ${statusLabel}
+                        </span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${totalActivities}</div>
+                            <div class="stat-label">Total Actividades</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${completedActivities}</div>
+                            <div class="stat-label">Completadas</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${pendingActivities}</div>
+                            <div class="stat-label">Pendientes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${percentage}%</div>
+                            <div class="stat-label">Porcentaje</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Mostrar detalles por sección según configuración showInSummary
+            sections.forEach(section => {
+                // Verificar que la sección existe en el dailyLog
+                if (!dailyLogs[dateStr].sections[section.id]) {
+                    return; // Skip esta sección
+                }
+                
+                // Usar showInSummary de la sección (por defecto "resumido" si no existe)
+                const showInSummary = section.showInSummary || 'resumido';
+                
+                // Si la sección está configurada como "no", no mostrarla
+                if (showInSummary === 'no') {
+                    return;
+                }
+                
+                // Calcular estadísticas de la sección
+                const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                let sectionTotal = 0;
+                let sectionCompleted = 0;
+                
+                sectionActivities.forEach(activity => {
+                    if (activity.frequency === '2 veces al dia') {
+                        sectionTotal += 2;
+                        const dataMorning = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_manana'];
+                        const dataAfternoon = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_tarde'];
+                        
+                        if (activity.type === 'parametros') {
+                            if (dataMorning && dataMorning.value !== null && !isNaN(dataMorning.value)) sectionCompleted++;
+                            if (dataAfternoon && dataAfternoon.value !== null && !isNaN(dataAfternoon.value)) sectionCompleted++;
+                        } else if (activity.type === 'nivel_aceite') {
+                            if (dataMorning && dataMorning.oilLevel) sectionCompleted++;
+                            if (dataAfternoon && dataAfternoon.oilLevel) sectionCompleted++;
+                        } else {
+                            if (dataMorning && dataMorning.status === 'ok') sectionCompleted++;
+                            if (dataAfternoon && dataAfternoon.status === 'ok') sectionCompleted++;
+                        }
+                    } else if (activity.frequency === 'Diario') {
+                        sectionTotal += 1;
+                        const activityData = dailyLogs[dateStr].sections[section.id].activities[activity.id];
+                        
+                        if (activity.type === 'parametros') {
+                            if (activityData && activityData.value !== null && !isNaN(activityData.value)) sectionCompleted++;
+                        } else if (activity.type === 'nivel_aceite') {
+                            if (activityData && activityData.oilLevel) sectionCompleted++;
+                        } else {
+                            if (activityData && activityData.status === 'ok') sectionCompleted++;
+                        }
+                    }
+                });
+                
+                // Si no hay actividades en la sección, no mostrarla
+                if (sectionTotal === 0) return;
+                
+                const sectionPercentage = Math.round((sectionCompleted / sectionTotal) * 100);
+                
+                // MODO RESUMIDO: Solo mostrar porcentaje
+                if (showInSummary === 'resumido') {
+                    reportHTML += '<div class="report-summary">';
+                    reportHTML += '<h3>' + section.icon + ' ' + section.name + '</h3>';
+                    reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold;">';
+                    reportHTML += sectionCompleted + '/' + sectionTotal + ' (' + sectionPercentage + '%)';
+                    reportHTML += '</p></div>';
+                    return;
+                }
+                
+                // MODO DETALLE: Mostrar porcentaje + actividades
+                let sectionHTML = '';
+                
+                sectionActivities.forEach(activity => {
+                    if (activity.frequency === '2 veces al dia') {
+                        const dataMorning = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_manana'];
+                        const dataAfternoon = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_tarde'];
+                        
+                        if (activity.type === 'parametros') {
+                            if (dataMorning && dataMorning.value !== null && !isNaN(dataMorning.value)) {
+                                const userInfo = dataMorning.user || 'Usuario';
+                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                const value = parseFloat(dataMorning.value);
+                                const isOutOfRange = (activity.min !== null && activity.min !== undefined && value < activity.min) || 
+                                                    (activity.max !== null && activity.max !== undefined && value > activity.max);
+                                const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                                const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                
+                                sectionHTML += '<p style="' + textColor + '"><strong>' + activity.name + ' (Mañana):</strong> ';
+                                sectionHTML += alertSymbol + dataMorning.value + ' ' + (activity.unit || '');
+                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                                sectionHTML += '</p>';
+                            }
+                            
+                            if (dataAfternoon && dataAfternoon.value !== null && !isNaN(dataAfternoon.value)) {
+                                const userInfo = dataAfternoon.user || 'Usuario';
+                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                const value = parseFloat(dataAfternoon.value);
+                                const isOutOfRange = (activity.min !== null && activity.min !== undefined && value < activity.min) || 
+                                                    (activity.max !== null && activity.max !== undefined && value > activity.max);
+                                const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                                const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                
+                                sectionHTML += '<p style="' + textColor + '"><strong>' + activity.name + ' (Tarde):</strong> ';
+                                sectionHTML += alertSymbol + dataAfternoon.value + ' ' + (activity.unit || '');
+                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                                sectionHTML += '</p>';
+                            }
+                        } else if (activity.type === 'nivel_aceite') {
+                            if (dataMorning && dataMorning.oilLevel) {
+                                const userInfo = dataMorning.user || 'Usuario';
+                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                const oilLevelText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataMorning.oilLevel] || dataMorning.oilLevel;
+                                
+                                sectionHTML += '<p><strong>' + activity.name + ' (Mañana):</strong> ' + oilLevelText;
+                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                                sectionHTML += '</p>';
+                            }
+                            
+                            if (dataAfternoon && dataAfternoon.oilLevel) {
+                                const userInfo = dataAfternoon.user || 'Usuario';
+                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                const oilLevelText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataAfternoon.oilLevel] || dataAfternoon.oilLevel;
+                                
+                                sectionHTML += '<p><strong>' + activity.name + ' (Tarde):</strong> ' + oilLevelText;
+                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                                sectionHTML += '</p>';
+                            }
+                        } else {
+                            if (dataMorning && dataMorning.status === 'ok') {
+                                const userInfo = dataMorning.user || 'Usuario';
+                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                
+                                sectionHTML += '<p><strong>' + activity.name + ' (Mañana):</strong> ✓ OK';
+                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                                sectionHTML += '</p>';
+                            }
+                            
+                            if (dataAfternoon && dataAfternoon.status === 'ok') {
+                                const userInfo = dataAfternoon.user || 'Usuario';
+                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                
+                                sectionHTML += '<p><strong>' + activity.name + ' (Tarde):</strong> ✓ OK';
+                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                                sectionHTML += '</p>';
+                            }
+                        }
+                    } else if (activity.frequency === 'Diario') {
+                        const activityData = dailyLogs[dateStr].sections[section.id].activities[activity.id];
+                        
+                        if (activity.type === 'parametros' && activityData && activityData.value !== null && !isNaN(activityData.value)) {
+                            const userInfo = activityData.user || 'Usuario';
+                            const timeInfo = activityData.timestamp ? new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                            const value = parseFloat(activityData.value);
+                            const isOutOfRange = (activity.min !== null && activity.min !== undefined && value < activity.min) || 
+                                                (activity.max !== null && activity.max !== undefined && value > activity.max);
+                            const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                            const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                            
+                            sectionHTML += '<p style="' + textColor + '"><strong>' + activity.name + ':</strong> ';
+                            sectionHTML += alertSymbol + activityData.value + ' ' + (activity.unit || '');
+                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                            sectionHTML += '</p>';
+                        } else if (activity.type === 'nivel_aceite' && activityData && activityData.oilLevel) {
+                            const userInfo = activityData.user || 'Usuario';
+                            const timeInfo = activityData.timestamp ? new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                            const oilLevelText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[activityData.oilLevel] || activityData.oilLevel;
+                            
+                            sectionHTML += '<p><strong>' + activity.name + ':</strong> ' + oilLevelText;
+                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                            sectionHTML += '</p>';
+                        } else if (activity.type === 'chequeo' && activityData && activityData.status === 'ok') {
+                            const userInfo = activityData.user || 'Usuario';
+                            const timeInfo = activityData.timestamp ? new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                            
+                            sectionHTML += '<p><strong>' + activity.name + ':</strong> ✓ OK';
+                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
+                            sectionHTML += '</p>';
+                        }
+                    }
+                });
+                
+                // Solo agregar la sección si tiene contenido
+                if (sectionHTML) {
+                    reportHTML += '<div class="report-summary">';
+                    reportHTML += '<h3>' + section.icon + ' ' + section.name + '</h3>';
+                    reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold; margin-bottom: 10px;">';
+                    reportHTML += sectionCompleted + '/' + sectionTotal + ' (' + sectionPercentage + '%)';
+                    reportHTML += '</p>';
+                    reportHTML += sectionHTML;
+                    reportHTML += '</div>';
+                }
+            });
+
+
+            // Mostrar novedades
+            if (dailyLogs[dateStr].novedades && dailyLogs[dateStr].novedades.length > 0) {
+                reportHTML += `<div class="report-summary"><h3>📝 Novedades</h3>`;
+                dailyLogs[dateStr].novedades.forEach((novedad, index) => {
+                    const photoIcon = novedad.photos && novedad.photos.length > 0 
+                        ? ` <span style="cursor: pointer; color: #667eea;" onclick="openPhotoCarouselForDate('${dateStr}', ${index})">📷(${novedad.photos.length})</span>` 
+                        : '';
+                    reportHTML += `<p>• ${novedad.text}${photoIcon} <small>(${novedad.user})</small></p>`;
+                });
+                reportHTML += `</div>`;
+            }
+
+            return reportHTML;
+        }
+        
+        function openPhotoCarouselForDate(dateStr, novedadIndex) {
+            const novedad = dailyLogs[dateStr].novedades[novedadIndex];
+            if (!novedad || !novedad.photos || novedad.photos.length === 0) return;
+            
+            const modal = document.createElement('div');
+            modal.id = 'photoCarouselModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.9); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center; flex-direction: column;
+            `;
+            
+            let currentPhotoIndex = 0;
+            
+            const updatePhoto = () => {
+                const img = document.getElementById('carouselImg');
+                img.src = novedad.photos[currentPhotoIndex];
+                const counter = document.getElementById('photoCounter');
+                counter.textContent = `${currentPhotoIndex + 1} / ${novedad.photos.length}`;
+            };
+            
+            modal.innerHTML = `
+                <div style="position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; z-index: 10001;" onclick="document.getElementById('photoCarouselModal').remove()">✕</div>
+                <div style="position: absolute; top: 20px; left: 20px; color: white; font-size: 18px;" id="photoCounter"></div>
+                <img id="carouselImg" src="${novedad.photos[0]}" style="max-width: 90%; max-height: 90%; border-radius: 8px;">
+                ${novedad.photos.length > 1 ? `
+                    <div style="position: absolute; bottom: 40px; display: flex; gap: 20px;">
+                        <button id="prevBtn" style="background: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-size: 18px;">← Anterior</button>
+                        <button id="nextBtn" style="background: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-size: 18px;">Siguiente →</button>
+                    </div>
+                ` : ''}
+            `;
+            
+            document.body.appendChild(modal);
+            updatePhoto();
+            
+            if (novedad.photos.length > 1) {
+                document.getElementById('prevBtn').onclick = () => {
+                    currentPhotoIndex = (currentPhotoIndex - 1 + novedad.photos.length) % novedad.photos.length;
+                    updatePhoto();
+                };
+                
+                document.getElementById('nextBtn').onclick = () => {
+                    currentPhotoIndex = (currentPhotoIndex + 1) % novedad.photos.length;
+                    updatePhoto();
+                };
+            }
+        }
+
+        function openPhotoCarousel(novedadIndex) {
+            openPhotoCarouselForDate(currentDate, novedadIndex);
+        }
+
+        function openHistorialPhotoCarousel(date, novedadIndex) {
+            const log = dailyLogs[date];
+            if (!log || !log.novedades) return;
+            
+            const novedad = log.novedades[novedadIndex];
+            if (!novedad || !novedad.photos || novedad.photos.length === 0) return;
+            
+            const modal = document.createElement('div');
+            modal.id = 'photoCarouselModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.9); z-index: 10000; display: flex; 
+                align-items: center; justify-content: center; flex-direction: column;
+            `;
+            
+            let currentPhotoIndex = 0;
+            
+            const updatePhoto = () => {
+                const img = document.getElementById('carouselImg');
+                img.src = novedad.photos[currentPhotoIndex];
+                const counter = document.getElementById('photoCounter');
+                counter.textContent = `${currentPhotoIndex + 1} / ${novedad.photos.length}`;
+            };
+            
+            modal.innerHTML = `
+                <div style="position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; z-index: 10001;" onclick="document.getElementById('photoCarouselModal').remove()">✕</div>
+                <div style="position: absolute; top: 20px; left: 20px; color: white; font-size: 18px;" id="photoCounter"></div>
+                <img id="carouselImg" src="${novedad.photos[0]}" style="max-width: 90%; max-height: 90%; border-radius: 8px;">
+                ${novedad.photos.length > 1 ? `
+                    <div style="position: absolute; bottom: 40px; display: flex; gap: 20px;">
+                        <button id="prevBtn" style="background: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-size: 18px;">← Anterior</button>
+                        <button id="nextBtn" style="background: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-size: 18px;">Siguiente →</button>
+                    </div>
+                ` : ''}
+            `;
+            
+            document.body.appendChild(modal);
+            updatePhoto();
+            
+            if (novedad.photos.length > 1) {
+                document.getElementById('prevBtn').addEventListener('click', () => {
+                    currentPhotoIndex = (currentPhotoIndex - 1 + novedad.photos.length) % novedad.photos.length;
+                    updatePhoto();
+                });
+                
+                document.getElementById('nextBtn').addEventListener('click', () => {
+                    currentPhotoIndex = (currentPhotoIndex + 1) % novedad.photos.length;
+                    updatePhoto();
+                });
+            }
+        }
+
+        function shareReport() {
+            const message = `Reporte HSB - ${new Date(currentDate).toLocaleDateString('es-ES')}`;
+            const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
+        // ==================== PLAN ====================
+        
+        function renderPlan() {
+            const container = document.getElementById('planContent');
+            
+            // Filtrar actividades periódicas (Semanal, Mensual, Trimestral)
+            const periodicActivities = activities.filter(a => 
+                a.frequency === 'Semanal' || 
+                a.frequency === 'Mensual' || 
+                a.frequency === 'Trimestral'
+            );
+            
+            if (periodicActivities.length === 0) {
+                container.innerHTML = `
+                    <div class="report-summary">
+                        <h3 style="color: #1e3c72;">📅 Plan de Actividades Periódicas</h3>
+                        <p style="color: #666;">No hay actividades periódicas configuradas</p>
+                        <p style="font-size: 12px; color: #999; margin-top: 10px;">
+                            Las actividades semanales, mensuales y trimestrales aparecerán aquí para aprobación.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = `
+                <div class="report-summary">
+                    <h3 style="color: #1e3c72; margin-bottom: 20px;">📅 Plan de Actividades Periódicas</h3>
+                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                        Estas actividades requieren aprobación antes de ejecutarse.
+                    </p>
+                </div>
+            `;
+            
+            // Agrupar por frecuencia
+            const frequencies = {
+                'Semanal': periodicActivities.filter(a => a.frequency === 'Semanal'),
+                'Mensual': periodicActivities.filter(a => a.frequency === 'Mensual'),
+                'Trimestral': periodicActivities.filter(a => a.frequency === 'Trimestral')
+            };
+            
+            Object.keys(frequencies).forEach(freq => {
+                if (frequencies[freq].length > 0) {
+                    html += `
+                        <div class="report-summary" style="margin-bottom: 20px;">
+                            <h4 style="color: #2a5298; margin-bottom: 15px;">🔄 ${freq}</h4>
+                    `;
+                    
+                    frequencies[freq].forEach(activity => {
+                        const section = sections.find(s => s.id === activity.sectionId);
+                        const sectionName = section ? section.name : 'Sección';
+                        
+                        // Determinar estado (simulado por ahora)
+                        const isPending = true; // En implementación futura verificar última ejecución
+                        const statusColor = isPending ? '#dc3545' : '#28a745';
+                        const statusIcon = isPending ? '🔴' : '🟢';
+                        
+                        html += `
+                            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>${activity.name}</strong>
+                                        <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                                            ${sectionName} | Frecuencia: ${freq}
+                                        </p>
+                                        <p style="font-size: 11px; color: #999; margin-top: 3px;">
+                                            ${statusIcon} Estado: ${isPending ? 'Pendiente de aprobación' : 'Aprobado'}
+                                        </p>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        ${isPending ? `
+                                            <button onclick="approveActivity(${activity.id})" 
+                                                    style="background: #28a745; color: white; border: none; 
+                                                           padding: 8px 15px; border-radius: 5px; cursor: pointer; 
+                                                           font-size: 12px;">
+                                                ✓ Aprobar
+                                            </button>
+                                        ` : `
+                                            <span style="color: #28a745; font-size: 12px;">✓ Aprobado</span>
+                                        `}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        async function approveActivity(activityId) {
+            // Por ahora solo mostrar mensaje
+            showSyncIndicator('✓ Actividad aprobada', 'synced');
+            alert('Actividad aprobada. Se agregará al mantenimiento diario.');
+            // En implementación futura: registrar aprobación en Firebase
+            renderPlan();
+        }
+
+        // ==================== HISTORIAL ====================
+        
+        function renderHistorial() {
+            const container = document.getElementById('historialContent');
+            
+            const dates = Object.keys(dailyLogs).sort().reverse();
+            
+            if (dates.length === 0) {
+                container.innerHTML = '<p>No hay historial disponible</p>';
+                return;
+            }
+
+            let html = '<div class="report-summary"><h3 style="color: #1e3c72; margin-bottom: 20px;">📂 Historial de Registros</h3></div>';
+            
+            dates.forEach(date => {
+                const log = dailyLogs[date];
+                let completed = 0;
+                let total = 0;
+
+                sections.forEach(section => {
+                    if (log.sections && log.sections[section.id]) {
+                        Object.values(log.sections[section.id].activities || {}).forEach(activity => {
+                            total++;
+                            if (activity.value !== null || activity.status !== null) {
+                                completed++;
+                            }
+                        });
+                    }
+                });
+
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                html += `
+                    <div class="report-summary" style="margin-bottom: 15px; cursor: pointer; transition: all 0.3s;" 
+                         onclick="toggleHistorialDetail('${date}')"
+                         onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)';"
+                         onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="color: #1e3c72;">📅 ${new Date(date).toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h3>
+                                <p style="margin-top: 5px; color: #666;">Completado: ${percentage}% (${completed}/${total})</p>
+                            </div>
+                            <div style="font-size: 24px; color: #667eea;">
+                                <span id="arrow_${date}">▶</span>
+                            </div>
+                        </div>
+                        <div id="detail_${date}" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee;">
+                            <p style="color: #666; margin-bottom: 10px;"><em>Cargando detalles...</em></p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+        
+        function toggleHistorialDetail(date) {
+            const detailDiv = document.getElementById(`detail_${date}`);
+            const arrow = document.getElementById(`arrow_${date}`);
+            
+            if (detailDiv.style.display === 'none') {
+                // Mostrar detalles
+                arrow.textContent = '▼';
+                detailDiv.style.display = 'block';
+                
+                // Generar contenido detallado
+                let detailHTML = '';
+                const log = dailyLogs[date];
+                
+                sections.forEach(section => {
+                    const sectionActivities = activities.filter(a => a.sectionId === section.id && (a.showInSummary === 'detalle' || a.showInSummary === 'estado'));
+                    
+                    if (sectionActivities.length > 0 && log.sections && log.sections[section.id]) {
+                        detailHTML += `<h4 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">${section.icon} ${section.name}</h4>`;
+                        
+                        sectionActivities.forEach(activity => {
+                            if (activity.frequency === '2 veces al dia') {
+                                const dataMorning = log.sections[section.id].activities[`${activity.id}_manana`];
+                                const dataAfternoon = log.sections[section.id].activities[`${activity.id}_tarde`];
+                                
+                                if (activity.type === 'parametros') {
+                                    // Manejo de parámetros numéricos
+                                    if (dataMorning && dataMorning.value !== null && dataMorning.value !== undefined) {
+                                        const userInfo = dataMorning.user || 'Usuario';
+                                        const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                        
+                                        // Verificar si está fuera de rango
+                                        const value = parseFloat(dataMorning.value);
+                                        const isOutOfRange = activity.min && activity.max && (value < activity.min || value > activity.max);
+                                        const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                                        const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                        
+                                        detailHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Mañana):</strong> ${alertSymbol}${dataMorning.value} ${activity.unit || ''} <small style="color: #999;">(${userInfo} - ${timeInfo})</small></p>`;
+                                    } else if (dataMorning && dataMorning.incomplete) {
+                                        // Mostrar alerta de no realizada
+                                        detailHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
+                                    }
+                                    if (dataAfternoon && dataAfternoon.value !== null && dataAfternoon.value !== undefined) {
+                                        const userInfo = dataAfternoon.user || 'Usuario';
+                                        const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                        
+                                        // Verificar si está fuera de rango
+                                        const value = parseFloat(dataAfternoon.value);
+                                        const isOutOfRange = activity.min && activity.max && (value < activity.min || value > activity.max);
+                                        const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                                        const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                        
+                                        detailHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Tarde):</strong> ${alertSymbol}${dataAfternoon.value} ${activity.unit || ''} <small style="color: #999;">(${userInfo} - ${timeInfo})</small></p>`;
+                                    } else if (dataAfternoon && dataAfternoon.incomplete) {
+                                        // Mostrar alerta de no realizada
+                                        detailHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
+                                    }
+                                } else if (activity.type === 'chequeo') {
+                                    // Verificar si es Nivel de Aceite
+                                    if (activity.name.toLowerCase().includes('nivel') && activity.name.toLowerCase().includes('aceite')) {
+                                        // Manejo especial para Nivel de Aceite con 4 niveles
+                                        if (dataMorning && dataMorning.oilLevel) {
+                                            const userInfo = dataMorning.user || 'Usuario';
+                                            const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                            
+                                            const oilLevelText = {
+                                                'full': '🟢 Full',
+                                                '3/4': '🟡 3/4',
+                                                '1/2': '🟠 1/2',
+                                                'vacio': '🔴 Vacío'
+                                            }[dataMorning.oilLevel] || dataMorning.oilLevel;
+                                            
+                                            const hasAlert = dataMorning.oilLevel === '1/2' || dataMorning.oilLevel === 'vacio';
+                                            const alertSymbol = hasAlert ? '⚠️ ' : '';
+                                            const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
+                                            
+                                            detailHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Mañana):</strong> ${alertSymbol}${oilLevelText} <small style="color: #999;">(${userInfo} - ${timeInfo})</small></p>`;
+                                        } else if (dataMorning && dataMorning.incomplete) {
+                                            // Mostrar alerta de no realizada
+                                            detailHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
+                                        }
+                                        if (dataAfternoon && dataAfternoon.oilLevel) {
+                                            const userInfo = dataAfternoon.user || 'Usuario';
+                                            const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                            
+                                            const oilLevelText = {
+                                                'full': '🟢 Full',
+                                                '3/4': '🟡 3/4',
+                                                '1/2': '🟠 1/2',
+                                                'vacio': '🔴 Vacío'
+                                            }[dataAfternoon.oilLevel] || dataAfternoon.oilLevel;
+                                            
+                                            const hasAlert = dataAfternoon.oilLevel === '1/2' || dataAfternoon.oilLevel === 'vacio';
+                                            const alertSymbol = hasAlert ? '⚠️ ' : '';
+                                            const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
+                                            
+                                            detailHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Tarde):</strong> ${alertSymbol}${oilLevelText} <small style="color: #999;">(${userInfo} - ${timeInfo})</small></p>`;
+                                        } else if (dataAfternoon && dataAfternoon.incomplete) {
+                                            // Mostrar alerta de no realizada
+                                            detailHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
+                                        }
+                                    } else {
+                                        // Manejo de chequeos normales (OK/No OK)
+                                        if (dataMorning && dataMorning.status === 'ok') {
+                                            const userInfo = dataMorning.user || 'Usuario';
+                                            const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                            
+                                            detailHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Mañana):</strong> ✓ OK <small style="color: #999;">(${userInfo} - ${timeInfo})</small></p>`;
+                                        } else if (dataMorning && dataMorning.incomplete) {
+                                            // Mostrar alerta de no realizada
+                                            detailHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
+                                        }
+                                        if (dataAfternoon && dataAfternoon.status === 'ok') {
+                                            const userInfo = dataAfternoon.user || 'Usuario';
+                                            const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                            
+                                            detailHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Tarde):</strong> ✓ OK <small style="color: #999;">(${userInfo} - ${timeInfo})</small></p>`;
+                                        } else if (dataAfternoon && dataAfternoon.incomplete) {
+                                            // Mostrar alerta de no realizada
+                                            detailHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Mostrar novedades
+                if (log.novedades && log.novedades.length > 0) {
+                    detailHTML += `<h4 style="color: #667eea; margin-top: 15px; margin-bottom: 10px;">📝 Novedades</h4>`;
+                    log.novedades.forEach((novedad, index) => {
+                        const photoIcon = novedad.photos && novedad.photos.length > 0 
+                            ? ` <span style="cursor: pointer; color: #667eea;" onclick="openHistorialPhotoCarousel('${date}', ${index})">📷(${novedad.photos.length})</span>` 
+                            : '';
+                        detailHTML += `<p style="margin: 5px 0;">• ${novedad.text}${photoIcon} <small style="color: #999;">(${novedad.user})</small></p>`;
+                    });
+                }
+                
+                if (detailHTML === '') {
+                    detailHTML = '<p style="color: #999;"><em>No hay detalles registrados para este día</em></p>';
+                }
+                
+                detailDiv.innerHTML = detailHTML;
+            } else {
+                // Ocultar detalles
+                arrow.textContent = '▶';
+                detailDiv.style.display = 'none';
+            }
+        }
+
+        // ==================== CONFIGURACIÓN ====================
+        
+        function renderConfiguracion() {
+            const container = document.getElementById('configContent');
+            
+            container.innerHTML = `
+                <div class="report-summary">
+                    <h3 style="color: #1e3c72; margin-bottom: 20px;">⚙️ Panel de Configuración</h3>
+                    
+                    <!-- Tabs de configuración -->
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px;">
+                        <button onclick="showConfigTab('users')" id="configTabUsers" 
+                                style="padding: 10px 20px; background: #667eea; color: white; border: none; 
+                                       border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
+                            👥 Usuarios
+                        </button>
+                        <button onclick="showConfigTab('sections')" id="configTabSections"
+                                style="padding: 10px 20px; background: #ddd; color: #666; border: none; 
+                                       border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
+                            📊 Secciones
+                        </button>
+                        <button onclick="showConfigTab('activities')" id="configTabActivities"
+                                style="padding: 10px 20px; background: #ddd; color: #666; border: none; 
+                                       border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
+                            📋 Actividades
+                        </button>
+                        <button onclick="showConfigTab('novedades')" id="configTabNovedades"
+                                style="padding: 10px 20px; background: #ddd; color: #666; border: none; 
+                                       border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
+                            📝 Novedades
+                        </button>
+                    </div>
+                    
+                    <!-- Contenido de tabs -->
+                    <div id="configTabContent"></div>
+                </div>
+            `;
+            
+            // Mostrar tab de usuarios por defecto
+            showConfigTab('users');
+        }
+        
+        function showConfigTab(tabName) {
+            // Actualizar botones
+            ['users', 'sections', 'activities', 'novedades'].forEach(tab => {
+                const btn = document.getElementById(`configTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+                if (tab === tabName) {
+                    btn.style.background = '#667eea';
+                    btn.style.color = 'white';
+                } else {
+                    btn.style.background = '#ddd';
+                    btn.style.color = '#666';
+                }
+            });
+            
+            // Mostrar contenido
+            const content = document.getElementById('configTabContent');
+            
+            switch(tabName) {
+                case 'users':
+                    renderUsersConfig(content);
+                    break;
+                case 'sections':
+                    renderSectionsConfig(content);
+                    break;
+                case 'activities':
+                    renderActivitiesConfig(content);
+                    break;
+                case 'novedades':
+                    renderNovedadesConfig(content);
+                    break;
+            }
+        }
+        
+        function renderUsersConfig(container) {
+            let html = '<h4 style="color: #2a5298; margin-bottom: 15px;">Gestión de Usuarios</h4>';
+            
+            users.forEach(user => {
+                html += `
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${user.fullName}</strong>
+                                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                                    Usuario: ${user.username} | Rol: ${user.role}
+                                </p>
+                            </div>
+                            <div>
+                                <button onclick="alert('Editar usuario: ${user.fullName}')" 
+                                        style="background: #667eea; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px; margin-right: 5px;">
+                                    ✏️ Editar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <button onclick="alert('Agregar nuevo usuario')" 
+                        style="background: #28a745; color: white; border: none; 
+                               padding: 10px 20px; border-radius: 5px; cursor: pointer; 
+                               font-size: 14px; margin-top: 15px; width: 100%;">
+                    ➕ Agregar Usuario
+                </button>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function renderSectionsConfig(container) {
+            let html = '<h4 style="color: #2a5298; margin-bottom: 15px;">Gestión de Secciones</h4>';
+            
+            sections.forEach((section, index) => {
+                html += `
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${section.icon} ${section.name}</strong>
+                                <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                                    Orden: ${section.order}
+                                </p>
+                            </div>
+                            <div>
+                                <button onclick="moveSectionUp(${section.id})" 
+                                        ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}
+                                        style="background: #667eea; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px; margin-right: 5px;">
+                                    ↑
+                                </button>
+                                <button onclick="moveSectionDown(${section.id})" 
+                                        ${index === sections.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}
+                                        style="background: #667eea; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px; margin-right: 5px;">
+                                    ↓
+                                </button>
+                                <button onclick="editSection(${section.id})" 
+                                        style="background: #ffc107; color: #000; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px; margin-right: 5px;">
+                                    ✏️
+                                </button>
+                                <button onclick="deleteSection(${section.id})" 
+                                        style="background: #dc3545; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px;">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <button onclick="promptAddSection()" 
+                        style="background: #28a745; color: white; border: none; 
+                               padding: 10px 20px; border-radius: 5px; cursor: pointer; 
+                               font-size: 14px; margin-top: 15px; width: 100%;">
+                    ➕ Agregar Sección
+                </button>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function promptAddSection() {
+            // Abrir modal en lugar de prompts
+            document.getElementById('newSectionName').value = '';
+            document.getElementById('newSectionIcon').value = '📦';
+            document.getElementById('newSectionShowInSummary').value = 'resumido';
+            document.getElementById('addSectionModal').style.display = 'flex';
+        }
+        
+        function closeAddSectionModal() {
+            document.getElementById('addSectionModal').style.display = 'none';
+        }
+        
+        async function saveNewSection() {
+            const name = document.getElementById('newSectionName').value.trim();
+            const icon = document.getElementById('newSectionIcon').value.trim();
+            const showInSummary = document.getElementById('newSectionShowInSummary').value;
+            
+            if (!name) {
+                alert('El nombre es obligatorio');
+                return;
+            }
+            
+            if (!icon) {
+                alert('El ícono es obligatorio');
+                return;
+            }
+            
+            const newId = Math.max(...sections.map(s => s.id), 0) + 1;
+            const newOrder = Math.max(...sections.map(s => s.order), 0) + 1;
+            
+            console.log(`➕ Creando nueva sección: ${name} (id:${newId}, order:${newOrder}, showInSummary:${showInSummary})`);
+            
+            const newSection = {
+                id: newId,
+                name: name,
+                icon: icon,
+                order: newOrder,
+                showInSummary: showInSummary
+            };
+            
+            sections.push(newSection);
+            sections.sort((a, b) => a.order - b.order);
+            
+            await sectionsRef.set(sections);
+            console.log('✅ Sección guardada en Firebase');
+            
+            // Inicializar la nueva sección en todos los dailyLogs existentes
+            console.log(`🔧 Inicializando sección en ${Object.keys(dailyLogs).length} días...`);
+            
+            for (const [date, log] of Object.entries(dailyLogs)) {
+                if (!log.sections) {
+                    log.sections = {};
+                }
+                
+                if (!log.sections[newId]) {
+                    console.log(`  ➕ Agregando sección id:${newId} al día ${date}`);
+                    log.sections[newId] = {
+                        activities: {},
+                        photos: []
+                    };
+                }
+            }
+            
+            // Guardar dailyLogs actualizados
+            await dailyLogsRef.set(dailyLogs);
+            console.log('✅ DailyLogs actualizados en Firebase');
+            
+            // Recargar datos desde Firebase para asegurar sincronización
+            await loadDataFromFirebase();
+            console.log('✅ Datos recargados desde Firebase');
+            
+            showSyncIndicator('✓ Sección agregada', 'synced');
+            closeAddSectionModal();
+            renderConfiguracion();
+            renderSections(); // Re-renderizar para mostrar la nueva sección
+        }
+        
+        let currentEditSectionId = null;
+        
+        function editSection(sectionId) {
+            const section = sections.find(s => s.id === sectionId);
+            if (!section) return;
+            
+            currentEditSectionId = sectionId;
+            
+            // Cargar datos de la sección en el modal
+            document.getElementById('editSectionName').value = section.name;
+            document.getElementById('editSectionIcon').value = section.icon;
+            document.getElementById('editSectionShowInSummary').value = section.showInSummary || 'resumido';
+            
+            // Abrir modal
+            document.getElementById('editSectionModal').style.display = 'flex';
+        }
+        
+        function closeEditSectionModal() {
+            document.getElementById('editSectionModal').style.display = 'none';
+            currentEditSectionId = null;
+        }
+        
+        async function saveEditedSection() {
+            if (!currentEditSectionId) return;
+            
+            const section = sections.find(s => s.id === currentEditSectionId);
+            if (!section) return;
+            
+            const name = document.getElementById('editSectionName').value.trim();
+            const icon = document.getElementById('editSectionIcon').value.trim();
+            const showInSummary = document.getElementById('editSectionShowInSummary').value;
+            
+            if (!name) {
+                alert('El nombre es obligatorio');
+                return;
+            }
+            
+            if (!icon) {
+                alert('El ícono es obligatorio');
+                return;
+            }
+            
+            // Actualizar la sección
+            section.name = name;
+            section.icon = icon;
+            section.showInSummary = showInSummary;
+            
+            // Guardar en Firebase
+            await sectionsRef.set(sections);
+            console.log('✅ Sección actualizada en Firebase');
+            
+            showSyncIndicator('✓ Sección actualizada', 'synced');
+            closeEditSectionModal();
+            renderConfiguracion();
+            renderSections(); // Re-renderizar para mostrar los cambios
+        }
+        
+        async function deleteSection(id) {
+            const section = sections.find(s => s.id === id);
+            if (!section) return;
+            
+            if (!confirm(`¿Eliminar la sección "${section.name}" y todas sus actividades?`)) return;
+            
+            // Eliminar actividades de esta sección
+            activities = activities.filter(a => a.sectionId !== id);
+            await activitiesRef.set(activities);
+            
+            // Eliminar sección
+            sections = sections.filter(s => s.id !== id);
+            await sectionsRef.set(sections);
+            
+            showSyncIndicator('✓ Sección eliminada', 'synced');
+            renderConfiguracion();
+        }
+        
+        async function moveSectionUp(id) {
+            const index = sections.findIndex(s => s.id === id);
+            if (index <= 0) return;
+            
+            // Intercambiar order con sección anterior
+            const temp = sections[index].order;
+            sections[index].order = sections[index - 1].order;
+            sections[index - 1].order = temp;
+            
+            sections.sort((a, b) => a.order - b.order);
+            await sectionsRef.set(sections);
+            
+            showSyncIndicator('✓ Orden actualizado', 'synced');
+            renderConfiguracion();
+            renderSections();
+        }
+        
+        async function moveSectionDown(id) {
+            const index = sections.findIndex(s => s.id === id);
+            if (index < 0 || index >= sections.length - 1) return;
+            
+            // Intercambiar order con sección siguiente
+            const temp = sections[index].order;
+            sections[index].order = sections[index + 1].order;
+            sections[index + 1].order = temp;
+            
+            sections.sort((a, b) => a.order - b.order);
+            await sectionsRef.set(sections);
+            
+            showSyncIndicator('✓ Orden actualizado', 'synced');
+            renderConfiguracion();
+            renderSections();
+        }
+        
+        function renderActivitiesConfig(container) {
+            let html = '<h4 style="color: #2a5298; margin-bottom: 15px;">Gestión de Actividades</h4>';
+            
+            // Agrupar por sección y ordenar
+            const sortedSections = [...sections].sort((a, b) => a.order - b.order);
+            
+            sortedSections.forEach(section => {
+                const sectionActivities = activities
+                    .filter(a => a.sectionId === section.id)
+                    .sort((a, b) => a.order - b.order); // Ordenar por order
+                
+                if (sectionActivities.length > 0) {
+                    html += `<h5 style="color: #667eea; margin-top: 20px; margin-bottom: 10px;">${section.icon} ${section.name}</h5>`;
+                    
+                    sectionActivities.forEach((activity, index) => {
+                        html += `
+                            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 8px; background: white;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="flex: 1;">
+                                        <strong style="font-size: 13px;">${activity.name}</strong>
+                                        <p style="font-size: 11px; color: #666; margin-top: 3px;">
+                                            Tipo: ${activity.type} | Frecuencia: ${activity.frequency}
+                                            ${activity.min !== null && activity.min !== undefined ? ` | Min: ${activity.min}` : ''}
+                                            ${activity.max !== null && activity.max !== undefined ? ` | Max: ${activity.max}` : ''}
+                                        </p>
+                                    </div>
+                                    <div style="white-space: nowrap;">
+                                        <button onclick="moveActivityUp(${activity.id})" 
+                                                ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}
+                                                style="background: #667eea; color: white; border: none; 
+                                                       padding: 4px 8px; border-radius: 3px; cursor: pointer; 
+                                                       font-size: 11px; margin-right: 3px;">
+                                            ↑
+                                        </button>
+                                        <button onclick="moveActivityDown(${activity.id})" 
+                                                ${index === sectionActivities.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}
+                                                style="background: #667eea; color: white; border: none; 
+                                                       padding: 4px 8px; border-radius: 3px; cursor: pointer; 
+                                                       font-size: 11px; margin-right: 3px;">
+                                            ↓
+                                        </button>
+                                        <button onclick="editActivity(${activity.id})" 
+                                                style="background: #ffc107; color: white; border: none; 
+                                                       padding: 4px 8px; border-radius: 3px; cursor: pointer; 
+                                                       font-size: 11px; margin-right: 3px;">
+                                            ✏️
+                                        </button>
+                                        <button onclick="deleteActivity(${activity.id})" 
+                                                style="background: #dc3545; color: white; border: none; 
+                                                       padding: 4px 8px; border-radius: 3px; cursor: pointer; 
+                                                       font-size: 11px;">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+            
+            html += `
+                <button onclick="promptAddActivity()" 
+                        style="background: #28a745; color: white; border: none; 
+                               padding: 10px 20px; border-radius: 5px; cursor: pointer; 
+                               font-size: 14px; margin-top: 15px; width: 100%;">
+                    ➕ Agregar Actividad
+                </button>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function promptAddActivity() {
+            // Abrir modal
+            const modal = document.getElementById('addActivityModal');
+            modal.style.display = 'block';
+            
+            // Llenar selector de secciones
+            const sectionSelect = document.getElementById('activitySection');
+            sectionSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            sections.forEach(section => {
+                sectionSelect.innerHTML += `<option value="${section.id}">${section.icon} ${section.name}</option>`;
+            });
+            
+            // Limpiar campos
+            document.getElementById('activityName').value = '';
+            document.getElementById('activityType').value = '';
+            document.getElementById('activityUnit').value = '';
+            document.getElementById('activityMin').value = '';
+            document.getElementById('activityMax').value = '';
+            document.getElementById('activityFrequency').value = '';
+            document.getElementById('parametrosFields').style.display = 'none';
+        }
+        
+        function closeAddActivityModal() {
+            document.getElementById('addActivityModal').style.display = 'none';
+        }
+        
+        function toggleActivityFields() {
+            const type = document.getElementById('activityType').value;
+            const parametrosFields = document.getElementById('parametrosFields');
+            parametrosFields.style.display = type === 'parametros' ? 'block' : 'none';
+        }
+        
+        async function saveNewActivity() {
+            const sectionId = parseInt(document.getElementById('activitySection').value);
+            const name = document.getElementById('activityName').value.trim();
+            const type = document.getElementById('activityType').value;
+            const frequency = document.getElementById('activityFrequency').value;
+            
+            // Validaciones
+            if (!sectionId) {
+                alert('Por favor selecciona una sección');
+                return;
+            }
+            
+            if (!name) {
+                alert('Por favor escribe el nombre de la actividad');
+                return;
+            }
+            
+            if (!type) {
+                alert('Por favor selecciona el tipo de registro');
+                return;
+            }
+            
+            if (!frequency) {
+                alert('Por favor selecciona la frecuencia');
+                return;
+            }
+            
+            const section = sections.find(s => s.id === sectionId);
+            if (!section) {
+                alert('Sección no encontrada');
+                return;
+            }
+            
+            let unit = null, min = null, max = null;
+            
+            if (type === 'parametros') {
+                unit = document.getElementById('activityUnit').value.trim() || '';
+                const minStr = document.getElementById('activityMin').value;
+                const maxStr = document.getElementById('activityMax').value;
+                min = minStr ? parseFloat(minStr) : null;
+                max = maxStr ? parseFloat(maxStr) : null;
+            }
+            
+            // Crear actividad
+            const newId = Math.max(...activities.map(a => a.id), 0) + 1;
+            const newOrder = Math.max(...activities.filter(a => a.sectionId === section.id).map(a => a.order), 0) + 1;
+            
+            const newActivity = {
+                id: newId,
+                sectionId: section.id,
+                name: name,
+                type: type,
+                frequency: frequency,
+                unit: unit,
+                min: min,
+                max: max,
+                order: newOrder,
+                showInSummary: 'detalle'
+            };
+            
+            activities.push(newActivity);
+            await activitiesRef.set(activities);
+            
+            // CORRECCIÓN: Inicializar la nueva actividad en el dailyLog actual
+            if (!dailyLogs[currentDate].sections[section.id]) {
+                dailyLogs[currentDate].sections[section.id] = { activities: {} };
+            }
+            
+            if (frequency === '2 veces al dia') {
+                // Inicializar turnos mañana y tarde
+                dailyLogs[currentDate].sections[section.id].activities[`${newId}_manana`] = {
+                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                };
+                dailyLogs[currentDate].sections[section.id].activities[`${newId}_tarde`] = {
+                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                };
+            } else {
+                // Inicializar actividad única
+                dailyLogs[currentDate].sections[section.id].activities[newId] = {
+                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                };
+            }
+            
+            // Guardar en Firebase
+            await database.ref(`dailyLogs/${currentDate}`).set(dailyLogs[currentDate]);
+            
+            showSyncIndicator('✓ Actividad agregada', 'synced');
+            closeAddActivityModal();
+            renderConfiguracion();
+            renderSections(); // Re-renderizar secciones para mostrar la nueva actividad
+        }
+        
+        function renderNovedadesConfig(container) {
+            let html = '<h4 style="color: #2a5298; margin-bottom: 15px;">Novedades Predefinidas</h4>';
+            
+            novedadesPredefinidas.forEach((novedad, index) => {
+                html += `
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1;">
+                                <strong>${novedad.text}</strong>
+                            </div>
+                            <div>
+                                <button onclick="moveNovedadUp(${novedad.id})" 
+                                        ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}
+                                        style="background: #667eea; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px; margin-right: 5px;">
+                                    ↑
+                                </button>
+                                <button onclick="moveNovedadDown(${novedad.id})" 
+                                        ${index === novedadesPredefinidas.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}
+                                        style="background: #667eea; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px; margin-right: 5px;">
+                                    ↓
+                                </button>
+                                <button onclick="deleteNovedad(${novedad.id})" 
+                                        style="background: #dc3545; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px;">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <button onclick="promptAddNovedad()" 
+                        style="background: #28a745; color: white; border: none; 
+                               padding: 10px 20px; border-radius: 5px; cursor: pointer; 
+                               font-size: 14px; margin-top: 15px; width: 100%;">
+                    ➕ Agregar Novedad
+                </button>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        async function moveNovedadUp(id) {
+            const index = novedadesPredefinidas.findIndex(n => n.id === id);
+            if (index <= 0) return;
+            
+            // Intercambiar posiciones
+            const temp = novedadesPredefinidas[index];
+            novedadesPredefinidas[index] = novedadesPredefinidas[index - 1];
+            novedadesPredefinidas[index - 1] = temp;
+            
+            await novedadesPredefinidasRef.set(novedadesPredefinidas);
+            showSyncIndicator('✓ Orden actualizado', 'synced');
+            renderConfiguracion();
+        }
+        
+        async function moveNovedadDown(id) {
+            const index = novedadesPredefinidas.findIndex(n => n.id === id);
+            if (index < 0 || index >= novedadesPredefinidas.length - 1) return;
+            
+            // Intercambiar posiciones
+            const temp = novedadesPredefinidas[index];
+            novedadesPredefinidas[index] = novedadesPredefinidas[index + 1];
+            novedadesPredefinidas[index + 1] = temp;
+            
+            await novedadesPredefinidasRef.set(novedadesPredefinidas);
+            showSyncIndicator('✓ Orden actualizado', 'synced');
+            renderConfiguracion();
+        }
+        
+        async function promptAddNovedad() {
+            const text = prompt('Escribe el texto de la nueva novedad:');
+            if (text && text.trim()) {
+                const newId = Math.max(...novedadesPredefinidas.map(n => n.id), 0) + 1;
+                const newNovedad = { id: newId, text: text.trim() };
+                novedadesPredefinidas.push(newNovedad);
+                
+                await novedadesPredefinidasRef.set(novedadesPredefinidas);
+                showSyncIndicator('✓ Novedad agregada', 'synced');
+                renderConfiguracion();
+            }
+        }
+        
+        async function deleteNovedad(id) {
+            if (confirm('¿Estás seguro de eliminar esta novedad?')) {
+                novedadesPredefinidas = novedadesPredefinidas.filter(n => n.id !== id);
+                await novedadesPredefinidasRef.set(novedadesPredefinidas);
+                showSyncIndicator('✓ Novedad eliminada', 'synced');
+                renderConfiguracion();
+            }
+        }
+        
+        async function moveActivityUp(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            // Obtener actividades de la misma sección
+            const sectionActivities = activities
+                .filter(a => a.sectionId === activity.sectionId)
+                .sort((a, b) => a.order - b.order);
+            
+            const index = sectionActivities.findIndex(a => a.id === activityId);
+            if (index <= 0) return;
+            
+            // Intercambiar order con actividad anterior
+            const temp = sectionActivities[index].order;
+            sectionActivities[index].order = sectionActivities[index - 1].order;
+            sectionActivities[index - 1].order = temp;
+            
+            await activitiesRef.set(activities);
+            showSyncIndicator('✓ Orden actualizado', 'synced');
+            renderConfiguracion();
+        }
+        
+        async function moveActivityDown(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            // Obtener actividades de la misma sección
+            const sectionActivities = activities
+                .filter(a => a.sectionId === activity.sectionId)
+                .sort((a, b) => a.order - b.order);
+            
+            const index = sectionActivities.findIndex(a => a.id === activityId);
+            if (index < 0 || index >= sectionActivities.length - 1) return;
+            
+            // Intercambiar order con actividad siguiente
+            const temp = sectionActivities[index].order;
+            sectionActivities[index].order = sectionActivities[index + 1].order;
+            sectionActivities[index + 1].order = temp;
+            
+            await activitiesRef.set(activities);
+            showSyncIndicator('✓ Orden actualizado', 'synced');
+            renderConfiguracion();
+        }
+        
+        async function deleteActivity(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            if (!confirm(`¿Eliminar la actividad "${activity.name}"?`)) return;
+            
+            activities = activities.filter(a => a.id !== activityId);
+            await activitiesRef.set(activities);
+            
+            showSyncIndicator('✓ Actividad eliminada', 'synced');
+            renderConfiguracion();
+        }
+        
+        async function editActivity(activityId) {
+            const activity = activities.find(a => a.id === activityId);
+            if (!activity) return;
+            
+            // Editar nombre
+            const newName = prompt('Nombre de la actividad:', activity.name);
+            if (!newName || newName.trim() === '') return;
+            
+            activity.name = newName.trim();
+            
+            // Si es parámetros, permitir editar rango
+            if (activity.type === 'parametros') {
+                const newUnit = prompt('Unidad:', activity.unit || '');
+                const newMin = prompt('Valor mínimo:', activity.min !== null && activity.min !== undefined ? activity.min : '');
+                const newMax = prompt('Valor máximo:', activity.max !== null && activity.max !== undefined ? activity.max : '');
+                
+                activity.unit = newUnit ? newUnit.trim() : '';
+                activity.min = newMin !== '' ? parseFloat(newMin) : null;
+                activity.max = newMax !== '' ? parseFloat(newMax) : null;
+            }
+            
+            await activitiesRef.set(activities);
+            showSyncIndicator('✓ Actividad editada', 'synced');
+            renderConfiguracion();
+        }
+
+        // ==================== INITIALIZE APP ====================
+        
+        window.addEventListener('load', async function() {
+            console.log('🚀 App starting...');
+            
+            // Initialize Firebase first
+            const firebaseReady = await initializeFirebase();
+            
+            if (!firebaseReady) {
+                document.getElementById('loginLoading').innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <h3 style="color: #dc3545; margin-bottom: 15px;">❌ Error al cargar Firebase</h3>
+                        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                            No se pudo conectar con la base de datos en la nube.
+                        </p>
+                        <p style="font-size: 12px; color: #999; margin-bottom: 20px;">
+                            Posibles causas:<br>
+                            • Problemas de conexión a internet<br>
+                            • Firewall o bloqueador de anuncios activo<br>
+                            • Restricciones de red corporativa
+                        </p>
+                        <button onclick="location.reload()" class="btn" style="margin-top: 15px;">🔄 Reintentar</button>
+                        <p style="font-size: 10px; color: #ccc; margin-top: 15px;">
+                            Si el problema persiste, intenta desactivar extensiones del navegador o usar otro navegador.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            await initializeFirebaseData();
+            setupRealTimeSync();
+            
+            // Check for saved session AFTER data is loaded
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser && users.length > 0) {
+                const savedUserData = JSON.parse(savedUser);
+                const updatedUser = users.find(u => u.id === savedUserData.id);
+                if (updatedUser) {
+                    currentUser = updatedUser;
+                    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                    showMainScreen();
+                }
+            }
+            
+            console.log('✅ App ready!');
+            
+            // Iniciar verificación periódica de cambio de día
+            startDailyRenewal();
+        });
+        
+        // ==================== RENOVACIÓN AUTOMÁTICA DIARIA ====================
+        
+        async function checkAndRenewDay() {
+            const newDate = getOperationalDate();
+            
+            if (newDate !== currentDate) {
+                console.log(`🔄 Cambio de día detectado: ${currentDate} → ${newDate}`);
+                
+                // Marcar actividades no completadas del día anterior
+                await markIncompleteActivities(currentDate);
+                
+                // Actualizar fecha actual
+                currentDate = newDate;
+                
+                // Inicializar estructura para el nuevo día
+                await initializeDailyStructure();
+                
+                // Refrescar interfaz
+                if (currentUser) {
+                    renderSections();
+                    renderReporteDiario();
+                }
+                
+                console.log(`✅ Día renovado: ${currentDate}`);
+            }
+        }
+        
+        async function markIncompleteActivities(date) {
+            if (!dailyLogs[date]) return;
+            
+            console.log(`⚠️ Marcando actividades no completadas del ${date}`);
+            
+            sections.forEach(section => {
+                if (!dailyLogs[date].sections || !dailyLogs[date].sections[section.id]) return;
+                
+                const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                
+                sectionActivities.forEach(activity => {
+                    if (activity.frequency === '2 veces al dia') {
+                        // Verificar turno mañana
+                        const activityKeyMorning = `${activity.id}_manana`;
+                        const dataMorning = dailyLogs[date].sections[section.id].activities[activityKeyMorning];
+                        
+                        if (dataMorning) {
+                            const isComplete = (activity.type === 'parametros' && dataMorning.value !== null) || 
+                                             (activity.type === 'chequeo' && (dataMorning.status === 'ok' || dataMorning.oilLevel));
+                            
+                            if (!isComplete) {
+                                dailyLogs[date].sections[section.id].activities[activityKeyMorning].incomplete = true;
+                                dailyLogs[date].sections[section.id].activities[activityKeyMorning].incompleteAlert = '⚠️ No realizada';
+                            }
+                        }
+                        
+                        // Verificar turno tarde
+                        const activityKeyAfternoon = `${activity.id}_tarde`;
+                        const dataAfternoon = dailyLogs[date].sections[section.id].activities[activityKeyAfternoon];
+                        
+                        if (dataAfternoon) {
+                            const isComplete = (activity.type === 'parametros' && dataAfternoon.value !== null) || 
+                                             (activity.type === 'chequeo' && (dataAfternoon.status === 'ok' || dataAfternoon.oilLevel));
+                            
+                            if (!isComplete) {
+                                dailyLogs[date].sections[section.id].activities[activityKeyAfternoon].incomplete = true;
+                                dailyLogs[date].sections[section.id].activities[activityKeyAfternoon].incompleteAlert = '⚠️ No realizada';
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // Guardar en Firebase
+            await database.ref(`dailyLogs/${date}`).set(dailyLogs[date]);
+        }
+        
+        function startDailyRenewal() {
+            // Verificar cada 5 minutos si cambió el día
+            setInterval(checkAndRenewDay, 5 * 60 * 1000); // 5 minutos
+            
+            console.log('🔄 Renovación automática iniciada (verifica cada 5 minutos)');
+        }
+        
+        // ==================== RELOJ DEL SISTEMA ====================
+        
+        function updateSystemClock() {
+            const now = new Date();
+            
+            // Formatear hora (HH:MM:SS)
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds}`;
+            
+            // Formatear fecha
+            const dateString = now.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Obtener día operacional
+            const operationalDate = getOperationalDate();
+            const operationalDateFormatted = new Date(operationalDate + 'T00:00:00').toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            // Actualizar elementos
+            const clockTime = document.getElementById('clockTime');
+            const clockDate = document.getElementById('clockDate');
+            const clockDay = document.getElementById('clockDay');
+            
+            if (clockTime) {
+                clockTime.textContent = timeString;
+            } else {
+                console.error('❌ clockTime element not found!');
+            }
+            
+            if (clockDate) {
+                clockDate.textContent = dateString;
+            } else {
+                console.error('❌ clockDate element not found!');
+            }
+            
+            if (clockDay) {
+                clockDay.textContent = `Día operacional: ${operationalDateFormatted}`;
+            } else {
+                console.error('❌ clockDay element not found!');
+            }
+        }
+        
+        function startSystemClock() {
+            console.log('⏰ Iniciando reloj del sistema...');
+            updateSystemClock(); // Actualizar inmediatamente
+            setInterval(updateSystemClock, 1000); // Actualizar cada segundo
+            console.log('✅ Reloj iniciado');
+        }
+    </script>
+    
+    <!-- ==================== PWA SERVICE WORKER ==================== -->
+    <script>
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then((registration) => {
+                        console.log('✅ PWA: Service Worker registrado', registration.scope);
+                        
+                        // Verificar actualizaciones cada 30 segundos
+                        setInterval(() => {
+                            registration.update();
+                        }, 30000);
+                        
+                        // Escuchar actualizaciones
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            console.log('🔄 PWA: Nueva versión detectada');
+                            
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('✅ PWA: Nueva versión lista');
+                                    // La app se actualizará en la próxima recarga
+                                }
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('❌ PWA: Error al registrar Service Worker:', error);
+                    });
+                
+                // Escuchar mensajes del Service Worker
+                navigator.serviceWorker.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+                        const updateType = event.data.updateType;
+                        const version = event.data.version;
+                        
+                        console.log('📢 PWA: Actualización disponible -', version, 'Tipo:', updateType);
+                        
+                        if (updateType === 'critical') {
+                            // Actualización crítica - forzar recarga
+                            if (confirm('⚠️ Actualización crítica disponible.\n\nLa aplicación se recargará ahora.')) {
+                                window.location.reload();
+                            }
+                        } else if (updateType === 'major') {
+                            // Actualización importante - notificar
+                            showUpdateNotification(version);
+                        }
+                        // Si es 'minor', se actualiza silenciosamente en la próxima recarga
+                    }
+                });
+            });
+        } else {
+            console.warn('⚠️ PWA: Service Workers no soportados en este navegador');
+        }
+        
+        // Mostrar notificación de actualización
+        function showUpdateNotification(version) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                font-family: Arial, sans-serif;
+                animation: slideDown 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+                <div style="flex: 1;">
+                    <strong style="display: block; margin-bottom: 5px;">🔄 Nueva versión disponible</strong>
+                    <small style="opacity: 0.9;">Versión ${version} - Se actualizará al recargar</small>
+                </div>
+                <button onclick="window.location.reload()" 
+                        style="background: white; color: #667eea; border: none; padding: 8px 16px; 
+                               border-radius: 5px; cursor: pointer; font-weight: bold;">
+                    Actualizar Ahora
+                </button>
+                <button onclick="this.parentElement.remove()" 
+                        style="background: transparent; color: white; border: 1px solid white; 
+                               padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                    Después
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-cerrar después de 10 segundos
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+        
+        // CSS para animación
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from {
+                    transform: translateX(-50%) translateY(-100px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(-50%) translateY(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Detectar cuando la app se instala
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 PWA: Instalación disponible');
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Opcional: Mostrar botón de instalación personalizado
+            // showInstallButton();
+        });
+        
+        // Detectar cuando la app se instaló exitosamente
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA: Aplicación instalada exitosamente');
+            deferredPrompt = null;
+        });
+        
+        // Detectar modo standalone (cuando se abre como PWA instalada)
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            console.log('📱 PWA: Ejecutando en modo standalone (instalada)');
+        }
+    </script>
+
+</body>
+</html>
