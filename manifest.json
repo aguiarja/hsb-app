@@ -2,7 +2,7 @@
   "name": "HSB Mantenimiento Preventivo",
   "short_name": "HSB App",
   "description": "Sistema de Mantenimiento Preventivo en Tiempo Real",
-  "start_url": "./hsb-app.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1e3c72",
   "theme_color": "#667eea",
