@@ -8,7 +8,7 @@ const UPDATE_TYPE = 'minor';
 
 // Archivos que se guardarán en cache (para funcionar offline)
 const CACHE_FILES = [
-    './hsb-app.html',
+    './index.html',
     './manifest.json'
 ];
 
