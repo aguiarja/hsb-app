@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -957,6 +958,10 @@
         let novedadesPredefinidasRef;
         let dailyLogsRef;
         let planActivitiesRef;
+        let planExecutionsRef;
+        let notCompletedActivitiesRef;
+        let alertsRef;
+        let novedadesRef;
 
         function initializeRefs() {
             usersRef = database.ref('users');
@@ -966,6 +971,10 @@
             novedadesPredefinidasRef = database.ref('novedadesPredefinidas');
             dailyLogsRef = database.ref('dailyLogs');
             planActivitiesRef = database.ref('planActivities');
+            planExecutionsRef = database.ref('planExecutions');
+            notCompletedActivitiesRef = database.ref('notCompletedActivities');
+            alertsRef = database.ref('alerts');
+            novedadesRef = database.ref('novedades');
         }
 
         // Local cache
@@ -976,6 +985,10 @@
         let novedadesPredefinidas = [];
         let dailyLogs = {};
         let planActivities = [];
+        let planExecutions = {};
+        let notCompletedActivities = {};
+        let alerts = [];
+        let novedades = {};
 
         // ==================== FIREBASE HELPERS ====================
         
@@ -996,6 +1009,25 @@
             }, 2000);
         }
 
+        // ==================== UTILITY FUNCTIONS ====================
+        
+        function formatDateForDisplay(dateStr) {
+            const date = new Date(dateStr);
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+        
+        function formatDateTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('es-ES', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
         // ==================== DEFAULT DATA ====================
         
         const defaultUsers = [
@@ -1005,7 +1037,11 @@
                 password: 'admin123', 
                 fullName: 'Administrador',
                 role: 'admin',
-                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion']
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion'],
+                planPermissions: {
+                    canView: true,
+                    canApprove: true
+                }
             },
             { 
                 id: 2, 
@@ -1013,7 +1049,11 @@
                 password: 'super123', 
                 fullName: 'Supervisor',
                 role: 'supervisor',
-                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial']
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial'],
+                planPermissions: {
+                    canView: true,
+                    canApprove: true
+                }
             },
             { 
                 id: 3, 
@@ -1021,7 +1061,11 @@
                 password: 'operador123', 
                 fullName: 'Operador General',
                 role: 'operador',
-                permissions: ['mantenimiento-preventivo', 'reporte-diario']
+                permissions: ['mantenimiento-preventivo', 'reporte-diario'],
+                planPermissions: {
+                    canView: false,
+                    canApprove: false
+                }
             }
         ];
 
@@ -1111,14 +1155,18 @@
             console.log('📥 Loading data from Firebase...');
 
             try {
-                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap] = await Promise.all([
+                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap] = await Promise.all([
                     usersRef.once('value'),
                     tabsRef.once('value'),
                     sectionsRef.once('value'),
                     activitiesRef.once('value'),
                     novedadesPredefinidasRef.once('value'),
                     dailyLogsRef.once('value'),
-                    planActivitiesRef.once('value')
+                    planActivitiesRef.once('value'),
+                    planExecutionsRef.once('value'),
+                    notCompletedActivitiesRef.once('value'),
+                    alertsRef.once('value'),
+                    novedadesRef.once('value')
                 ]);
 
                 users = usersSnap.val() || [];
@@ -1128,8 +1176,14 @@
                 novedadesPredefinidas = novedadesSnap.val() || [];
                 dailyLogs = logsSnap.val() || {};
                 planActivities = planSnap.val() || [];
+                planExecutions = planExecSnap.val() || {};
+                notCompletedActivities = notCompletedSnap.val() || {};
+                alerts = alertsSnap.val() ? Object.values(alertsSnap.val()) : [];
+                novedades = novedadesFullSnap.val() || {};
 
                 console.log('✅ Data loaded successfully!');
+                console.log(`📊 Loaded: ${users.length} users, ${sections.length} sections, ${activities.length} activities`);
+                console.log(`📋 Alertas: ${alerts.length}, Actividades no realizadas en ${Object.keys(notCompletedActivities).length} días`);
                 
                 // Reparar dailyLogs con secciones faltantes
                 await repairDailyLogs();
@@ -1843,18 +1897,30 @@
             
             content.innerHTML = `
                 <div class="form-group">
-                    <label>Novedades Predefinidas:</label>
-                    ${novedadesPredefinidas.map(n => `
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="novedad_${n.id}" value="${n.text}">
-                            <label for="novedad_${n.id}">${n.text}</label>
-                        </div>
-                    `).join('')}
+                    <label>Sección/Equipo:</label>
+                    <select id="novedadSection" onchange="toggleNovedadForm()" style="width: 100%; padding: 10px; border: 2px solid #667eea; border-radius: 5px; font-size: 14px;">
+                        <option value="" selected>General (sin sección)</option>
+                        ${sections.map(s => `<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label>Otra Novedad (personalizada):</label>
-                    <textarea id="customNovedad" rows="3" placeholder="Escribe aquí..."></textarea>
+                
+                <div id="novedadesPredefinidasContainer" class="form-group" style="display: block; background: #f0f8ff; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <h4 style="color: #0066cc; margin-bottom: 10px; font-size: 14px; text-align: center;">═══ NOVEDADES PREDEFINIDAS ═══</h4>
+                    <div id="novedadesPredefinidas">
+                        ${novedadesPredefinidas.map(n => `
+                            <div class="checkbox-group" style="margin: 8px 0; padding: 10px; background: #fff; border-radius: 5px;">
+                                <input type="checkbox" id="novedad_${n.id}" value="${n.text}" style="margin-right: 10px; width: 18px; height: 18px;">
+                                <label for="novedad_${n.id}" style="cursor: pointer;">${n.text}</label>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
+                
+                <div class="form-group" id="novedadTextContainer">
+                    <label id="novedadTextLabel">Novedad adicional (opcional):</label>
+                    <textarea id="customNovedad" rows="3" placeholder="Escribe aquí cualquier novedad adicional..."></textarea>
+                </div>
+                
                 <div class="form-group">
                     <label>📷 Fotos (Opcional - Máximo 3):</label>
                     <input type="file" id="novedadPhotos" accept="image/*" capture="environment" style="display: none;">
@@ -1886,6 +1952,31 @@
             });
             
             modal.style.display = 'block';
+        }
+        
+        function toggleNovedadForm() {
+            const sectionSelect = document.getElementById('novedadSection');
+            const selectedSection = sectionSelect ? sectionSelect.value : '';
+            
+            const predefinidasContainer = document.getElementById('novedadesPredefinidasContainer');
+            const textLabel = document.getElementById('novedadTextLabel');
+            const textArea = document.getElementById('customNovedad');
+            
+            if (!predefinidasContainer || !textLabel || !textArea) return;
+            
+            if (selectedSection === '') {
+                // MODO GENERAL: Mostrar checkboxes predefinidas
+                predefinidasContainer.style.display = 'block';
+                textLabel.textContent = 'Novedad adicional (opcional):';
+                textArea.placeholder = 'Escribe aquí cualquier novedad adicional...';
+                textArea.required = false;
+            } else {
+                // MODO SECCIÓN ESPECÍFICA: Solo texto libre
+                predefinidasContainer.style.display = 'none';
+                textLabel.textContent = 'Novedad:';
+                textArea.placeholder = 'Describe la novedad o incidencia del equipo...';
+                textArea.required = true;
+            }
         }
         
         function updatePhotosPreview() {
@@ -1928,55 +2019,93 @@
         }
 
         async function saveNovedad() {
-            const selectedNovedades = [];
-            
-            novedadesPredefinidas.forEach(n => {
-                const checkbox = document.getElementById(`novedad_${n.id}`);
-                if (checkbox && checkbox.checked) {
-                    selectedNovedades.push(n.text);
-                }
-            });
-            
+            const sectionId = document.getElementById('novedadSection').value;
             const customNovedad = document.getElementById('customNovedad').value.trim();
-            if (customNovedad) {
-                selectedNovedades.push(customNovedad);
+            
+            let novedadText = '';
+            
+            if (sectionId === '') {
+                // GENERAL: Recoger checkboxes seleccionados
+                const selectedNovedades = [];
+                
+                novedadesPredefinidas.forEach(n => {
+                    const checkbox = document.getElementById(`novedad_${n.id}`);
+                    if (checkbox && checkbox.checked) {
+                        selectedNovedades.push(n.text);
+                    }
+                });
+                
+                // Combinar predefinidas con texto adicional
+                if (selectedNovedades.length > 0) {
+                    novedadText = selectedNovedades.join(', ');
+                }
+                
+                if (customNovedad) {
+                    novedadText += (novedadText ? '. ' : '') + customNovedad;
+                }
+                
+                if (!novedadText) {
+                    alert('⚠️ Debes seleccionar al menos una novedad predefinida o escribir una novedad adicional');
+                    return;
+                }
+                
+            } else {
+                // SECCIÓN ESPECÍFICA: Solo texto libre
+                novedadText = customNovedad;
+                
+                if (!novedadText) {
+                    alert('⚠️ Debes escribir la novedad del equipo');
+                    return;
+                }
             }
             
-            if (selectedNovedades.length > 0) {
-                showSyncIndicator('💾 Guardando novedad...', 'syncing');
+            // Determinar nombre de sección
+            const sectionName = sectionId 
+                ? sections.find(s => s.id == sectionId)?.name || 'General'
+                : 'General';
+            
+            showSyncIndicator('💾 Guardando novedad...', 'syncing');
+            
+            // Subir fotos acumuladas si hay
+            const photoURLs = [];
+            
+            if (accumulatedPhotos.length > 0) {
+                showSyncIndicator('📷 Subiendo fotos...', 'syncing');
                 
-                // Subir fotos acumuladas si hay
-                const photoURLs = [];
-                
-                if (accumulatedPhotos.length > 0) {
-                    showSyncIndicator('📷 Subiendo fotos...', 'syncing');
+                for (let i = 0; i < accumulatedPhotos.length; i++) {
+                    const file = accumulatedPhotos[i];
+                    const timestamp = Date.now();
+                    const fileName = `novedades/${currentDate}/${timestamp}_${i}.jpg`;
+                    const storageRef = storage.ref(fileName);
                     
-                    for (let i = 0; i < accumulatedPhotos.length; i++) {
-                        const file = accumulatedPhotos[i];
-                        const timestamp = Date.now();
-                        const fileName = `novedades/${currentDate}/${timestamp}_${i}.jpg`;
-                        const storageRef = storage.ref(fileName);
-                        
-                        try {
-                            await storageRef.put(file);
-                            const url = await storageRef.getDownloadURL();
-                            photoURLs.push(url);
-                        } catch (error) {
-                            console.error('Error subiendo foto:', error);
-                        }
+                    try {
+                        await storageRef.put(file);
+                        const url = await storageRef.getDownloadURL();
+                        photoURLs.push(url);
+                    } catch (error) {
+                        console.error('Error subiendo foto:', error);
                     }
                 }
+            }
+            
+            // Crear objeto novedad
+            const novedad = {
+                id: Date.now(),
+                sectionId: sectionId || null,
+                sectionName: sectionName,
+                text: novedadText,
+                user: currentUser.fullName,
+                timestamp: new Date().toISOString(),
+                photos: photoURLs
+            };
+            
+            try {
+                // Guardar en Firebase (nueva estructura)
+                await novedadesRef.child(currentDate).push(novedad);
                 
+                // También guardar en dailyLogs para compatibilidad con reporte diario
                 const currentNovedades = dailyLogs[currentDate].novedades || [];
-                const newNovedad = {
-                    text: selectedNovedades.join(', '),
-                    user: currentUser.fullName,
-                    timestamp: new Date().toISOString(),
-                    photos: photoURLs // Agregar URLs de fotos
-                };
-                
-                currentNovedades.push(newNovedad);
-                
+                currentNovedades.push(novedad);
                 await database.ref(`dailyLogs/${currentDate}/novedades`).set(currentNovedades);
                 
                 showSyncIndicator('✓ Novedad guardada', 'synced');
@@ -1985,8 +2114,10 @@
                 
                 // Limpiar fotos acumuladas
                 accumulatedPhotos = [];
-            } else {
-                alert('Por favor selecciona o escribe al menos una novedad');
+                
+            } catch (error) {
+                console.error('Error al guardar novedad:', error);
+                showSyncIndicator('✗ Error al guardar', 'error');
             }
         }
 
@@ -3538,6 +3669,8 @@
             
             console.log(`⚠️ Marcando actividades no completadas del ${date}`);
             
+            const notCompletedList = [];
+            
             sections.forEach(section => {
                 if (!dailyLogs[date].sections || !dailyLogs[date].sections[section.id]) return;
                 
@@ -3556,6 +3689,18 @@
                             if (!isComplete) {
                                 dailyLogs[date].sections[section.id].activities[activityKeyMorning].incomplete = true;
                                 dailyLogs[date].sections[section.id].activities[activityKeyMorning].incompleteAlert = '⚠️ No realizada';
+                                
+                                // Registrar en lista de no completadas
+                                notCompletedList.push({
+                                    id: Date.now() + Math.random(),
+                                    date: date,
+                                    sectionId: section.id,
+                                    sectionName: section.name,
+                                    activityId: activity.id,
+                                    activityName: `${activity.name} (Mañana)`,
+                                    activityType: activity.type,
+                                    timestamp: new Date().toISOString()
+                                });
                             }
                         }
                         
@@ -3570,14 +3715,51 @@
                             if (!isComplete) {
                                 dailyLogs[date].sections[section.id].activities[activityKeyAfternoon].incomplete = true;
                                 dailyLogs[date].sections[section.id].activities[activityKeyAfternoon].incompleteAlert = '⚠️ No realizada';
+                                
+                                // Registrar en lista de no completadas
+                                notCompletedList.push({
+                                    id: Date.now() + Math.random(),
+                                    date: date,
+                                    sectionId: section.id,
+                                    sectionName: section.name,
+                                    activityId: activity.id,
+                                    activityName: `${activity.name} (Tarde)`,
+                                    activityType: activity.type,
+                                    timestamp: new Date().toISOString()
+                                });
                             }
                         }
                     }
                 });
             });
             
-            // Guardar en Firebase
+            // Guardar dailyLogs actualizado en Firebase
             await database.ref(`dailyLogs/${date}`).set(dailyLogs[date]);
+            
+            // Guardar actividades no completadas en nueva colección
+            if (notCompletedList.length > 0) {
+                console.log(`📝 Registrando ${notCompletedList.length} actividades no realizadas`);
+                
+                // Guardar en notCompletedActivities
+                for (const item of notCompletedList) {
+                    await notCompletedActivitiesRef.child(date).push(item);
+                    
+                    // Crear alerta para cada actividad no completada
+                    await alertsRef.push({
+                        id: Date.now() + Math.random(),
+                        type: 'not_completed',
+                        date: date,
+                        section: item.sectionName,
+                        activity: item.activityName,
+                        message: `No se realizó: ${item.activityName} el ${formatDateForDisplay(date)}`,
+                        severity: 'warning',
+                        read: false,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+                
+                console.log(`✅ ${notCompletedList.length} actividades no realizadas registradas`);
+            }
         }
         
         function startDailyRenewal() {
