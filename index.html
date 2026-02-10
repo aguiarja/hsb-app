@@ -2420,13 +2420,44 @@
 
             // Mostrar novedades
             if (dailyLogs[dateStr].novedades && dailyLogs[dateStr].novedades.length > 0) {
-                reportHTML += `<div class="report-summary"><h3>📝 Novedades</h3>`;
+                reportHTML += `<div class="report-summary"><h3>📝 Novedades del Día</h3>`;
+                
                 dailyLogs[dateStr].novedades.forEach((novedad, index) => {
-                    const photoIcon = novedad.photos && novedad.photos.length > 0 
-                        ? ` <span style="cursor: pointer; color: #667eea;" onclick="openPhotoCarouselForDate('${dateStr}', ${index})">📷(${novedad.photos.length})</span>` 
+                    // Preparar datos
+                    const sectionBadge = novedad.sectionName && novedad.sectionName !== 'General' 
+                        ? `<span style="background: #667eea; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; margin-right: 8px;">📦 ${novedad.sectionName}</span>` 
+                        : `<span style="background: #6c757d; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; margin-right: 8px;">📋 General</span>`;
+                    
+                    // Resumir texto (primeros 100 caracteres)
+                    const fullText = novedad.text || '';
+                    const shortText = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
+                    
+                    // Foto en miniatura
+                    const photoThumb = novedad.photos && novedad.photos.length > 0 
+                        ? `<img src="${novedad.photos[0]}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; margin-left: 10px; cursor: pointer; border: 2px solid #667eea;" onclick="openNovedadDetailModal('${dateStr}', ${index})">` 
                         : '';
-                    reportHTML += `<p>• ${novedad.text}${photoIcon} <small>(${novedad.user})</small></p>`;
+                    
+                    // Fecha y hora
+                    const timestamp = novedad.timestamp ? new Date(novedad.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                    
+                    reportHTML += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea; cursor: pointer; transition: all 0.2s;" 
+                             onclick="openNovedadDetailModal('${dateStr}', ${index})"
+                             onmouseover="this.style.background='#e9ecef'" 
+                             onmouseout="this.style.background='#f8f9fa'">
+                            <div style="flex: 1;">
+                                <div style="margin-bottom: 5px;">
+                                    ${sectionBadge}
+                                    <small style="color: #6c757d;">🕐 ${timestamp}</small>
+                                </div>
+                                <div style="color: #495057; font-size: 14px;">${shortText}</div>
+                                <small style="color: #6c757d; font-size: 12px;">👤 ${novedad.user}</small>
+                            </div>
+                            ${photoThumb}
+                        </div>
+                    `;
                 });
+                
                 reportHTML += `</div>`;
             }
 
@@ -2484,6 +2515,133 @@
 
         function openPhotoCarousel(novedadIndex) {
             openPhotoCarouselForDate(currentDate, novedadIndex);
+        }
+        
+        function openNovedadDetailModal(dateStr, novedadIndex) {
+            const novedad = dailyLogs[dateStr].novedades[novedadIndex];
+            if (!novedad) return;
+            
+            // Crear modal
+            const modal = document.createElement('div');
+            modal.id = 'novedadDetailModal';
+            modal.style.cssText = `
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                width: 100%; 
+                height: 100%; 
+                background: rgba(0,0,0,0.7); 
+                z-index: 10000; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                padding: 20px;
+            `;
+            
+            // Formatear fecha y hora completa
+            const fullDateTime = novedad.timestamp 
+                ? new Date(novedad.timestamp).toLocaleString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : 'Fecha no disponible';
+            
+            // Sección
+            const sectionInfo = novedad.sectionName && novedad.sectionName !== 'General'
+                ? `<div style="margin-bottom: 15px;">
+                     <strong style="color: #667eea;">📦 Sección:</strong> 
+                     <span style="background: #667eea; color: white; padding: 5px 15px; border-radius: 15px; font-size: 14px;">${novedad.sectionName}</span>
+                   </div>`
+                : `<div style="margin-bottom: 15px;">
+                     <strong style="color: #6c757d;">📋 Categoría:</strong> 
+                     <span style="background: #6c757d; color: white; padding: 5px 15px; border-radius: 15px; font-size: 14px;">General</span>
+                   </div>`;
+            
+            // Fotos
+            let photosHTML = '';
+            if (novedad.photos && novedad.photos.length > 0) {
+                photosHTML = `
+                    <div style="margin-top: 20px;">
+                        <strong style="color: #495057;">📷 Evidencias fotográficas (${novedad.photos.length}):</strong>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                            ${novedad.photos.map((photo, idx) => `
+                                <img src="${photo}" 
+                                     style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 3px solid #667eea;" 
+                                     onclick="openPhotoCarouselForDate('${dateStr}', ${novedadIndex}); document.getElementById('novedadDetailModal').remove();">
+                            `).join('')}
+                        </div>
+                        <small style="color: #6c757d; display: block; margin-top: 5px;">Click en las fotos para ver en tamaño completo</small>
+                    </div>
+                `;
+            }
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px 12px 0 0; position: relative;">
+                        <div style="position: absolute; top: 15px; right: 15px; color: white; font-size: 28px; cursor: pointer; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.2); border-radius: 50%; transition: all 0.2s;" 
+                             onclick="document.getElementById('novedadDetailModal').remove()"
+                             onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                             onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                            ✕
+                        </div>
+                        <h2 style="color: white; margin: 0; font-size: 24px;">📝 Detalle de Novedad</h2>
+                        <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0; font-size: 14px;">Solo lectura</p>
+                    </div>
+                    
+                    <!-- Contenido -->
+                    <div style="padding: 25px;">
+                        <!-- Sección -->
+                        ${sectionInfo}
+                        
+                        <!-- Fecha y hora -->
+                        <div style="margin-bottom: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <strong style="color: #495057;">🕐 Fecha y Hora:</strong><br>
+                            <span style="color: #6c757d; font-size: 14px;">${fullDateTime}</span>
+                        </div>
+                        
+                        <!-- Usuario -->
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #495057;">👤 Reportado por:</strong> 
+                            <span style="color: #667eea; font-weight: 600;">${novedad.user}</span>
+                        </div>
+                        
+                        <!-- Detalle completo -->
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #495057;">📄 Descripción completa:</strong>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 8px; border-left: 4px solid #28a745; line-height: 1.6;">
+                                ${novedad.text}
+                            </div>
+                        </div>
+                        
+                        <!-- Fotos -->
+                        ${photosHTML}
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="padding: 20px; background: #f8f9fa; border-radius: 0 0 12px 12px; text-align: center;">
+                        <button onclick="document.getElementById('novedadDetailModal').remove()" 
+                                style="background: #667eea; color: white; border: none; padding: 12px 30px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.2s;"
+                                onmouseover="this.style.background='#5568d3'"
+                                onmouseout="this.style.background='#667eea'">
+                            Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Cerrar con click fuera del modal
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
         }
 
         function openHistorialPhotoCarousel(date, novedadIndex) {
