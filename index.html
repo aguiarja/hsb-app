@@ -630,16 +630,6 @@
                     <div><small id="currentUserRole"></small></div>
                 </div>
                 
-                <!-- Botón Refrescar -->
-                <button onclick="manualRefresh()" 
-                        style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 10px 0; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-                        onmouseover="this.style.background='#218838'"
-                        onmouseout="this.style.background='#28a745'"
-                        title="Actualizar datos de Firebase">
-                    <span id="refreshIcon">🔄</span>
-                    <span>Refrescar</span>
-                </button>
-                
                 <div id="systemClock" style="background: #667eea; color: white; padding: 8px 15px; border-radius: 8px; font-size: 13px; text-align: center; margin: 10px 0; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <div style="font-weight: bold; font-size: 16px;" id="clockTime">--:--:--</div>
                     <div style="font-size: 11px; opacity: 0.9;" id="clockDate">Cargando...</div>
@@ -684,11 +674,19 @@
 
         <!-- TAB: PLAN -->
         <div id="tab-plan" class="tab-content">
-            <div class="section-header">
-                <h2>📅 Plan de Mantenimiento</h2>
-                <p style="color: #666; font-size: 13px; margin-top: 5px;">Actividades periódicas que requieren aprobación</p>
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2>📅 Plan de Mantenimiento Periódico</h2>
+                    <p style="color: #666; font-size: 13px; margin-top: 5px;">Actividades programadas (semanal, mensual, anual, etc.)</p>
+                </div>
+                <button id="btnNewPlanActivity" onclick="openNewPlanActivityModal()" 
+                        style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    ➕ Nueva Actividad Periódica
+                </button>
             </div>
-            <div id="planContent"></div>
+            <div id="planContent">
+                <p style="text-align: center; color: #999; padding: 40px;">Cargando plan de mantenimiento...</p>
+            </div>
         </div>
 
         <!-- TAB: HISTORIAL -->
@@ -696,6 +694,19 @@
             <div class="section-header">
                 <h2>📋 Historial</h2>
             </div>
+            
+            <!-- Selector de modo -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <button id="btnHistorialPorFecha" onclick="showHistorialMode('porFecha')" 
+                        class="btn" style="flex: 1; background: #667eea; color: white; padding: 12px;">
+                    📅 Por Fecha
+                </button>
+                <button id="btnHistorialPorSeccion" onclick="showHistorialMode('porSeccion')" 
+                        class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
+                    📦 Por Equipo/Área
+                </button>
+            </div>
+            
             <div id="historialContent"></div>
         </div>
 
@@ -775,12 +786,15 @@
                     <label>Frecuencia:</label>
                     <select id="activityFrequency" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
                         <option value="">-- Seleccionar --</option>
-                        <option value="2 veces al dia">2 veces al día</option>
-                        <option value="Diario">Diario</option>
-                        <option value="semanal">Semanal</option>
-                        <option value="mensual">Mensual</option>
-                        <option value="trimestral">Trimestral</option>
+                        <option value="2 veces al dia">2 veces al día (Mañana y Tarde)</option>
+                        <option value="Diario">Diario (Una vez al día)</option>
                     </select>
+                    <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2196f3;">
+                        <small style="color: #1976d2; font-weight: 500;">
+                            ℹ️ <strong>Actividades Periódicas:</strong> Para actividades semanales, mensuales, trimestrales, etc., 
+                            usa la pestaña <strong style="color: #667eea;">"📅 Plan"</strong>
+                        </small>
+                    </div>
                 </div>
                 
                 <button onclick="saveNewActivity()" class="btn" style="width: 100%; margin-top: 15px;">
@@ -873,6 +887,251 @@
                         ✓ Guardar Cambios
                     </button>
                     <button onclick="closeEditSectionModal()" class="btn" style="flex: 1; background: #6c757d;">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Nueva Actividad Periódica -->
+    <div id="newPlanActivityModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px;">
+                <h3 style="margin: 0;">📅 Nueva Actividad Periódica</h3>
+                <span class="close" onclick="closeNewPlanActivityModal()" style="color: white;">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><strong>Sección/Equipo:</strong></label>
+                    <select id="planActivitySection" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                        <option value="">Seleccionar sección...</option>
+                        <!-- Se llenará dinámicamente -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Nombre de la Actividad:</strong></label>
+                    <input type="text" id="planActivityName" placeholder="Ej: Cambio de Aceite Motor A" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Descripción Detallada:</strong></label>
+                    <textarea id="planActivityDescription" rows="3" 
+                              placeholder="Describe el procedimiento completo de la actividad..."
+                              style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px; resize: vertical;"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">Incluye materiales necesarios, pasos a seguir, precauciones, etc.</small>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Frecuencia:</strong></label>
+                    <select id="planActivityFrequency" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                        <option value="">Seleccionar frecuencia...</option>
+                        <option value="weekly">🔵 Semanal (cada 7 días)</option>
+                        <option value="biweekly">🟢 Quincenal (cada 15 días)</option>
+                        <option value="monthly">🟡 Mensual (cada 30 días)</option>
+                        <option value="bimonthly">🟠 Bimestral (cada 60 días)</option>
+                        <option value="quarterly">🟣 Trimestral (cada 90 días)</option>
+                        <option value="semiannual">🔴 Semestral (cada 180 días)</option>
+                        <option value="annual">⚫ Anual (cada 365 días)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Fecha de Primera Ejecución:</strong></label>
+                    <input type="date" id="planActivityFirstDate" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">A partir de esta fecha, la actividad aparecerá en el Mantenimiento Preventivo</small>
+                </div>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #2196f3;">
+                    <strong style="color: #1976d2;">ℹ️ Importante:</strong>
+                    <ul style="margin: 10px 0 0 20px; color: #666; font-size: 13px;">
+                        <li>La actividad quedará <strong>pendiente de aprobación</strong></li>
+                        <li>Un supervisor debe aprobarla para activarla</li>
+                        <li>Una vez aprobada, aparecerá automáticamente en su fecha programada</li>
+                    </ul>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="savePlanActivity()" class="btn" style="flex: 1; background: #28a745; padding: 12px; font-size: 15px; font-weight: bold;">
+                        ✓ Crear Actividad
+                    </button>
+                    <button onclick="closeNewPlanActivityModal()" class="btn" style="flex: 1; background: #6c757d; padding: 12px; font-size: 15px;">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Usuario -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3>👤 Agregar Nuevo Usuario</h3>
+                <span class="close" onclick="closeAddUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label><strong>Nombre Completo:</strong></label>
+                    <input type="text" id="newUserFullName" placeholder="Ej: Juan Pérez" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Usuario (para login):</strong></label>
+                    <input type="text" id="newUserUsername" placeholder="Ej: jperez" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Sin espacios, letras minúsculas y números</small>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Contraseña:</strong></label>
+                    <input type="password" id="newUserPassword" placeholder="Mínimo 6 caracteres" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Rol:</strong></label>
+                    <select id="newUserRole" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                        <option value="">Seleccionar rol...</option>
+                        <option value="admin">Administrador (acceso completo)</option>
+                        <option value="supervisor">Supervisor (aprobar actividades)</option>
+                        <option value="operador">Operador (solo ejecución)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Permisos de Pestañas:</strong></label>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewReporte" style="margin-right: 8px;">
+                            <span>📊 Reporte Diario</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewMantenimiento" style="margin-right: 8px;">
+                            <span>🔧 Mantenimiento Preventivo</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewPlan" style="margin-right: 8px;">
+                            <span>📅 Plan de Mantenimiento</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewHistorial" style="margin-right: 8px;">
+                            <span>📋 Historial</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewConfig" style="margin-right: 8px;">
+                            <span>⚙️ Configuración</span>
+                        </label>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 8px;">Marca las pestañas que este usuario podrá ver</small>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Permisos Especiales:</strong></label>
+                    <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border: 1px solid #ffc107;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanApprovePlan" style="margin-right: 8px;">
+                            <span>⭐ Puede aprobar actividades periódicas (Plan)</span>
+                        </label>
+                    </div>
+                    <small style="color: #666; display: block; margin-top: 5px;">Administradores y Supervisores tienen todos los permisos automáticamente</small>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="saveNewUser()" class="btn" style="flex: 1; background: #28a745; padding: 12px; font-size: 15px; font-weight: bold;">
+                        ✓ Crear Usuario
+                    </button>
+                    <button onclick="closeAddUserModal()" class="btn" style="flex: 1; background: #6c757d; padding: 12px; font-size: 15px;">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Usuario -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3>✏️ Editar Usuario</h3>
+                <span class="close" onclick="closeEditUserModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                
+                <div class="form-group">
+                    <label><strong>Nombre Completo:</strong></label>
+                    <input type="text" id="editUserFullName" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Usuario (para login):</strong></label>
+                    <input type="text" id="editUserUsername" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Nueva Contraseña:</strong></label>
+                    <input type="password" id="editUserPassword" placeholder="Dejar vacío para no cambiar" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                    <small style="color: #666; display: block; margin-top: 5px;">Solo completa si quieres cambiar la contraseña</small>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Rol:</strong></label>
+                    <select id="editUserRole" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 14px;">
+                        <option value="admin">Administrador</option>
+                        <option value="supervisor">Supervisor</option>
+                        <option value="operador">Operador</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Permisos de Pestañas:</strong></label>
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewReporte" style="margin-right: 8px;">
+                            <span>📊 Reporte Diario</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewMantenimiento" style="margin-right: 8px;">
+                            <span>🔧 Mantenimiento Preventivo</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewPlan" style="margin-right: 8px;">
+                            <span>📅 Plan de Mantenimiento</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewHistorial" style="margin-right: 8px;">
+                            <span>📋 Historial</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewConfig" style="margin-right: 8px;">
+                            <span>⚙️ Configuración</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>Permisos Especiales:</strong></label>
+                    <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border: 1px solid #ffc107;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanApprovePlan" style="margin-right: 8px;">
+                            <span>⭐ Puede aprobar actividades periódicas (Plan)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="saveEditedUser()" class="btn" style="flex: 1; background: #28a745; padding: 12px; font-size: 15px; font-weight: bold;">
+                        ✓ Guardar Cambios
+                    </button>
+                    <button onclick="closeEditUserModal()" class="btn" style="flex: 1; background: #6c757d; padding: 12px; font-size: 15px;">
                         ✕ Cancelar
                     </button>
                 </div>
@@ -995,11 +1254,22 @@
         let activities = [];
         let novedadesPredefinidas = [];
         let dailyLogs = {};
-        let planActivities = [];
+        let planActivities = {};  // Cambiar de [] a {}
         let planExecutions = {};
         let notCompletedActivities = {};
         let alerts = [];
         let novedades = {};
+        
+        // Exponer variables al scope global para funciones window.*
+        window.HSB_DATA = {
+            get sections() { return sections; },
+            get activities() { return activities; },
+            get dailyLogs() { return dailyLogs; },
+            get planActivities() { return planActivities; },
+            get novedades() { return novedades; },
+            get currentDate() { return currentDate; },
+            get currentSectionId() { return currentSectionId; }
+        };
 
         // ==================== FIREBASE HELPERS ====================
         
@@ -1186,7 +1456,7 @@
                 activities = activitiesSnap.val() || [];
                 novedadesPredefinidas = novedadesSnap.val() || [];
                 dailyLogs = logsSnap.val() || {};
-                planActivities = planSnap.val() || [];
+                planActivities = planSnap.val() || {};  // Cambiar de [] a {}
                 planExecutions = planExecSnap.val() || {};
                 notCompletedActivities = notCompletedSnap.val() || {};
                 alerts = alertsSnap.val() ? Object.values(alertsSnap.val()) : [];
@@ -1289,81 +1559,377 @@
                     console.log('🔄 Sync check - no changes');
                 }
             });
+            
+            // Listener para Plan de Mantenimiento
+            planActivitiesRef.on('value', (snapshot) => {
+                planActivities = snapshot.val() || {};
+                console.log('📅 Plan activities updated');
+                
+                // Actualizar vista de Plan si está activa
+                if (document.getElementById('tab-plan').classList.contains('active')) {
+                    renderPlan();
+                }
+            });
 
             console.log('✅ Real-time sync active!');
         }
         
-        // ==================== MANUAL REFRESH ====================
+        // ==================== PLAN DE MANTENIMIENTO ====================
         
-        async function manualRefresh() {
-            console.log('🔄 Manual refresh triggered');
+        let planFilterSection = 'all'; // Variable global para filtro
+        
+        function renderPlanFilter() {
+            let html = `
+                <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <label style="font-weight: bold; color: #1e3c72;">🔍 Filtrar por Sección:</label>
+                        <select id="planSectionFilter" onchange="filterPlanBySection(this.value)" 
+                                style="flex: 1; max-width: 400px; padding: 10px; border: 2px solid #667eea; border-radius: 5px; font-size: 14px;">
+                            <option value="all">📋 Todas las Secciones</option>
+            `;
             
-            // Animación del icono
-            const refreshIcon = document.getElementById('refreshIcon');
-            const originalIcon = refreshIcon.textContent;
+            sections.forEach(section => {
+                const selected = planFilterSection == section.id ? 'selected' : '';
+                html += `<option value="${section.id}" ${selected}>${section.icon} ${section.name}</option>`;
+            });
             
-            // Rotar icono
-            refreshIcon.style.display = 'inline-block';
-            refreshIcon.style.animation = 'spin 1s linear infinite';
+            html += `
+                        </select>
+                    </div>
+                </div>
+            `;
             
-            // Agregar CSS de animación si no existe
-            if (!document.getElementById('spinAnimation')) {
-                const style = document.createElement('style');
-                style.id = 'spinAnimation';
-                style.textContent = `
-                    @keyframes spin {
-                        from { transform: rotate(0deg); }
-                        to { transform: rotate(360deg); }
-                    }
-                `;
-                document.head.appendChild(style);
+            return html;
+        }
+        
+        function filterPlanBySection(sectionId) {
+            planFilterSection = sectionId;
+            renderPlan();
+        }
+        
+        function openNewPlanActivityModal() {
+            // Llenar selector de secciones
+            const sectionSelect = document.getElementById('planActivitySection');
+            sectionSelect.innerHTML = '<option value="">Seleccionar sección...</option>';
+            sections.forEach(section => {
+                sectionSelect.innerHTML += `<option value="${section.id}">${section.icon} ${section.name}</option>`;
+            });
+            
+            // Establecer fecha mínima como hoy
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('planActivityFirstDate').setAttribute('min', today);
+            document.getElementById('planActivityFirstDate').value = today;
+            
+            // Mostrar modal
+            document.getElementById('newPlanActivityModal').style.display = 'block';
+        }
+        
+        function closeNewPlanActivityModal() {
+            document.getElementById('newPlanActivityModal').style.display = 'none';
+            // Limpiar campos
+            document.getElementById('planActivitySection').value = '';
+            document.getElementById('planActivityName').value = '';
+            document.getElementById('planActivityDescription').value = '';
+            document.getElementById('planActivityFrequency').value = '';
+            document.getElementById('planActivityFirstDate').value = '';
+        }
+        
+        async function savePlanActivity() {
+            const sectionId = document.getElementById('planActivitySection').value;
+            const name = document.getElementById('planActivityName').value.trim();
+            const description = document.getElementById('planActivityDescription').value.trim();
+            const frequency = document.getElementById('planActivityFrequency').value;
+            const firstDate = document.getElementById('planActivityFirstDate').value;
+            
+            // Validaciones
+            if (!sectionId) {
+                alert('⚠️ Debes seleccionar una sección');
+                return;
             }
             
-            showSyncIndicator('🔄 Actualizando...', 'syncing');
+            if (!name) {
+                alert('⚠️ Debes ingresar el nombre de la actividad');
+                return;
+            }
+            
+            if (!frequency) {
+                alert('⚠️ Debes seleccionar la frecuencia');
+                return;
+            }
+            
+            if (!firstDate) {
+                alert('⚠️ Debes ingresar la fecha de primera ejecución');
+                return;
+            }
+            
+            const frequencyDays = {
+                'weekly': 7,
+                'biweekly': 15,
+                'monthly': 30,
+                'bimonthly': 60,
+                'quarterly': 90,
+                'semiannual': 180,
+                'annual': 365
+            };
+            
+            const newActivity = {
+                id: Date.now(),
+                sectionId: parseInt(sectionId),
+                name: name,
+                description: description || 'Sin descripción',
+                frequency: frequency,
+                frequencyDays: frequencyDays[frequency],
+                status: 'pending',  // Pendiente de aprobación
+                firstExecution: firstDate,
+                lastExecution: null,
+                nextExecution: firstDate,
+                daysOverdue: 0,
+                active: false,
+                createdBy: currentUser.fullName,
+                createdDate: new Date().toISOString().split('T')[0],
+                approvedBy: null,
+                approvedDate: null
+            };
             
             try {
-                // Recargar datos desde Firebase
-                const [logsSnap, alertsSnap, novedadesSnap] = await Promise.all([
-                    dailyLogsRef.once('value'),
-                    alertsRef.once('value'),
-                    novedadesRef.once('value')
-                ]);
+                showSyncIndicator('💾 Guardando actividad...', 'syncing');
                 
-                dailyLogs = logsSnap.val() || {};
-                alerts = alertsSnap.val() ? Object.values(alertsSnap.val()) : [];
-                novedades = novedadesSnap.val() || {};
+                await planActivitiesRef.push(newActivity);
                 
-                console.log('✅ Datos actualizados desde Firebase');
-                
-                // Re-renderizar vista activa
-                if (document.getElementById('tab-mantenimiento-preventivo').classList.contains('active')) {
-                    renderSections();
-                }
-                
-                if (document.getElementById('tab-reporte-diario').classList.contains('active')) {
-                    renderReporteDiario();
-                }
-                
-                showSyncIndicator('✓ Actualizado exitosamente', 'synced');
-                
-                // Feedback visual adicional
-                setTimeout(() => {
-                    refreshIcon.style.animation = '';
-                    refreshIcon.textContent = '✓';
-                    setTimeout(() => {
-                        refreshIcon.textContent = originalIcon;
-                    }, 1000);
-                }, 500);
+                showSyncIndicator('✓ Actividad creada (pendiente de aprobación)', 'synced');
+                closeNewPlanActivityModal();
+                renderPlan();
                 
             } catch (error) {
-                console.error('❌ Error al actualizar:', error);
-                showSyncIndicator('✗ Error al actualizar', 'error');
-                refreshIcon.style.animation = '';
-                refreshIcon.textContent = '⚠️';
-                setTimeout(() => {
-                    refreshIcon.textContent = originalIcon;
-                }, 2000);
+                console.error('Error al crear actividad:', error);
+                showSyncIndicator('✗ Error al crear', 'error');
             }
+        }
+        
+        function renderPlan() {
+            const container = document.getElementById('planContent');
+            
+            if (!planActivities || Object.keys(planActivities).length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">📅</div>
+                        <h3 style="color: #666; margin-bottom: 10px;">No hay actividades en el plan</h3>
+                        <p style="color: #999; font-size: 14px;">Crea tu primera actividad periódica para comenzar</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Convertir objeto a array
+            let activitiesArray = Object.entries(planActivities).map(([key, activity]) => ({
+                firebaseKey: key,
+                ...activity
+            }));
+            
+            // Aplicar filtro por sección
+            if (planFilterSection !== 'all') {
+                activitiesArray = activitiesArray.filter(a => a.sectionId === parseInt(planFilterSection));
+            }
+            
+            // Si después del filtro no hay actividades
+            if (activitiesArray.length === 0) {
+                container.innerHTML = `
+                    ${renderPlanFilter()}
+                    <div style="text-align: center; padding: 40px 20px; background: white; margin-top: 15px; border-radius: 8px;">
+                        <p style="color: #999;">No hay actividades para la sección seleccionada</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Tabla estilo lista
+            let html = renderPlanFilter() + `
+                <div style="overflow-x: auto; margin-top: 15px;">
+                    <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px;">
+                        <thead>
+                            <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                <th style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd;">Equipo/Área</th>
+                                <th style="padding: 15px; text-align: left; border-bottom: 2px solid #ddd;">Acción</th>
+                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #ddd;">Frecuencia</th>
+                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #ddd;">Última Ejecución</th>
+                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #ddd;">Próxima Ejecución</th>
+                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #ddd;">Estatus</th>
+                                <th style="padding: 15px; text-align: center; border-bottom: 2px solid #ddd;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            activitiesArray.forEach(activity => {
+                const section = sections.find(s => s.id === activity.sectionId);
+                const sectionName = section ? `${section.icon} ${section.name}` : 'Sin sección';
+                const frequencyLabel = getFrequencyLabel(activity.frequency);
+                
+                const lastExec = activity.lastExecution ? formatDateShort(activity.lastExecution) : '-';
+                const nextExec = activity.nextExecution ? formatDateShort(activity.nextExecution) : formatDateShort(activity.firstExecution);
+                
+                // Determinar estatus
+                let statusBadge = '';
+                let rowBg = 'white';
+                
+                if (activity.status === 'pending') {
+                    statusBadge = '<span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">⏳ Pendiente</span>';
+                    rowBg = '#f8f9fa';
+                } else if (activity.status === 'overdue') {
+                    const daysOverdue = calculateDaysOverdue(activity.nextExecution);
+                    statusBadge = `<span style="background: #dc3545; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">🔴 Vencida (${daysOverdue}d)</span>`;
+                    rowBg = '#ffe6e6';
+                } else if (isUpcoming(activity)) {
+                    const daysUntil = calculateDaysUntil(activity.nextExecution);
+                    statusBadge = `<span style="background: #ffc107; color: #000; padding: 4px 12px; border-radius: 12px; font-size: 12px;">🟡 Próxima (${daysUntil}d)</span>`;
+                    rowBg = '#fff8e6';
+                } else {
+                    statusBadge = '<span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">🟢 Al día</span>';
+                }
+                
+                // Botones de acción
+                let actionButtons = '';
+                const canApprove = currentUser.role === 'admin' || currentUser.role === 'supervisor' || 
+                                 (currentUser.planPermissions && currentUser.planPermissions.canApprove);
+                
+                if (activity.status === 'pending' && canApprove) {
+                    actionButtons = `
+                        <button onclick="approvePlanActivity('${activity.firebaseKey}')" 
+                                style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px; margin-right: 5px;">
+                            ✓ Aprobar
+                        </button>
+                        <button onclick="deletePlanActivity('${activity.firebaseKey}')" 
+                                style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                            🗑️ Eliminar
+                        </button>
+                    `;
+                } else {
+                    actionButtons = `
+                        <button onclick="viewPlanHistory('${activity.firebaseKey}')" 
+                                style="background: #2196f3; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 12px;">
+                            📊 Historial
+                        </button>
+                    `;
+                }
+                
+                html += `
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #ddd;">
+                        <td style="padding: 12px;">${sectionName}</td>
+                        <td style="padding: 12px;">
+                            <strong>${activity.name}</strong>
+                            ${activity.description ? `<br><small style="color: #666;">${activity.description}</small>` : ''}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            <span style="background: #667eea; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px;">
+                                ${frequencyLabel}
+                            </span>
+                        </td>
+                        <td style="padding: 12px; text-align: center;">${lastExec}</td>
+                        <td style="padding: 12px; text-align: center;">${nextExec}</td>
+                        <td style="padding: 12px; text-align: center;">${statusBadge}</td>
+                        <td style="padding: 12px; text-align: center;">${actionButtons}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        
+        function getFrequencyLabel(frequency) {
+            const labels = {
+                'weekly': 'Semanal',
+                'biweekly': 'Quincenal',
+                'monthly': 'Mensual',
+                'bimonthly': 'Bimestral',
+                'quarterly': 'Trimestral',
+                'semiannual': 'Semestral',
+                'annual': 'Anual'
+            };
+            return labels[frequency] || frequency;
+        }
+        
+        function isUpcoming(activity) {
+            const daysUntil = calculateDaysUntil(activity.nextExecution);
+            return daysUntil >= 0 && daysUntil <= 7;
+        }
+        
+        function calculateDaysUntil(dateStr) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const targetDate = new Date(dateStr);
+            targetDate.setHours(0, 0, 0, 0);
+            const diff = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+            return diff;
+        }
+        
+        function calculateDaysOverdue(dateStr) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const targetDate = new Date(dateStr);
+            targetDate.setHours(0, 0, 0, 0);
+            const diff = Math.ceil((today - targetDate) / (1000 * 60 * 60 * 24));
+            return diff > 0 ? diff : 0;
+        }
+        
+        function formatDateShort(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+        
+        async function approvePlanActivity(firebaseKey) {
+            const activity = planActivities[firebaseKey];
+            
+            if (!confirm(`¿Aprobar la actividad "${activity.name}"?\n\nEsto la agregará al plan de mantenimiento activo.`)) {
+                return;
+            }
+            
+            try {
+                showSyncIndicator('⚙️ Aprobando actividad...', 'syncing');
+                
+                await planActivitiesRef.child(firebaseKey).update({
+                    status: 'approved',
+                    active: true,
+                    approvedBy: currentUser.fullName,
+                    approvedDate: new Date().toISOString().split('T')[0]
+                });
+                
+                showSyncIndicator('✓ Actividad aprobada', 'synced');
+                
+            } catch (error) {
+                console.error('Error al aprobar:', error);
+                showSyncIndicator('✗ Error al aprobar', 'error');
+            }
+        }
+        
+        async function deletePlanActivity(firebaseKey) {
+            const activity = planActivities[firebaseKey];
+            
+            if (!confirm(`¿Eliminar la actividad "${activity.name}"?\n\nEsta acción no se puede deshacer.`)) {
+                return;
+            }
+            
+            try {
+                showSyncIndicator('🗑️ Eliminando...', 'syncing');
+                
+                await planActivitiesRef.child(firebaseKey).remove();
+                
+                showSyncIndicator('✓ Actividad eliminada', 'synced');
+                
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+                showSyncIndicator('✗ Error al eliminar', 'error');
+            }
+        }
+        
+        function viewPlanHistory(firebaseKey) {
+            alert('Función de historial en desarrollo (FASE 5)');
         }
 
         // ==================== AUTHENTICATION ====================
@@ -1469,6 +2035,14 @@
                     renderSections();
                 } else if (tabId === 'plan') {
                     renderPlan();
+                    // Mostrar botón para Admin y Supervisor siempre
+                    const btnNewActivity = document.getElementById('btnNewPlanActivity');
+                    if (btnNewActivity) {
+                        const canCreate = currentUser.role === 'admin' || 
+                                        currentUser.role === 'supervisor' ||
+                                        (currentUser.planPermissions && currentUser.planPermissions.canApprove);
+                        btnNewActivity.style.display = canCreate ? 'block' : 'none';
+                    }
                 } else if (tabId === 'reporte-diario') {
                     renderReporteDiario();
                 } else if (tabId === 'historial') {
@@ -1673,8 +2247,82 @@
             
             console.log('Section activities:', sectionActivities.length);
             
+            // ===== ACTIVIDADES PERIÓDICAS APROBADAS =====
+            console.log('═══════════════════════════════════════════');
+            console.log('🔍 BUSCANDO ACTIVIDADES PERIÓDICAS');
+            console.log('═══════════════════════════════════════════');
+            console.log('📍 Sección actual:', sectionId, section ? `(${section.name})` : '');
+            console.log('📅 Fecha actual (currentDate):', currentDate);
+            console.log('📦 planActivities:', planActivities);
+            console.log('📊 Tipo de planActivities:', typeof planActivities, Array.isArray(planActivities) ? 'Array' : 'Object');
+            console.log('📈 Cantidad total de actividades en plan:', Object.keys(planActivities || {}).length);
+            console.log('───────────────────────────────────────────');
+            
+            const periodicActivities = Object.entries(planActivities || {})
+                .map(([key, activity]) => {
+                    console.log(`\n🔎 Procesando: "${activity.name}"`);
+                    console.log(`   Firebase Key: ${key}`);
+                    console.log(`   Datos completos:`, activity);
+                    return { firebaseKey: key, ...activity };
+                })
+                .filter(activity => {
+                    console.log(`\n✓ Evaluando filtros para: "${activity.name}"`);
+                    console.log(`   1️⃣ sectionId: ${activity.sectionId} === ${sectionId}?`, activity.sectionId === sectionId);
+                    console.log(`   2️⃣ status: "${activity.status}" === "approved"?`, activity.status === 'approved');
+                    
+                    if (activity.sectionId !== sectionId) {
+                        console.log(`   ❌ DESCARTADA: Sección diferente`);
+                        return false;
+                    }
+                    if (activity.status !== 'approved') {
+                        console.log(`   ❌ DESCARTADA: Status no aprobado (actual: "${activity.status}")`);
+                        return false;
+                    }
+                    
+                    // Verificar si debe ejecutarse hoy o antes
+                    const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
+                    console.log(`   3️⃣ Fecha objetivo:`, targetDate);
+                    console.log(`   3️⃣ lastExecution:`, activity.lastExecution || 'ninguna');
+                    console.log(`   3️⃣ nextExecution:`, activity.nextExecution || 'ninguna');
+                    console.log(`   3️⃣ firstExecution:`, activity.firstExecution);
+                    console.log(`   3️⃣ Comparación: "${targetDate}" <= "${currentDate}"?`, targetDate <= currentDate);
+                    
+                    const shouldShow = targetDate <= currentDate;
+                    if (shouldShow) {
+                        console.log(`   ✅ INCLUIDA - Cumple todos los criterios`);
+                    } else {
+                        console.log(`   ❌ DESCARTADA: Fecha es futura (no debe aparecer aún)`);
+                    }
+                    
+                    return shouldShow;
+                });
+            
+            console.log('\n═══════════════════════════════════════════');
+            console.log(`✅ RESULTADO FINAL: ${periodicActivities.length} actividad(es) a mostrar`);
+            if (periodicActivities.length > 0) {
+                console.log('📋 Actividades que se mostrarán:');
+                periodicActivities.forEach((act, idx) => {
+                    console.log(`   ${idx + 1}. ${act.name} (${act.frequency})`);
+                });
+            }
+            console.log('═══════════════════════════════════════════\n');
+            
+            // Mostrar actividades periódicas primero si hay
+            if (periodicActivities.length > 0) {
+                const headerPeriodic = document.createElement('div');
+                headerPeriodic.style.cssText = 'background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; padding: 12px 20px; margin: 0 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
+                headerPeriodic.innerHTML = '📅 ACTIVIDADES PERIÓDICAS (Programadas)';
+                content.appendChild(headerPeriodic);
+                
+                periodicActivities.forEach(activity => {
+                    renderPeriodicActivityField(content, activity);
+                });
+            }
+            
             if (sectionActivities.length === 0) {
-                content.innerHTML = '<p style="padding: 20px; color: #666;">No hay actividades configuradas</p>';
+                if (periodicActivities.length === 0) {
+                    content.innerHTML = '<p style="padding: 20px; color: #666;">No hay actividades configuradas</p>';
+                }
             } else {
                 // Separar actividades por frecuencia
                 const actividades2Veces = sectionActivities.filter(a => a.frequency === '2 veces al dia');
@@ -1736,6 +2384,78 @@
                     reader.readAsDataURL(file);
                 }
             });
+        }
+        
+        function renderPeriodicActivityField(container, activity) {
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'activity-field periodic';
+            fieldDiv.style.cssText = 'background: #e3f2fd; border-left: 4px solid #2196f3; margin-bottom: 15px; padding: 15px; border-radius: 8px;';
+            
+            const frequencyLabel = getFrequencyLabel(activity.frequency);
+            const daysOverdue = activity.nextExecution ? calculateDaysOverdue(activity.nextExecution) : 0;
+            const isOverdue = daysOverdue > 0;
+            
+            fieldDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="flex: 1;">
+                        <strong style="font-size: 16px; color: #1976d2;">🔵 ${activity.name}</strong>
+                        <div style="margin-top: 5px; font-size: 13px; color: #666;">
+                            <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 8px;">
+                                ${frequencyLabel}
+                            </span>
+                            ${activity.lastExecution 
+                                ? `Última: ${formatDateShort(activity.lastExecution)} | Próxima: ${formatDateShort(activity.nextExecution)}`
+                                : `Primera ejecución programada: ${formatDateShort(activity.firstExecution)}`
+                            }
+                            ${isOverdue ? `<span style="color: #dc3545; font-weight: bold; margin-left: 8px;">⚠️ Vencida (${daysOverdue} días)</span>` : ''}
+                        </div>
+                        ${activity.description ? `<p style="margin-top: 8px; font-size: 12px; color: #666; font-style: italic;">${activity.description}</p>` : ''}
+                    </div>
+                    <button onclick="executePeriodicActivity('${activity.firebaseKey}')" 
+                            style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; white-space: nowrap;">
+                        ✓ Ejecutar
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(fieldDiv);
+        }
+        
+        async function executePeriodicActivity(firebaseKey) {
+            const activity = planActivities[firebaseKey];
+            if (!activity) {
+                alert('Actividad no encontrada');
+                return;
+            }
+            
+            const confirmed = confirm(`¿Confirmar ejecución de:\n\n"${activity.name}"\n\nSe registrará como ejecutada el ${new Date(currentDate).toLocaleDateString('es-ES')}`);
+            if (!confirmed) return;
+            
+            try {
+                showSyncIndicator('⚙️ Registrando ejecución...', 'syncing');
+                
+                // Calcular próxima ejecución
+                const nextDate = new Date(currentDate);
+                nextDate.setDate(nextDate.getDate() + activity.frequencyDays);
+                const nextExecution = nextDate.toISOString().split('T')[0];
+                
+                // Actualizar en Firebase
+                await planActivitiesRef.child(firebaseKey).update({
+                    lastExecution: currentDate,
+                    nextExecution: nextExecution,
+                    status: 'approved' // Mantener aprobada
+                });
+                
+                showSyncIndicator('✓ Actividad ejecutada correctamente', 'synced');
+                
+                // Recargar vista
+                if (currentSectionId) {
+                    showSectionDetail(currentSectionId);
+                }
+            } catch (error) {
+                console.error('Error al ejecutar actividad:', error);
+                showSyncIndicator('✗ Error al ejecutar', 'error');
+            }
         }
 
         function renderActivityField(container, activity, turno = null) {
@@ -2802,106 +3522,294 @@
 
         // ==================== PLAN ====================
         
-        function renderPlan() {
-            const container = document.getElementById('planContent');
+
+        // ==================== HISTORIAL ====================
+        
+        let historialMode = 'porFecha'; // o 'porSeccion'
+        
+        function showHistorialMode(mode) {
+            historialMode = mode;
             
-            // Filtrar actividades periódicas (Semanal, Mensual, Trimestral)
-            const periodicActivities = activities.filter(a => 
-                a.frequency === 'Semanal' || 
-                a.frequency === 'Mensual' || 
-                a.frequency === 'Trimestral'
-            );
+            // Actualizar estilos de botones
+            document.getElementById('btnHistorialPorFecha').style.background = mode === 'porFecha' ? '#667eea' : '#6c757d';
+            document.getElementById('btnHistorialPorSeccion').style.background = mode === 'porSeccion' ? '#667eea' : '#6c757d';
             
-            if (periodicActivities.length === 0) {
-                container.innerHTML = `
-                    <div class="report-summary">
-                        <h3 style="color: #1e3c72;">📅 Plan de Actividades Periódicas</h3>
-                        <p style="color: #666;">No hay actividades periódicas configuradas</p>
-                        <p style="font-size: 12px; color: #999; margin-top: 10px;">
-                            Las actividades semanales, mensuales y trimestrales aparecerán aquí para aprobación.
-                        </p>
-                    </div>
-                `;
+            // Renderizar según modo
+            if (mode === 'porFecha') {
+                renderHistorialPorFecha();
+            } else {
+                renderHistorialPorSeccion();
+            }
+        }
+        
+        function renderHistorial() {
+            // Por defecto mostrar por fecha
+            showHistorialMode('porFecha');
+        }
+        
+        function renderHistorialPorFecha() {
+            const container = document.getElementById('historialContent');
+            
+            const dates = Object.keys(dailyLogs).sort().reverse();
+            
+            if (dates.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px; color: #999;">No hay historial disponible</p>';
                 return;
             }
             
             let html = `
-                <div class="report-summary">
-                    <h3 style="color: #1e3c72; margin-bottom: 20px;">📅 Plan de Actividades Periódicas</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">
-                        Estas actividades requieren aprobación antes de ejecutarse.
-                    </p>
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1e3c72; margin-bottom: 10px;">📅 Filtrar por fecha</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="historialFechaInicio" 
+                               style="padding: 10px; border: 2px solid #667eea; border-radius: 5px; flex: 1;">
+                        <span>hasta</span>
+                        <input type="date" id="historialFechaFin" 
+                               style="padding: 10px; border: 2px solid #667eea; border-radius: 5px; flex: 1;">
+                        <button onclick="filtrarHistorialPorFecha()" 
+                                style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                            🔍 Buscar
+                        </button>
+                    </div>
                 </div>
             `;
             
-            // Agrupar por frecuencia
-            const frequencies = {
-                'Semanal': periodicActivities.filter(a => a.frequency === 'Semanal'),
-                'Mensual': periodicActivities.filter(a => a.frequency === 'Mensual'),
-                'Trimestral': periodicActivities.filter(a => a.frequency === 'Trimestral')
-            };
-            
-            Object.keys(frequencies).forEach(freq => {
-                if (frequencies[freq].length > 0) {
-                    html += `
-                        <div class="report-summary" style="margin-bottom: 20px;">
-                            <h4 style="color: #2a5298; margin-bottom: 15px;">🔄 ${freq}</h4>
-                    `;
-                    
-                    frequencies[freq].forEach(activity => {
-                        const section = sections.find(s => s.id === activity.sectionId);
-                        const sectionName = section ? section.name : 'Sección';
-                        
-                        // Determinar estado (simulado por ahora)
-                        const isPending = true; // En implementación futura verificar última ejecución
-                        const statusColor = isPending ? '#dc3545' : '#28a745';
-                        const statusIcon = isPending ? '🔴' : '🟢';
-                        
-                        html += `
-                            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <div>
-                                        <strong>${activity.name}</strong>
-                                        <p style="font-size: 12px; color: #666; margin-top: 5px;">
-                                            ${sectionName} | Frecuencia: ${freq}
-                                        </p>
-                                        <p style="font-size: 11px; color: #999; margin-top: 3px;">
-                                            ${statusIcon} Estado: ${isPending ? 'Pendiente de aprobación' : 'Aprobado'}
-                                        </p>
-                                    </div>
-                                    <div style="text-align: right;">
-                                        ${isPending ? `
-                                            <button onclick="approveActivity(${activity.id})" 
-                                                    style="background: #28a745; color: white; border: none; 
-                                                           padding: 8px 15px; border-radius: 5px; cursor: pointer; 
-                                                           font-size: 12px;">
-                                                ✓ Aprobar
-                                            </button>
-                                        ` : `
-                                            <span style="color: #28a745; font-size: 12px;">✓ Aprobado</span>
-                                        `}
-                                    </div>
-                                </div>
+            dates.forEach(date => {
+                const log = dailyLogs[date];
+                let completed = 0;
+                let total = 0;
+
+                sections.forEach(section => {
+                    if (log.sections && log.sections[section.id]) {
+                        Object.values(log.sections[section.id].activities || {}).forEach(activity => {
+                            total++;
+                            if (activity.value !== null || activity.status !== null) {
+                                completed++;
+                            }
+                        });
+                    }
+                });
+
+                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                html += `
+                    <div class="report-summary" style="margin-bottom: 15px; cursor: pointer; transition: all 0.3s;" 
+                         onclick="toggleHistorialDetail('${date}')"
+                         onmouseover="this.style.transform='translateX(5px)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.15)';"
+                         onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="color: #1e3c72;">📅 ${new Date(date).toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h3>
+                                <p style="margin-top: 5px; color: #666;">Completado: ${percentage}% (${completed}/${total})</p>
                             </div>
-                        `;
-                    });
-                    
-                    html += `</div>`;
-                }
+                            <div style="font-size: 24px; color: #667eea;">
+                                <span id="arrow_${date}">▶</span>
+                            </div>
+                        </div>
+                        <div id="detail_${date}" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee;">
+                            <p style="color: #666; margin-bottom: 10px;"><em>Cargando detalles...</em></p>
+                        </div>
+                    </div>
+                `;
             });
-            
+
             container.innerHTML = html;
         }
         
-        async function approveActivity(activityId) {
-            // Por ahora solo mostrar mensaje
-            showSyncIndicator('✓ Actividad aprobada', 'synced');
-            alert('Actividad aprobada. Se agregará al mantenimiento diario.');
-            // En implementación futura: registrar aprobación en Firebase
-            renderPlan();
+        // Hacer función global
+        window.renderHistorialPorSeccion = function() {
+            console.log('📊 Renderizando historial por sección');
+            const container = document.getElementById('historialContent');
+            const sections = window.HSB_DATA.sections;
+            
+            let html = '<div style="display: flex; flex-wrap: wrap; gap: 15px;">';
+            
+            sections.forEach(section => {
+                html += `
+                    <div style="flex: 1; min-width: 250px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s;"
+                         onclick="window.showSeccionHistorial(${section.id})"
+                         onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';">
+                        <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">${section.icon}</div>
+                        <h3 style="text-align: center; color: #1e3c72; margin-bottom: 5px;">${section.name}</h3>
+                        <p style="text-align: center; color: #666; font-size: 13px;">Click para ver historial</p>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+            console.log('✅ Grid de secciones renderizado');
         }
-
-        // ==================== HISTORIAL ====================
+        
+        // Hacer función global
+        window.showSeccionHistorial = function(sectionId) {
+            console.log('📊 Mostrando historial de sección:', sectionId);
+            const sections = window.HSB_DATA.sections;
+            const dailyLogs = window.HSB_DATA.dailyLogs;
+            const activities = window.HSB_DATA.activities;
+            const novedades = window.HSB_DATA.novedades;
+            
+            const section = sections.find(s => s.id === sectionId);
+            if (!section) {
+                console.error('Sección no encontrada:', sectionId);
+                return;
+            }
+            
+            const container = document.getElementById('historialContent');
+            
+            // Botón volver
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <button onclick="window.renderHistorialPorSeccion()" 
+                            style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                        ← Volver a Secciones
+                    </button>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <h2 style="color: #1e3c72; margin-bottom: 10px;">${section.icon} ${section.name}</h2>
+                    <h3 style="color: #667eea; margin-bottom: 10px;">📅 Filtrar por fecha</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="date" id="seccionFechaInicio" 
+                               style="padding: 10px; border: 2px solid #667eea; border-radius: 5px; flex: 1;">
+                        <span>hasta</span>
+                        <input type="date" id="seccionFechaFin" 
+                               style="padding: 10px; border: 2px solid #667eea; border-radius: 5px; flex: 1;">
+                        <button onclick="filtrarSeccionPorFecha(${sectionId})" 
+                                style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                            🔍 Buscar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Obtener todas las fechas con datos de esta sección
+            const dates = Object.keys(dailyLogs).sort().reverse();
+            const datesWithData = dates.filter(date => {
+                const log = dailyLogs[date];
+                return log.sections && log.sections[sectionId] && 
+                       Object.keys(log.sections[sectionId].activities || {}).length > 0;
+            });
+            
+            console.log('📅 Fechas con datos:', datesWithData.length);
+            
+            if (datesWithData.length === 0) {
+                html += '<p style="text-align: center; padding: 40px; color: #999;">No hay registros para esta sección</p>';
+                container.innerHTML = html;
+                // Agregar listener al botón volver
+                setTimeout(() => {
+                    const btnVolver = document.getElementById('btnVolverSecciones');
+                    if (btnVolver) {
+                        btnVolver.addEventListener('click', renderHistorialPorSeccion);
+                    }
+                }, 0);
+                return;
+            }
+            
+            // Mostrar historial de la sección
+            datesWithData.forEach(date => {
+                const log = dailyLogs[date];
+                html += `
+                    <div class="report-summary" style="margin-bottom: 15px;">
+                        <h3 style="color: #667eea;">📅 ${new Date(date).toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h3>
+                `;
+                
+                // Actividades de esta sección en esta fecha
+                const sectionActivities = activities.filter(a => a.sectionId === sectionId);
+                sectionActivities.forEach(activity => {
+                    const actData = log.sections[sectionId].activities;
+                    
+                    if (activity.frequency === '2 veces al dia') {
+                        const dataMorning = actData[`${activity.id}_manana`];
+                        const dataAfternoon = actData[`${activity.id}_tarde`];
+                        
+                        if (dataMorning && (dataMorning.value !== null || dataMorning.status !== null || dataMorning.oilLevel)) {
+                            html += `<p style="margin: 8px 0;"><strong>${activity.name} (Mañana):</strong> `;
+                            if (activity.type === 'parametros') {
+                                html += `${dataMorning.value} ${activity.unit || ''}`;
+                            } else if (activity.type === 'chequeo') {
+                                html += dataMorning.status === 'ok' ? '✓ OK' : '✗ No OK';
+                            } else if (activity.type === 'nivel_aceite') {
+                                html += `Nivel: ${dataMorning.oilLevel || '-'}`;
+                            }
+                            if (dataMorning.user) html += ` <small style="color: #666;">(${dataMorning.user})</small>`;
+                            html += `</p>`;
+                        }
+                        
+                        if (dataAfternoon && (dataAfternoon.value !== null || dataAfternoon.status !== null || dataAfternoon.oilLevel)) {
+                            html += `<p style="margin: 8px 0;"><strong>${activity.name} (Tarde):</strong> `;
+                            if (activity.type === 'parametros') {
+                                html += `${dataAfternoon.value} ${activity.unit || ''}`;
+                            } else if (activity.type === 'chequeo') {
+                                html += dataAfternoon.status === 'ok' ? '✓ OK' : '✗ No OK';
+                            } else if (activity.type === 'nivel_aceite') {
+                                html += `Nivel: ${dataAfternoon.oilLevel || '-'}`;
+                            }
+                            if (dataAfternoon.user) html += ` <small style="color: #666;">(${dataAfternoon.user})</small>`;
+                            html += `</p>`;
+                        }
+                    } else {
+                        const activityData = actData[activity.id];
+                        if (activityData && (activityData.value !== null || activityData.status !== null || activityData.oilLevel)) {
+                            html += `<p style="margin: 8px 0;"><strong>${activity.name}:</strong> `;
+                            if (activity.type === 'parametros') {
+                                html += `${activityData.value} ${activity.unit || ''}`;
+                            } else if (activity.type === 'chequeo') {
+                                html += activityData.status === 'ok' ? '✓ OK' : '✗ No OK';
+                            } else if (activity.type === 'nivel_aceite') {
+                                html += `Nivel: ${activityData.oilLevel || '-'}`;
+                            }
+                            if (activityData.user) html += ` <small style="color: #666;">(${activityData.user})</small>`;
+                            html += `</p>`;
+                        }
+                    }
+                });
+                
+                // Novedades de esta sección en esta fecha
+                if (novedades[date]) {
+                    const seccionNovedades = novedades[date].filter(n => n.sectionId === sectionId);
+                    if (seccionNovedades.length > 0) {
+                        html += `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                                    <h4 style="color: #ff6b6b;">📝 Novedades:</h4>`;
+                        seccionNovedades.forEach(nov => {
+                            html += `<p style="margin: 8px 0; color: #666;">• ${nov.text}</p>`;
+                        });
+                        html += `</div>`;
+                    }
+                }
+                
+                html += `</div>`;
+            });
+            
+            container.innerHTML = html;
+            
+            // Agregar event listeners después de insertar el HTML
+            setTimeout(() => {
+                const btnVolver = document.getElementById('btnVolverSecciones');
+                if (btnVolver) {
+                    btnVolver.addEventListener('click', renderHistorialPorSeccion);
+                }
+                
+                const btnFiltrar = document.getElementById('btnFiltrarSeccion');
+                if (btnFiltrar) {
+                    btnFiltrar.addEventListener('click', function() {
+                        const sid = parseInt(this.getAttribute('data-section-id'));
+                        filtrarSeccionPorFecha(sid);
+                    });
+                }
+            }, 0);
+        }
+        
+        function filtrarHistorialPorFecha() {
+            // Implementar filtro por rango de fechas
+            alert('Filtro por fecha en desarrollo');
+        }
+        
+        function filtrarSeccionPorFecha(sectionId) {
+            // Implementar filtro por rango de fechas para sección específica
+            alert('Filtro por fecha en sección en desarrollo');
+        }
         
         function renderHistorial() {
             const container = document.getElementById('historialContent');
@@ -3194,12 +4102,18 @@
                                     Usuario: ${user.username} | Rol: ${user.role}
                                 </p>
                             </div>
-                            <div>
-                                <button onclick="alert('Editar usuario: ${user.fullName}')" 
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="openEditUserModal(${user.id})" 
                                         style="background: #667eea; color: white; border: none; 
                                                padding: 6px 12px; border-radius: 5px; cursor: pointer; 
-                                               font-size: 12px; margin-right: 5px;">
+                                               font-size: 12px;">
                                     ✏️ Editar
+                                </button>
+                                <button onclick="deleteUser(${user.id}, '${user.fullName}')" 
+                                        style="background: #dc3545; color: white; border: none; 
+                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
+                                               font-size: 12px;">
+                                    🗑️ Eliminar
                                 </button>
                             </div>
                         </div>
@@ -3208,7 +4122,7 @@
             });
             
             html += `
-                <button onclick="alert('Agregar nuevo usuario')" 
+                <button onclick="openAddUserModal()" 
                         style="background: #28a745; color: white; border: none; 
                                padding: 10px 20px; border-radius: 5px; cursor: pointer; 
                                font-size: 14px; margin-top: 15px; width: 100%;">
@@ -3217,6 +4131,258 @@
             `;
             
             container.innerHTML = html;
+        }
+        
+        // ==================== GESTIÓN DE USUARIOS ====================
+        
+        function openAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'block';
+            // Limpiar campos
+            document.getElementById('newUserFullName').value = '';
+            document.getElementById('newUserUsername').value = '';
+            document.getElementById('newUserPassword').value = '';
+            document.getElementById('newUserRole').value = '';
+            // Limpiar checkboxes de pestañas
+            document.getElementById('newUserCanViewReporte').checked = false;
+            document.getElementById('newUserCanViewMantenimiento').checked = false;
+            document.getElementById('newUserCanViewPlan').checked = false;
+            document.getElementById('newUserCanViewHistorial').checked = false;
+            document.getElementById('newUserCanViewConfig').checked = false;
+            // Limpiar permiso especial
+            document.getElementById('newUserCanApprovePlan').checked = false;
+        }
+        
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'none';
+        }
+        
+        async function saveNewUser() {
+            const fullName = document.getElementById('newUserFullName').value.trim();
+            const username = document.getElementById('newUserUsername').value.trim().toLowerCase();
+            const password = document.getElementById('newUserPassword').value;
+            const role = document.getElementById('newUserRole').value;
+            
+            // Leer permisos de pestañas
+            const canViewReporte = document.getElementById('newUserCanViewReporte').checked;
+            const canViewMantenimiento = document.getElementById('newUserCanViewMantenimiento').checked;
+            const canViewPlan = document.getElementById('newUserCanViewPlan').checked;
+            const canViewHistorial = document.getElementById('newUserCanViewHistorial').checked;
+            const canViewConfig = document.getElementById('newUserCanViewConfig').checked;
+            const canApprovePlan = document.getElementById('newUserCanApprovePlan').checked;
+            
+            // Validaciones
+            if (!fullName) {
+                alert('⚠️ Ingresa el nombre completo');
+                return;
+            }
+            
+            if (!username) {
+                alert('⚠️ Ingresa un nombre de usuario');
+                return;
+            }
+            
+            if (!/^[a-z0-9]+$/.test(username)) {
+                alert('⚠️ El usuario solo puede contener letras minúsculas y números');
+                return;
+            }
+            
+            if (users.find(u => u.username === username)) {
+                alert('⚠️ Este usuario ya existe');
+                return;
+            }
+            
+            if (!password || password.length < 6) {
+                alert('⚠️ La contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+            
+            if (!role) {
+                alert('⚠️ Selecciona un rol');
+                return;
+            }
+            
+            // Construir array de permisos basado en checkboxes
+            const permissions = [];
+            
+            // Admin y Supervisor tienen todos los permisos automáticamente
+            if (role === 'admin' || role === 'supervisor') {
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion');
+            } else {
+                // Operadores y otros roles: usar checkboxes
+                if (canViewReporte) permissions.push('reporte-diario');
+                if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
+                if (canViewPlan) permissions.push('plan');
+                if (canViewHistorial) permissions.push('historial');
+                if (canViewConfig) permissions.push('configuracion');
+            }
+            
+            // Crear nuevo usuario
+            const newId = Math.max(...users.map(u => u.id), 0) + 1;
+            
+            const newUser = {
+                id: newId,
+                username: username,
+                password: password,
+                fullName: fullName,
+                role: role,
+                permissions: permissions,
+                planPermissions: {
+                    canView: permissions.includes('plan'),
+                    canApprove: canApprovePlan || role === 'admin' || role === 'supervisor'
+                }
+            };
+            
+            try {
+                showSyncIndicator('💾 Creando usuario...', 'syncing');
+                users.push(newUser);
+                await usersRef.set(users);
+                showSyncIndicator('✓ Usuario creado exitosamente', 'synced');
+                closeAddUserModal();
+                renderConfiguracion();
+            } catch (error) {
+                console.error('Error al crear usuario:', error);
+                showSyncIndicator('✗ Error al crear usuario', 'error');
+            }
+        }
+        
+        function openEditUserModal(userId) {
+            const user = users.find(u => u.id === userId);
+            if (!user) return;
+            
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUserFullName').value = user.fullName;
+            document.getElementById('editUserUsername').value = user.username;
+            document.getElementById('editUserPassword').value = '';
+            document.getElementById('editUserRole').value = user.role;
+            
+            // Cargar permisos de pestañas
+            document.getElementById('editUserCanViewReporte').checked = user.permissions.includes('reporte-diario');
+            document.getElementById('editUserCanViewMantenimiento').checked = user.permissions.includes('mantenimiento-preventivo');
+            document.getElementById('editUserCanViewPlan').checked = user.permissions.includes('plan');
+            document.getElementById('editUserCanViewHistorial').checked = user.permissions.includes('historial');
+            document.getElementById('editUserCanViewConfig').checked = user.permissions.includes('configuracion');
+            
+            // Cargar permiso especial
+            const canApprove = user.planPermissions?.canApprove || false;
+            document.getElementById('editUserCanApprovePlan').checked = canApprove;
+            
+            document.getElementById('editUserModal').style.display = 'block';
+        }
+        
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+        
+        async function saveEditedUser() {
+            const userId = parseInt(document.getElementById('editUserId').value);
+            const fullName = document.getElementById('editUserFullName').value.trim();
+            const username = document.getElementById('editUserUsername').value.trim().toLowerCase();
+            const password = document.getElementById('editUserPassword').value;
+            const role = document.getElementById('editUserRole').value;
+            
+            // Leer permisos de pestañas
+            const canViewReporte = document.getElementById('editUserCanViewReporte').checked;
+            const canViewMantenimiento = document.getElementById('editUserCanViewMantenimiento').checked;
+            const canViewPlan = document.getElementById('editUserCanViewPlan').checked;
+            const canViewHistorial = document.getElementById('editUserCanViewHistorial').checked;
+            const canViewConfig = document.getElementById('editUserCanViewConfig').checked;
+            const canApprovePlan = document.getElementById('editUserCanApprovePlan').checked;
+            
+            const userIndex = users.findIndex(u => u.id === userId);
+            if (userIndex === -1) {
+                alert('Usuario no encontrado');
+                return;
+            }
+            
+            // Validaciones
+            if (!fullName) {
+                alert('⚠️ Ingresa el nombre completo');
+                return;
+            }
+            
+            if (!username) {
+                alert('⚠️ Ingresa un nombre de usuario');
+                return;
+            }
+            
+            if (!/^[a-z0-9]+$/.test(username)) {
+                alert('⚠️ El usuario solo puede contener letras minúsculas y números');
+                return;
+            }
+            
+            // Verificar que no exista otro usuario con ese username
+            const existingUser = users.find(u => u.username === username && u.id !== userId);
+            if (existingUser) {
+                alert('⚠️ Ese usuario ya existe');
+                return;
+            }
+            
+            if (password && password.length < 6) {
+                alert('⚠️ La contraseña debe tener al menos 6 caracteres');
+                return;
+            }
+            
+            // Construir array de permisos basado en checkboxes
+            const permissions = [];
+            
+            // Admin y Supervisor tienen todos los permisos automáticamente
+            if (role === 'admin' || role === 'supervisor') {
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion');
+            } else {
+                // Operadores y otros roles: usar checkboxes
+                if (canViewReporte) permissions.push('reporte-diario');
+                if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
+                if (canViewPlan) permissions.push('plan');
+                if (canViewHistorial) permissions.push('historial');
+                if (canViewConfig) permissions.push('configuracion');
+            }
+            
+            // Actualizar usuario
+            users[userIndex].fullName = fullName;
+            users[userIndex].username = username;
+            if (password) {
+                users[userIndex].password = password;
+            }
+            users[userIndex].role = role;
+            users[userIndex].permissions = permissions;
+            users[userIndex].planPermissions = {
+                canView: permissions.includes('plan'),
+                canApprove: canApprovePlan || role === 'admin' || role === 'supervisor'
+            };
+            
+            try {
+                showSyncIndicator('💾 Guardando cambios...', 'syncing');
+                await usersRef.set(users);
+                showSyncIndicator('✓ Usuario actualizado', 'synced');
+                closeEditUserModal();
+                renderConfiguracion();
+            } catch (error) {
+                console.error('Error al actualizar usuario:', error);
+                showSyncIndicator('✗ Error al actualizar', 'error');
+            }
+        }
+        
+        async function deleteUser(userId, fullName) {
+            if (!confirm(`¿Eliminar al usuario "${fullName}"?\n\nEsta acción no se puede deshacer.`)) {
+                return;
+            }
+            
+            const userIndex = users.findIndex(u => u.id === userId);
+            if (userIndex === -1) {
+                alert('Usuario no encontrado');
+                return;
+            }
+            
+            try {
+                showSyncIndicator('🗑️ Eliminando usuario...', 'syncing');
+                users.splice(userIndex, 1);
+                await usersRef.set(users);
+                showSyncIndicator('✓ Usuario eliminado', 'synced');
+                renderConfiguracion();
+            } catch (error) {
+                console.error('Error al eliminar usuario:', error);
+                showSyncIndicator('✗ Error al eliminar', 'error');
+            }
         }
         
         function renderSectionsConfig(container) {
