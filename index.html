@@ -629,6 +629,17 @@
                     <strong id="currentUserName"></strong>
                     <div><small id="currentUserRole"></small></div>
                 </div>
+                
+                <!-- Botón Refrescar -->
+                <button onclick="manualRefresh()" 
+                        style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin: 10px 0; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                        onmouseover="this.style.background='#218838'"
+                        onmouseout="this.style.background='#28a745'"
+                        title="Actualizar datos de Firebase">
+                    <span id="refreshIcon">🔄</span>
+                    <span>Refrescar</span>
+                </button>
+                
                 <div id="systemClock" style="background: #667eea; color: white; padding: 8px 15px; border-radius: 8px; font-size: 13px; text-align: center; margin: 10px 0; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <div style="font-weight: bold; font-size: 16px;" id="clockTime">--:--:--</div>
                     <div style="font-size: 11px; opacity: 0.9;" id="clockDate">Cargando...</div>
@@ -1251,21 +1262,108 @@
             console.log('🔄 Setting up real-time sync...');
 
             dailyLogsRef.on('value', (snapshot) => {
+                const previousLogs = JSON.stringify(dailyLogs);
                 dailyLogs = snapshot.val() || {};
-                console.log('🔄 Daily logs updated');
+                const newLogs = JSON.stringify(dailyLogs);
                 
-                // Re-render current view if needed
-                if (document.getElementById('tab-mantenimiento-preventivo').classList.contains('active')) {
-                    const detailActive = document.getElementById('sectionDetail').classList.contains('active');
-                    if (!detailActive) {
-                        renderSections();
+                // Solo re-renderizar si hubo cambios reales
+                if (previousLogs !== newLogs) {
+                    console.log('🔄 Daily logs updated - refreshing views');
+                    
+                    // Actualizar vista de Mantenimiento Preventivo
+                    if (document.getElementById('tab-mantenimiento-preventivo').classList.contains('active')) {
+                        const detailActive = document.getElementById('sectionDetail').classList.contains('active');
+                        if (!detailActive) {
+                            renderSections();
+                        }
                     }
+                    
+                    // Actualizar vista de Reporte Diario
+                    if (document.getElementById('tab-reporte-diario').classList.contains('active')) {
+                        renderReporteDiario();
+                        console.log('📊 Reporte Diario actualizado automáticamente');
+                    }
+                    
+                    showSyncIndicator('✓ Datos actualizados', 'synced');
+                } else {
+                    console.log('🔄 Sync check - no changes');
                 }
-                
-                showSyncIndicator('✓ Datos actualizados', 'synced');
             });
 
             console.log('✅ Real-time sync active!');
+        }
+        
+        // ==================== MANUAL REFRESH ====================
+        
+        async function manualRefresh() {
+            console.log('🔄 Manual refresh triggered');
+            
+            // Animación del icono
+            const refreshIcon = document.getElementById('refreshIcon');
+            const originalIcon = refreshIcon.textContent;
+            
+            // Rotar icono
+            refreshIcon.style.display = 'inline-block';
+            refreshIcon.style.animation = 'spin 1s linear infinite';
+            
+            // Agregar CSS de animación si no existe
+            if (!document.getElementById('spinAnimation')) {
+                const style = document.createElement('style');
+                style.id = 'spinAnimation';
+                style.textContent = `
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            showSyncIndicator('🔄 Actualizando...', 'syncing');
+            
+            try {
+                // Recargar datos desde Firebase
+                const [logsSnap, alertsSnap, novedadesSnap] = await Promise.all([
+                    dailyLogsRef.once('value'),
+                    alertsRef.once('value'),
+                    novedadesRef.once('value')
+                ]);
+                
+                dailyLogs = logsSnap.val() || {};
+                alerts = alertsSnap.val() ? Object.values(alertsSnap.val()) : [];
+                novedades = novedadesSnap.val() || {};
+                
+                console.log('✅ Datos actualizados desde Firebase');
+                
+                // Re-renderizar vista activa
+                if (document.getElementById('tab-mantenimiento-preventivo').classList.contains('active')) {
+                    renderSections();
+                }
+                
+                if (document.getElementById('tab-reporte-diario').classList.contains('active')) {
+                    renderReporteDiario();
+                }
+                
+                showSyncIndicator('✓ Actualizado exitosamente', 'synced');
+                
+                // Feedback visual adicional
+                setTimeout(() => {
+                    refreshIcon.style.animation = '';
+                    refreshIcon.textContent = '✓';
+                    setTimeout(() => {
+                        refreshIcon.textContent = originalIcon;
+                    }, 1000);
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ Error al actualizar:', error);
+                showSyncIndicator('✗ Error al actualizar', 'error');
+                refreshIcon.style.animation = '';
+                refreshIcon.textContent = '⚠️';
+                setTimeout(() => {
+                    refreshIcon.textContent = originalIcon;
+                }, 2000);
+            }
         }
 
         // ==================== AUTHENTICATION ====================
