@@ -1,10 +1,10 @@
 // ==================== SERVICE WORKER - HSB APP ====================
 // Versión del cache - CAMBIA ESTO cada vez que actualices la app
-const CACHE_VERSION = 'hsb-app-v1.0.0';
+const CACHE_VERSION = 'hsb-app-v1.1.0';
 
 // Tipo de actualización (cambia según el tipo de cambio)
 // 'minor' = silencioso, 'major' = notificar, 'critical' = forzar
-const UPDATE_TYPE = 'minor';
+const UPDATE_TYPE = 'major';
 
 // Archivos que se guardarán en cache (para funcionar offline)
 const CACHE_FILES = [
