@@ -966,6 +966,49 @@
         </div>
     </div>
 
+    <!-- Modal para Ejecutar Actividad Programada -->
+    <div id="executePeriodicModal" class="modal" onclick="if(event.target===this) window.closeExecutePeriodicModal()">
+        <div class="modal-content" style="max-width: 650px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; padding: 20px;">
+                <h3 style="margin: 0;">✓ Ejecutar Actividad Programada</h3>
+                <span class="close" onclick="window.closeExecutePeriodicModal()" style="color: white;">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196f3;">
+                    <h4 id="executeActivityName" style="color: #1976d2; margin: 0 0 5px 0;"></h4>
+                    <p id="executeActivityDetails" style="color: #666; font-size: 13px; margin: 0;"></p>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>📝 Descripción de la Ejecución:</strong></label>
+                    <textarea id="executeDescription" rows="4" 
+                              placeholder="Describe lo que se realizó, hallazgos, observaciones, problemas encontrados, etc."
+                              style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #2196f3; font-size: 14px; resize: vertical;"></textarea>
+                    <small style="color: #666; display: block; margin-top: 5px;">Opcional pero recomendado para llevar registro detallado</small>
+                </div>
+                
+                <div class="form-group">
+                    <label><strong>📸 Fotos de la Ejecución (hasta 5):</strong></label>
+                    <input type="file" id="executePhotos" multiple accept="image/*" style="display: none;" onchange="window.previewExecutePhotos()">
+                    <div class="photo-upload" onclick="document.getElementById('executePhotos').click()">
+                        <p>📷 Haz clic para agregar fotos (máximo 5)</p>
+                    </div>
+                    <div id="executePhotosPreview" class="photo-preview"></div>
+                    <small style="color: #666; display: block; margin-top: 5px;">Documenta visualmente el trabajo realizado</small>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button onclick="window.confirmExecutePeriodicActivity()" class="btn" style="flex: 1; background: #28a745; padding: 12px; font-size: 15px; font-weight: bold;">
+                        ✓ Confirmar Ejecución
+                    </button>
+                    <button onclick="window.closeExecutePeriodicModal()" class="btn" style="flex: 1; background: #6c757d; padding: 12px; font-size: 15px;">
+                        ✕ Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Agregar Usuario -->
     <div id="addUserModal" class="modal">
         <div class="modal-content" style="max-width: 550px;">
@@ -1247,29 +1290,26 @@
             novedadesRef = database.ref('novedades');
         }
 
-        // Local cache
+        // Local cache - HACER GLOBALES DIRECTAMENTE
+        window.sections = [];
+        window.activities = [];
+        window.dailyLogs = {};
+        window.planActivities = {};
+        window.planExecutions = {};
+        window.novedades = {};
+        
+        // Referencias locales para compatibilidad
         let users = [];
         let tabs = [];
-        let sections = [];
-        let activities = [];
+        let sections = window.sections;
+        let activities = window.activities;
         let novedadesPredefinidas = [];
-        let dailyLogs = {};
-        let planActivities = {};  // Cambiar de [] a {}
-        let planExecutions = {};
+        let dailyLogs = window.dailyLogs;
+        let planActivities = window.planActivities;
+        let planExecutions = window.planExecutions;
         let notCompletedActivities = {};
         let alerts = [];
-        let novedades = {};
-        
-        // Exponer variables al scope global para funciones window.*
-        window.HSB_DATA = {
-            get sections() { return sections; },
-            get activities() { return activities; },
-            get dailyLogs() { return dailyLogs; },
-            get planActivities() { return planActivities; },
-            get novedades() { return novedades; },
-            get currentDate() { return currentDate; },
-            get currentSectionId() { return currentSectionId; }
-        };
+        let novedades = window.novedades;
 
         // ==================== FIREBASE HELPERS ====================
         
@@ -1456,15 +1496,29 @@
                 activities = activitiesSnap.val() || [];
                 novedadesPredefinidas = novedadesSnap.val() || [];
                 dailyLogs = logsSnap.val() || {};
-                planActivities = planSnap.val() || {};  // Cambiar de [] a {}
+                planActivities = planSnap.val() || {};
                 planExecutions = planExecSnap.val() || {};
                 notCompletedActivities = notCompletedSnap.val() || {};
                 alerts = alertsSnap.val() ? Object.values(alertsSnap.val()) : [];
                 novedades = novedadesFullSnap.val() || {};
+                
+                // ACTUALIZAR VARIABLES GLOBALES
+                window.sections = sections;
+                window.activities = activities;
+                window.dailyLogs = dailyLogs;
+                window.planActivities = planActivities;
+                window.planExecutions = planExecutions;
+                window.novedades = novedades;
 
                 console.log('✅ Data loaded successfully!');
                 console.log(`📊 Loaded: ${users.length} users, ${sections.length} sections, ${activities.length} activities`);
                 console.log(`📋 Alertas: ${alerts.length}, Actividades no realizadas en ${Object.keys(notCompletedActivities).length} días`);
+                console.log('🌍 Variables globales actualizadas:', {
+                    sections: window.sections.length,
+                    activities: window.activities.length,
+                    dailyLogs: Object.keys(window.dailyLogs).length,
+                    planExecutions: Object.keys(window.planExecutions).length
+                });
                 
                 // Reparar dailyLogs con secciones faltantes
                 await repairDailyLogs();
@@ -2186,6 +2240,28 @@
                     }
                 });
                 
+                // Agregar actividades programadas (periódicas) pendientes para esta sección
+                const periodicActivitiesForSection = Object.entries(planActivities || {})
+                    .filter(([key, activity]) => {
+                        if (activity.sectionId != section.id) return false;
+                        if (activity.status !== 'approved') return false;
+                        // Si fue ejecutada HOY → siempre incluir (completada pero del día)
+                        if (activity.lastExecution === currentDate) return true;
+                        // Si está pendiente (vencida o de hoy)
+                        const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
+                        return targetDate <= currentDate;
+                    });
+                
+                // Sumar al total
+                totalFields += periodicActivitiesForSection.length;
+                
+                // Contar ejecutadas HOY como completadas
+                periodicActivitiesForSection.forEach(([key, activity]) => {
+                    if (activity.lastExecution === currentDate) {
+                        completedFields++;
+                    }
+                });
+                
                 const percentage = totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
                 
                 const sectionCard = document.createElement('div');
@@ -2245,93 +2321,34 @@
                 .filter(a => a.sectionId === sectionId && (a.frequency === '2 veces al dia' || a.frequency === 'Diario'))
                 .sort((a, b) => a.order - b.order);
             
-            console.log('Section activities:', sectionActivities.length);
-            
             // ===== ACTIVIDADES PERIÓDICAS APROBADAS =====
-            console.log('═══════════════════════════════════════════');
-            console.log('🔍 BUSCANDO ACTIVIDADES PERIÓDICAS');
-            console.log('═══════════════════════════════════════════');
-            console.log('📍 Sección actual:', sectionId, section ? `(${section.name})` : '');
-            console.log('📅 Fecha actual (currentDate):', currentDate);
-            console.log('📦 planActivities:', planActivities);
-            console.log('📊 Tipo de planActivities:', typeof planActivities, Array.isArray(planActivities) ? 'Array' : 'Object');
-            console.log('📈 Cantidad total de actividades en plan:', Object.keys(planActivities || {}).length);
-            console.log('───────────────────────────────────────────');
-            
             const periodicActivities = Object.entries(planActivities || {})
                 .map(([key, activity]) => {
-                    console.log(`\n🔎 Procesando: "${activity.name}"`);
-                    console.log(`   Firebase Key: ${key}`);
-                    console.log(`   Datos completos:`, activity);
                     return { firebaseKey: key, ...activity };
                 })
                 .filter(activity => {
-                    console.log(`\n✓ Evaluando filtros para: "${activity.name}"`);
-                    console.log(`   1️⃣ sectionId: ${activity.sectionId} === ${sectionId}?`, activity.sectionId === sectionId);
-                    console.log(`   2️⃣ status: "${activity.status}" === "approved"?`, activity.status === 'approved');
-                    
-                    if (activity.sectionId !== sectionId) {
-                        console.log(`   ❌ DESCARTADA: Sección diferente`);
-                        return false;
-                    }
-                    if (activity.status !== 'approved') {
-                        console.log(`   ❌ DESCARTADA: Status no aprobado (actual: "${activity.status}")`);
-                        return false;
-                    }
-                    
-                    // Verificar si debe ejecutarse hoy o antes
+                    if (activity.sectionId != sectionId) return false;
+                    if (activity.status !== 'approved') return false;
+                    // Si fue ejecutada HOY → mantener visible todo el día
+                    if (activity.lastExecution === currentDate) return true;
+                    // Si está pendiente
                     const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
-                    console.log(`   3️⃣ Fecha objetivo:`, targetDate);
-                    console.log(`   3️⃣ lastExecution:`, activity.lastExecution || 'ninguna');
-                    console.log(`   3️⃣ nextExecution:`, activity.nextExecution || 'ninguna');
-                    console.log(`   3️⃣ firstExecution:`, activity.firstExecution);
-                    console.log(`   3️⃣ Comparación: "${targetDate}" <= "${currentDate}"?`, targetDate <= currentDate);
-                    
-                    const shouldShow = targetDate <= currentDate;
-                    if (shouldShow) {
-                        console.log(`   ✅ INCLUIDA - Cumple todos los criterios`);
-                    } else {
-                        console.log(`   ❌ DESCARTADA: Fecha es futura (no debe aparecer aún)`);
-                    }
-                    
-                    return shouldShow;
+                    return targetDate <= currentDate;
                 });
             
-            console.log('\n═══════════════════════════════════════════');
-            console.log(`✅ RESULTADO FINAL: ${periodicActivities.length} actividad(es) a mostrar`);
-            if (periodicActivities.length > 0) {
-                console.log('📋 Actividades que se mostrarán:');
-                periodicActivities.forEach((act, idx) => {
-                    console.log(`   ${idx + 1}. ${act.name} (${act.frequency})`);
-                });
-            }
-            console.log('═══════════════════════════════════════════\n');
+            // ORDEN CORRECTO: Primero actividades diarias, luego periódicas
             
-            // Mostrar actividades periódicas primero si hay
-            if (periodicActivities.length > 0) {
-                const headerPeriodic = document.createElement('div');
-                headerPeriodic.style.cssText = 'background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; padding: 12px 20px; margin: 0 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
-                headerPeriodic.innerHTML = '📅 ACTIVIDADES PERIÓDICAS (Programadas)';
-                content.appendChild(headerPeriodic);
-                
-                periodicActivities.forEach(activity => {
-                    renderPeriodicActivityField(content, activity);
-                });
-            }
-            
-            if (sectionActivities.length === 0) {
-                if (periodicActivities.length === 0) {
-                    content.innerHTML = '<p style="padding: 20px; color: #666;">No hay actividades configuradas</p>';
-                }
+            if (sectionActivities.length === 0 && periodicActivities.length === 0) {
+                content.innerHTML = '<p style="padding: 20px; color: #666;">No hay actividades configuradas</p>';
             } else {
-                // Separar actividades por frecuencia
+                // 1. PRIMERO: Actividades diarias (Mañana y Tarde)
                 const actividades2Veces = sectionActivities.filter(a => a.frequency === '2 veces al dia');
                 const actividadesOtras = sectionActivities.filter(a => a.frequency !== '2 veces al dia');
                 
                 if (actividades2Veces.length > 0) {
                     // Header TURNO MAÑANA
                     const headerManana = document.createElement('div');
-                    headerManana.style.cssText = 'background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%); color: white; padding: 12px 20px; margin: 20px 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
+                    headerManana.style.cssText = 'background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%); color: white; padding: 12px 20px; margin: 0 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
                     headerManana.innerHTML = '🌅 TURNO MAÑANA';
                     content.appendChild(headerManana);
                     
@@ -2356,6 +2373,18 @@
                 actividadesOtras.forEach(activity => {
                     renderActivityField(content, activity);
                 });
+                
+                // 2. AL FINAL: Actividades Programadas (Periódicas)
+                if (periodicActivities.length > 0) {
+                    const headerPeriodic = document.createElement('div');
+                    headerPeriodic.style.cssText = 'background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; padding: 12px 20px; margin: 20px 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
+                    headerPeriodic.innerHTML = '📋 ACTIVIDADES PROGRAMADAS';
+                    content.appendChild(headerPeriodic);
+                    
+                    periodicActivities.forEach(activity => {
+                        renderPeriodicActivityField(content, activity);
+                    });
+                }
             }
 
             // Fotos de la sección
@@ -2389,69 +2418,209 @@
         function renderPeriodicActivityField(container, activity) {
             const fieldDiv = document.createElement('div');
             fieldDiv.className = 'activity-field periodic';
-            fieldDiv.style.cssText = 'background: #e3f2fd; border-left: 4px solid #2196f3; margin-bottom: 15px; padding: 15px; border-radius: 8px;';
             
             const frequencyLabel = getFrequencyLabel(activity.frequency);
-            const daysOverdue = activity.nextExecution ? calculateDaysOverdue(activity.nextExecution) : 0;
-            const isOverdue = daysOverdue > 0;
+            const executedToday = activity.lastExecution === currentDate;
             
-            fieldDiv.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex: 1;">
-                        <strong style="font-size: 16px; color: #1976d2;">🔵 ${activity.name}</strong>
-                        <div style="margin-top: 5px; font-size: 13px; color: #666;">
-                            <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 8px;">
-                                ${frequencyLabel}
-                            </span>
-                            ${activity.lastExecution 
-                                ? `Última: ${formatDateShort(activity.lastExecution)} | Próxima: ${formatDateShort(activity.nextExecution)}`
-                                : `Primera ejecución programada: ${formatDateShort(activity.firstExecution)}`
-                            }
-                            ${isOverdue ? `<span style="color: #dc3545; font-weight: bold; margin-left: 8px;">⚠️ Vencida (${daysOverdue} días)</span>` : ''}
+            if (executedToday) {
+                // ✅ EJECUTADA HOY — verde, sin botón
+                fieldDiv.style.cssText = 'background: #e8f5e9; border-left: 4px solid #28a745; margin-bottom: 15px; padding: 15px; border-radius: 8px;';
+                fieldDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <strong style="font-size: 16px; color: #1b5e20;">✅ ${activity.name}</strong>
+                            <div style="margin-top: 5px; font-size: 13px; color: #555;">
+                                <span style="background: #28a745; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 8px;">
+                                    ${frequencyLabel}
+                                </span>
+                                Ejecutada hoy
+                                <span style="color: #888; margin-left: 8px;">| Próxima: ${formatDateShort(activity.nextExecution)}</span>
+                            </div>
+                            ${activity.description ? `<p style="margin-top: 8px; font-size: 12px; color: #666; font-style: italic;">${activity.description}</p>` : ''}
                         </div>
-                        ${activity.description ? `<p style="margin-top: 8px; font-size: 12px; color: #666; font-style: italic;">${activity.description}</p>` : ''}
+                        <div style="background: #28a745; color: white; padding: 10px 16px; border-radius: 5px; font-weight: bold; font-size: 14px; white-space: nowrap; opacity: 0.8;">
+                            ✓ Realizada
+                        </div>
                     </div>
-                    <button onclick="executePeriodicActivity('${activity.firebaseKey}')" 
-                            style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; white-space: nowrap;">
-                        ✓ Ejecutar
-                    </button>
-                </div>
-            `;
+                `;
+            } else {
+                // 🔵 PENDIENTE — azul, con botón ejecutar
+                const daysOverdue = activity.nextExecution ? calculateDaysOverdue(activity.nextExecution) : 0;
+                const isOverdue = !activity.lastExecution
+                    ? calculateDaysOverdue(activity.firstExecution) > 0
+                    : daysOverdue > 0;
+
+                fieldDiv.style.cssText = 'background: #e3f2fd; border-left: 4px solid #2196f3; margin-bottom: 15px; padding: 15px; border-radius: 8px;';
+                fieldDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <strong style="font-size: 16px; color: #1976d2;">🔵 ${activity.name}</strong>
+                            <div style="margin-top: 5px; font-size: 13px; color: #666;">
+                                <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-right: 8px;">
+                                    ${frequencyLabel}
+                                </span>
+                                ${activity.lastExecution 
+                                    ? `Última: ${formatDateShort(activity.lastExecution)} | Próxima: ${formatDateShort(activity.nextExecution)}`
+                                    : `Primera ejecución programada: ${formatDateShort(activity.firstExecution)}`
+                                }
+                                ${isOverdue ? `<span style="color: #dc3545; font-weight: bold; margin-left: 8px;">⚠️ Vencida</span>` : ''}
+                            </div>
+                            ${activity.description ? `<p style="margin-top: 8px; font-size: 12px; color: #666; font-style: italic;">${activity.description}</p>` : ''}
+                        </div>
+                        <button onclick="window.executePeriodicActivity('${activity.firebaseKey}')" 
+                                style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; white-space: nowrap;">
+                            ✓ Ejecutar
+                        </button>
+                    </div>
+                `;
+            }
             
             container.appendChild(fieldDiv);
         }
         
-        async function executePeriodicActivity(firebaseKey) {
-            const activity = planActivities[firebaseKey];
+        // Variable global para ejecutar actividades programadas
+        let currentExecutingActivityKey = null;
+        
+        window.executePeriodicActivity = function(firebaseKey) {
+            const activity = window.planActivities[firebaseKey];
             if (!activity) {
-                alert('Actividad no encontrada');
+                alert('Error: actividad no encontrada');
                 return;
             }
             
-            const confirmed = confirm(`¿Confirmar ejecución de:\n\n"${activity.name}"\n\nSe registrará como ejecutada el ${new Date(currentDate).toLocaleDateString('es-ES')}`);
-            if (!confirmed) return;
+            currentExecutingActivityKey = firebaseKey;
+            
+            try {
+                document.getElementById('executeActivityName').textContent = activity.name;
+                
+                const section = sections.find(s => s.id == activity.sectionId);
+                const sectionName = section ? section.name : 'Desconocido';
+                
+                document.getElementById('executeActivityDetails').innerHTML = `
+                    <strong>Sección:</strong> ${sectionName}<br>
+                    <strong>Frecuencia:</strong> ${getFrequencyLabel(activity.frequency)}<br>
+                    <strong>Fecha:</strong> ${new Date(currentDate + 'T00:00:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}
+                `;
+                
+                document.getElementById('executeDescription').value = '';
+                document.getElementById('executePhotos').value = '';
+                document.getElementById('executePhotosPreview').innerHTML = '';
+                
+                document.getElementById('executePeriodicModal').style.display = 'block';
+            } catch (error) {
+                console.error('Error al abrir modal:', error);
+                alert('Error al abrir modal: ' + error.message);
+            }
+        }
+        
+        window.closeExecutePeriodicModal = function() {
+            document.getElementById('executePeriodicModal').style.display = 'none';  // ← CORRECTO
+            currentExecutingActivityKey = null;
+        }
+        
+        window.previewExecutePhotos = function() {
+            const input = document.getElementById('executePhotos');
+            const preview = document.getElementById('executePhotosPreview');
+            preview.innerHTML = '';
+            
+            if (input.files.length > 5) {
+                alert('Máximo 5 fotos permitidas');
+                input.value = '';
+                return;
+            }
+            
+            for (let file of input.files) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        window.confirmExecutePeriodicActivity = async function() {
+            if (!currentExecutingActivityKey) {
+                alert('Error: No hay actividad seleccionada');
+                return;
+            }
+            
+            const activity = planActivities[currentExecutingActivityKey];
+            const description = document.getElementById('executeDescription').value.trim();
+            const photosInput = document.getElementById('executePhotos');
             
             try {
                 showSyncIndicator('⚙️ Registrando ejecución...', 'syncing');
                 
+                // Subir fotos a Firebase Storage
+                const photoURLs = [];
+                if (photosInput.files.length > 0) {
+                    for (let file of photosInput.files) {
+                        const timestamp = Date.now();
+                        const fileName = `periodic_${currentExecutingActivityKey}_${timestamp}_${file.name}`;
+                        const storageRef = storage.ref(`planExecutions/${currentDate}/${fileName}`);
+                        
+                        await storageRef.put(file);
+                        const url = await storageRef.getDownloadURL();
+                        photoURLs.push(url);
+                    }
+                }
+                
                 // Calcular próxima ejecución
+                const freqDaysMap = {weekly:7, biweekly:15, monthly:30, bimonthly:60, quarterly:90, semiannual:180, annual:365};
+                const frequencyDays = activity.frequencyDays || freqDaysMap[activity.frequency] || 30;
                 const nextDate = new Date(currentDate);
-                nextDate.setDate(nextDate.getDate() + activity.frequencyDays);
+                nextDate.setDate(nextDate.getDate() + frequencyDays);
                 const nextExecution = nextDate.toISOString().split('T')[0];
                 
-                // Actualizar en Firebase
-                await planActivitiesRef.child(firebaseKey).update({
+                // Crear registro de ejecución
+                const executionRecord = {
+                    activityKey: currentExecutingActivityKey,
+                    activityName: activity.name,
+                    sectionId: activity.sectionId,
+                    executedDate: currentDate,
+                    description: description || '',
+                    photos: photoURLs,
+                    user: currentUser.fullName,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Guardar registro de ejecución en planExecutions
+                const execRef = await database.ref(`planExecutions/${currentDate}`).push(executionRecord);
+                
+                // Actualizar actividad en planActivities
+                await planActivitiesRef.child(currentExecutingActivityKey).update({
                     lastExecution: currentDate,
                     nextExecution: nextExecution,
                     status: 'approved' // Mantener aprobada
                 });
                 
+                // Actualizar variables locales
+                if (!window.planExecutions[currentDate]) {
+                    window.planExecutions[currentDate] = {};
+                }
+                window.planExecutions[currentDate][execRef.key] = executionRecord;
+                
+                if (window.planActivities[currentExecutingActivityKey]) {
+                    window.planActivities[currentExecutingActivityKey].lastExecution = currentDate;
+                    window.planActivities[currentExecutingActivityKey].nextExecution = nextExecution;
+                }
+                
+                // Actualizar referencias locales
+                planExecutions = window.planExecutions;
+                planActivities = window.planActivities;
+                
                 showSyncIndicator('✓ Actividad ejecutada correctamente', 'synced');
                 
-                // Recargar vista
+                // Cerrar modal
+                window.closeExecutePeriodicModal();
+                
+                // Recargar vista de sección y secciones
                 if (currentSectionId) {
                     showSectionDetail(currentSectionId);
                 }
+                renderSections(); // Actualizar barras de progreso
             } catch (error) {
                 console.error('Error al ejecutar actividad:', error);
                 showSyncIndicator('✗ Error al ejecutar', 'error');
@@ -3009,6 +3178,27 @@
                         }
                     }
                 });
+                
+                // Agregar actividades programadas ejecutadas este día
+                const periodicActivitiesForSection = Object.entries(planActivities || {})
+                    .filter(([key, activity]) => {
+                        if (activity.sectionId != section.id) return false;
+                        if (activity.status !== 'approved') return false;
+                        // Ejecutada este día → siempre incluir
+                        if (activity.lastExecution === dateStr) return true;
+                        // Pendiente: fecha objetivo era hoy o antes
+                        const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
+                        return targetDate <= dateStr;
+                    });
+                
+                totalActivities += periodicActivitiesForSection.length;
+                
+                // Contar ejecutadas
+                periodicActivitiesForSection.forEach(([key, activity]) => {
+                    if (activity.lastExecution === dateStr) {
+                        completedActivities++;
+                    }
+                });
             });
 
             const percentage = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
@@ -3094,6 +3284,25 @@
                             if (activityData && activityData.status === 'ok') sectionCompleted++;
                         }
                     }
+                });
+                
+                // Agregar actividades programadas pendientes y ejecutadas
+                const periodicActivitiesForSection = Object.entries(window.planActivities || {})
+                    .filter(([key, activity]) => {
+                        if (activity.sectionId != section.id) return false;
+                        if (activity.status !== 'approved') return false;
+                        // Ejecutada ese día → siempre incluir
+                        if (activity.lastExecution === dateStr) return true;
+                        // Pendiente
+                        const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
+                        return targetDate <= dateStr;
+                    });
+                
+                sectionTotal += periodicActivitiesForSection.length;
+                
+                // Contar ejecutadas ese día
+                periodicActivitiesForSection.forEach(([key, activity]) => {
+                    if (activity.lastExecution === dateStr) sectionCompleted++;
                 });
                 
                 // Si no hay actividades en la sección, no mostrarla
@@ -3223,8 +3432,45 @@
                     }
                 });
                 
-                // Solo agregar la sección si tiene contenido
-                if (sectionHTML) {
+                // Agregar actividades programadas ejecutadas este día
+                if (window.planExecutions && window.planExecutions[dateStr]) {
+                    const executions = Object.values(window.planExecutions[dateStr]);
+                    const sectionExecutions = executions.filter(exec => exec.sectionId == section.id);
+                    
+                    if (sectionExecutions.length > 0) {
+                        console.log('✅ Mostrando', sectionExecutions.length, 'actividades ejecutadas');
+                        sectionHTML += '<div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e3f2fd;"><h4 style="color: #2196f3; font-size: 14px; margin-bottom: 10px;">📋 Actividades Programadas Ejecutadas</h4>';
+                        
+                        sectionExecutions.forEach(exec => {
+                            console.log('   - ' + exec.activityName + ' por ' + exec.user);
+                            const timeInfo = exec.timestamp ? new Date(exec.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                            
+                            sectionHTML += '<div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #2196f3;">';
+                            sectionHTML += '<p style="margin: 0;"><strong>🔵 ' + exec.activityName + '</strong>';
+                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + exec.user + ' - ' + timeInfo + ')</small>';
+                            sectionHTML += '</p>';
+                            
+                            if (exec.description) {
+                                sectionHTML += '<p style="margin: 5px 0 0 0; font-size: 13px; color: #666; font-style: italic;">' + exec.description + '</p>';
+                            }
+                            
+                            if (exec.photos && exec.photos.length > 0) {
+                                sectionHTML += '<div style="margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap;">';
+                                exec.photos.forEach(photoUrl => {
+                                    sectionHTML += '<img src="' + photoUrl + '" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid #2196f3;" onclick="window.open(\'' + photoUrl + '\', \'_blank\')">';
+                                });
+                                sectionHTML += '</div>';
+                            }
+                            
+                            sectionHTML += '</div>';
+                        });
+                        
+                        sectionHTML += '</div>';
+                    }
+                }
+                
+                // Mostrar sección si tiene actividades (diarias o programadas)
+                if (sectionHTML || sectionTotal > 0) {
                     reportHTML += '<div class="report-summary">';
                     reportHTML += '<h3>' + section.icon + ' ' + section.name + '</h3>';
                     reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold; margin-bottom: 10px;">';
@@ -3538,7 +3784,7 @@
             if (mode === 'porFecha') {
                 renderHistorialPorFecha();
             } else {
-                renderHistorialPorSeccion();
+                window.renderHistorialPorSeccion();  // Usar window. explícitamente
             }
         }
         
@@ -3619,17 +3865,22 @@
         // Hacer función global
         window.renderHistorialPorSeccion = function() {
             console.log('📊 Renderizando historial por sección');
+            console.log('📦 window.sections:', window.sections);
+            console.log('📦 Cantidad de secciones:', window.sections ? window.sections.length : 0);
+            
             const container = document.getElementById('historialContent');
-            const sections = window.HSB_DATA.sections;
+            if (!window.sections || window.sections.length === 0) {
+                container.innerHTML = '<p style="padding: 20px; text-align: center; color: #999;">No hay secciones disponibles</p>';
+                return;
+            }
             
-            let html = '<div style="display: flex; flex-wrap: wrap; gap: 15px;">';
+            // USAR DELEGACIÓN DE EVENTOS - UN SOLO LISTENER EN EL CONTENEDOR
+            let html = '<div id="sectionsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;">';
             
-            sections.forEach(section => {
+            window.sections.forEach(section => {
                 html += `
-                    <div style="flex: 1; min-width: 250px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s;"
-                         onclick="window.showSeccionHistorial(${section.id})"
-                         onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
-                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)';">
+                    <div class="section-history-card" data-section-id="${section.id}"
+                         style="flex: 1; min-width: 250px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.3s;">
                         <div style="font-size: 48px; text-align: center; margin-bottom: 10px;">${section.icon}</div>
                         <h3 style="text-align: center; color: #1e3c72; margin-bottom: 5px;">${section.name}</h3>
                         <p style="text-align: center; color: #666; font-size: 13px;">Click para ver historial</p>
@@ -3640,17 +3891,63 @@
             html += '</div>';
             container.innerHTML = html;
             console.log('✅ Grid de secciones renderizado');
+            
+            // DELEGACIÓN DE EVENTOS - Listener en el contenedor padre
+            const grid = document.getElementById('sectionsGrid');
+            if (grid) {
+                // Remover listeners anteriores si existen
+                const oldGrid = grid.cloneNode(true);
+                grid.parentNode.replaceChild(oldGrid, grid);
+                
+                // Agregar nuevo listener al grid
+                document.getElementById('sectionsGrid').addEventListener('click', function(e) {
+                    // Buscar la tarjeta clickeada (puede ser el div o un hijo)
+                    let card = e.target;
+                    while (card && !card.classList.contains('section-history-card')) {
+                        card = card.parentElement;
+                    }
+                    
+                    if (card && card.classList.contains('section-history-card')) {
+                        const sectionId = parseInt(card.getAttribute('data-section-id'));
+                        console.log('🖱️ CLICK DETECTADO en tarjeta, sectionId:', sectionId);
+                        window.showSeccionHistorial(sectionId);
+                    }
+                });
+                
+                // Hover effects con delegación
+                document.getElementById('sectionsGrid').addEventListener('mouseover', function(e) {
+                    let card = e.target;
+                    while (card && !card.classList.contains('section-history-card')) {
+                        card = card.parentElement;
+                    }
+                    if (card && card.classList.contains('section-history-card')) {
+                        card.style.transform = 'translateY(-5px)';
+                        card.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                    }
+                });
+                
+                document.getElementById('sectionsGrid').addEventListener('mouseout', function(e) {
+                    let card = e.target;
+                    while (card && !card.classList.contains('section-history-card')) {
+                        card = card.parentElement;
+                    }
+                    if (card && card.classList.contains('section-history-card')) {
+                        card.style.transform = 'translateY(0)';
+                        card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    }
+                });
+                
+                console.log('✅ Event delegation configurada en grid');
+            }
         }
         
         // Hacer función global
         window.showSeccionHistorial = function(sectionId) {
             console.log('📊 Mostrando historial de sección:', sectionId);
-            const sections = window.HSB_DATA.sections;
-            const dailyLogs = window.HSB_DATA.dailyLogs;
-            const activities = window.HSB_DATA.activities;
-            const novedades = window.HSB_DATA.novedades;
+            console.log('📦 window.sections:', window.sections);
+            console.log('📦 window.dailyLogs:', Object.keys(window.dailyLogs || {}).length, 'fechas');
             
-            const section = sections.find(s => s.id === sectionId);
+            const section = window.sections.find(s => s.id === sectionId);
             if (!section) {
                 console.error('Sección no encontrada:', sectionId);
                 return;
@@ -3685,9 +3982,9 @@
             `;
             
             // Obtener todas las fechas con datos de esta sección
-            const dates = Object.keys(dailyLogs).sort().reverse();
+            const dates = Object.keys(window.dailyLogs).sort().reverse();
             const datesWithData = dates.filter(date => {
-                const log = dailyLogs[date];
+                const log = window.dailyLogs[date];
                 return log.sections && log.sections[sectionId] && 
                        Object.keys(log.sections[sectionId].activities || {}).length > 0;
             });
@@ -3697,26 +3994,19 @@
             if (datesWithData.length === 0) {
                 html += '<p style="text-align: center; padding: 40px; color: #999;">No hay registros para esta sección</p>';
                 container.innerHTML = html;
-                // Agregar listener al botón volver
-                setTimeout(() => {
-                    const btnVolver = document.getElementById('btnVolverSecciones');
-                    if (btnVolver) {
-                        btnVolver.addEventListener('click', renderHistorialPorSeccion);
-                    }
-                }, 0);
                 return;
             }
             
             // Mostrar historial de la sección
             datesWithData.forEach(date => {
-                const log = dailyLogs[date];
+                const log = window.dailyLogs[date];
                 html += `
                     <div class="report-summary" style="margin-bottom: 15px;">
                         <h3 style="color: #667eea;">📅 ${new Date(date).toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h3>
                 `;
                 
                 // Actividades de esta sección en esta fecha
-                const sectionActivities = activities.filter(a => a.sectionId === sectionId);
+                const sectionActivities = window.activities.filter(a => a.sectionId === sectionId);
                 sectionActivities.forEach(activity => {
                     const actData = log.sections[sectionId].activities;
                     
