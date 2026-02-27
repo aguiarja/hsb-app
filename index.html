@@ -707,19 +707,31 @@
             </div>
             
             <!-- Selector de modo -->
-            <div style="display: flex; gap: 10px; margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <button id="btnHistorialPorFecha" onclick="showHistorialMode('porFecha')" 
-                        class="btn" style="flex: 1; background: #667eea; color: white; padding: 12px;">
-                    📅 Por Fecha
-                </button>
-                <button id="btnHistorialPorSeccion" onclick="showHistorialMode('porSeccion')" 
-                        class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
-                    📦 Por Equipo/Área
-                </button>
-                <button id="btnHistorialProduccion" onclick="showHistorialMode('produccion')" 
-                        class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
-                    🧊 Producción
-                </button>
+            <!-- Selector de modo - Padre/Hijo -->
+            <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="display: flex; gap: 10px; margin-bottom:0;" id="historialMainButtons">
+                    <button id="btnHistorialMantenimiento" onclick="toggleHistorialMantenimiento()" 
+                            class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
+                        🔧 Mantenimiento
+                    </button>
+                    <button id="btnHistorialProduccion" onclick="showHistorialMode('produccion')" 
+                            class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
+                        🧊 Producción
+                    </button>
+                </div>
+                <!-- Sub-botones de Mantenimiento (ocultos por defecto) -->
+                <div id="historialSubButtons" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid #e0e0e0;">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btnHistorialPorFecha" onclick="showHistorialMode('porFecha')" 
+                                class="btn" style="flex: 1; background: #6c757d; color: white; padding: 10px; font-size:13px;">
+                            📅 Por Fecha
+                        </button>
+                        <button id="btnHistorialPorSeccion" onclick="showHistorialMode('porSeccion')" 
+                                class="btn" style="flex: 1; background: #6c757d; color: white; padding: 10px; font-size:13px;">
+                            📦 Por Equipo/Área
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div id="historialContent"></div>
@@ -1554,7 +1566,7 @@
 
         const defaultTabs = [
             { id: 'reporte-diario', name: '📊 Reporte Diario', order: 1 },
-            { id: 'mantenimiento-preventivo', name: '🔧 Mantenimiento Preventivo', order: 2 },
+            { id: 'mantenimiento-preventivo', name: '🔧 Mantenimiento', order: 2 },
             { id: 'produccion', name: '🧊 Producción', order: 3 },
             { id: 'plan', name: '📅 Plan', order: 4 },
             { id: 'historial', name: '📋 Historial', order: 5 },
@@ -1665,18 +1677,24 @@
                 });
                 tabs = tabsSnap.val() || [];
                 
-                // PARCHE: Asegurar que el tab 'produccion' exista
+                // PARCHE: Asegurar que el tab 'produccion' exista y renombrar mantenimiento
+                let tabsChanged = false;
                 if (!tabs.find(t => t.id === 'produccion')) {
                     tabs.push({ id: 'produccion', name: '🧊 Producción', order: 3 });
-                    // Reordenar: plan=4, historial=5, configuracion=6
                     tabs.forEach(t => {
                         if (t.id === 'plan' && t.order < 4) t.order = 4;
                         if (t.id === 'historial' && t.order < 5) t.order = 5;
                         if (t.id === 'configuracion' && t.order < 6) t.order = 6;
                     });
-                    // Guardar en Firebase para futuras cargas
-                    tabsRef.set(tabs);
+                    tabsChanged = true;
                 }
+                // Renombrar "Mantenimiento Preventivo" → "Mantenimiento"
+                const mantTab = tabs.find(t => t.id === 'mantenimiento-preventivo');
+                if (mantTab && mantTab.name !== '🔧 Mantenimiento') {
+                    mantTab.name = '🔧 Mantenimiento';
+                    tabsChanged = true;
+                }
+                if (tabsChanged) tabsRef.set(tabs);
                 sections = sectionsSnap.val() || [];
                 activities = activitiesSnap.val() || [];
                 novedadesPredefinidas = novedadesSnap.val() || [];
@@ -4114,21 +4132,53 @@
         
         let historialMode = 'porFecha'; // o 'porSeccion'
         
+        function toggleHistorialMantenimiento() {
+            const subBtns = document.getElementById('historialSubButtons');
+            const isVisible = subBtns.style.display !== 'none';
+            
+            if (isVisible) {
+                // Colapsar
+                subBtns.style.display = 'none';
+                document.getElementById('btnHistorialMantenimiento').style.background = '#6c757d';
+            } else {
+                // Expandir y mostrar por fecha por defecto
+                subBtns.style.display = 'block';
+                document.getElementById('btnHistorialMantenimiento').style.background = '#667eea';
+                document.getElementById('btnHistorialProduccion').style.background = '#6c757d';
+                showHistorialMode('porFecha');
+            }
+        }
+
         function showHistorialMode(mode) {
             historialMode = mode;
             
-            // Actualizar estilos de botones
-            document.getElementById('btnHistorialPorFecha').style.background = mode === 'porFecha' ? '#667eea' : '#6c757d';
-            document.getElementById('btnHistorialPorSeccion').style.background = mode === 'porSeccion' ? '#667eea' : '#6c757d';
-            document.getElementById('btnHistorialProduccion').style.background = mode === 'produccion' ? '#667eea' : '#6c757d';
+            const btnMant = document.getElementById('btnHistorialMantenimiento');
+            const btnProd = document.getElementById('btnHistorialProduccion');
+            const btnFecha = document.getElementById('btnHistorialPorFecha');
+            const btnSeccion = document.getElementById('btnHistorialPorSeccion');
+            const subBtns = document.getElementById('historialSubButtons');
             
-            // Renderizar según modo
-            if (mode === 'porFecha') {
-                renderHistorialPorFecha();
-            } else if (mode === 'produccion') {
+            if (mode === 'produccion') {
+                // Producción activa, colapsar mantenimiento
+                btnProd.style.background = '#667eea';
+                btnMant.style.background = '#6c757d';
+                subBtns.style.display = 'none';
+                if (btnFecha) btnFecha.style.background = '#6c757d';
+                if (btnSeccion) btnSeccion.style.background = '#6c757d';
                 renderHistorialProduccion();
             } else {
-                window.renderHistorialPorSeccion();  // Usar window. explícitamente
+                // Modo mantenimiento
+                btnProd.style.background = '#6c757d';
+                btnMant.style.background = '#667eea';
+                subBtns.style.display = 'block';
+                if (btnFecha) btnFecha.style.background = mode === 'porFecha' ? '#667eea' : '#6c757d';
+                if (btnSeccion) btnSeccion.style.background = mode === 'porSeccion' ? '#667eea' : '#6c757d';
+                
+                if (mode === 'porFecha') {
+                    renderHistorialPorFecha();
+                } else {
+                    window.renderHistorialPorSeccion();
+                }
             }
         }
         
@@ -6162,17 +6212,14 @@
                         <h3 style="color:#1e3c72;">📋 Resumen de Producción</h3>
                         <span style="background:#667eea; color:white; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">Pendiente confirmar</span>
                     </div>
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.moldsProduced : 'N/A'}</div><div class="stat-label">Moldes Producidos</div></div>
-                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsProduced : 'N/A'}</div><div class="stat-label">Filas Producidas</div></div>
-                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.totalHours + 'h' : 'N/A'}</div><div class="stat-label">Tiempo Total</div></div>
-                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsPerHour : 'N/A'}</div><div class="stat-label">Filas/Hora</div></div>
-                    </div>
-                    <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px; font-size:14px;">
-                        <p><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol}</p>
-                        <p><strong>Horario:</strong> ${rec.startTime} — ${rec.endTime}</p>
-                        <p><strong>Temperatura:</strong> ${rec.startTemp || '-'}°C → ${rec.endTemp || '-'}°C</p>
-                        <p><strong>Módulos:</strong> ${kpis ? kpis.modulesProduced : 'N/A'}</p>
+                    <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin-bottom:20px; font-size:15px; line-height:2;">
+                        <p><strong>Fila Inicio:</strong> ${rec.startRow}${rec.startCol}</p>
+                        <p><strong>Fila Fin:</strong> ${rec.endRow}${rec.endCol}</p>
+                        <p><strong>Número de Moldes:</strong> ${kpis ? kpis.moldsProduced : 'N/A'}</p>
+                        <p><strong>Hora de Inicio:</strong> ${rec.startTime}</p>
+                        <p><strong>Hora de Fin:</strong> ${rec.endTime}</p>
+                        <p><strong>Temperatura Inicio:</strong> ${rec.startTemp || '-'}°C</p>
+                        <p><strong>Temperatura Fin:</strong> ${rec.endTemp || '-'}°C</p>
                         <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
                     </div>
                     <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
