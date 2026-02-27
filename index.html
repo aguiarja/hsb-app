@@ -1253,15 +1253,27 @@
             
             // Si son antes de las 06:00 AM, usar el día anterior
             if (hour < 6) {
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-                return yesterday.toISOString().split('T')[0];
+                now.setDate(now.getDate() - 1);
             }
             
-            return now.toISOString().split('T')[0];
+            // Usar componentes locales (NO toISOString que devuelve UTC)
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         
         let currentDate = getOperationalDate();
+        
+        // Helper: obtener fecha local en formato YYYY-MM-DD (evita bug de toISOString que usa UTC)
+        function getLocalDateString(date) {
+            const d = date || new Date();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
         let accumulatedPhotos = []; // Para acumular fotos en móvil
 
         // Firebase references (will be initialized after Firebase loads)
@@ -1690,7 +1702,7 @@
             });
             
             // Establecer fecha mínima como hoy
-            const today = new Date().toISOString().split('T')[0];
+            const today = getLocalDateString();
             document.getElementById('planActivityFirstDate').setAttribute('min', today);
             document.getElementById('planActivityFirstDate').value = today;
             
@@ -1760,7 +1772,7 @@
                 daysOverdue: 0,
                 active: false,
                 createdBy: currentUser.fullName,
-                createdDate: new Date().toISOString().split('T')[0],
+                createdDate: getLocalDateString(),
                 approvedBy: null,
                 approvedDate: null
             };
@@ -1971,7 +1983,7 @@
                     status: 'approved',
                     active: true,
                     approvedBy: currentUser.fullName,
-                    approvedDate: new Date().toISOString().split('T')[0]
+                    approvedDate: getLocalDateString()
                 });
                 
                 showSyncIndicator('✓ Actividad aprobada', 'synced');
@@ -2592,7 +2604,7 @@
                 const frequencyDays = activity.frequencyDays || freqDaysMap[activity.frequency] || 30;
                 const nextDate = new Date(currentDate);
                 nextDate.setDate(nextDate.getDate() + frequencyDays);
-                const nextExecution = nextDate.toISOString().split('T')[0];
+                const nextExecution = getLocalDateString(nextDate);
                 
                 // Crear registro de ejecución
                 const executionRecord = {
@@ -3146,17 +3158,8 @@
             
             let fullHTML = '';
             
-            // SECCIÓN 1: DÍA ACTUAL (En proceso)
+            // Solo mostrar el día actual (En proceso)
             fullHTML += renderDayReport(currentDate, true);
-            
-            // SECCIÓN 2: DÍA ANTERIOR (Cerrado)
-            const yesterday = new Date(currentDate);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().split('T')[0];
-            
-            if (dailyLogs[yesterdayStr]) {
-                fullHTML += renderDayReport(yesterdayStr, false);
-            }
             
             container.innerHTML = fullHTML;
         }
