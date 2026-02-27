@@ -3883,6 +3883,8 @@
             if (prodRec) {
                 const prodKpis = (prodRec.endTime && prodRec.startTime) ? calculateProductionKPIs(prodRec.startRow, prodRec.startCol, prodRec.endRow, prodRec.endCol, prodRec.startTime, prodRec.endTime) : null;
                 const prodOpNames = prodRec.operatorNamesSnapshot || getProductionOperatorNames(prodRec.operatorIds || []);
+                const prodPartials = prodRec.partialLoads || [];
+                const prodPartialMolds = prodPartials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
                 const prodStatus = prodRec.confirmed ? '✅ Confirmada' : (prodRec.endTime ? '⏳ Pendiente' : '🔄 En proceso');
                 const prodColor = prodRec.confirmed ? '#28a745' : (prodRec.endTime ? '#667eea' : '#ffc107');
                 
@@ -3893,12 +3895,20 @@
                 reportHTML += `</div>`;
                 
                 if (prodKpis) {
+                    // Producción finalizada o confirmada
                     reportHTML += `<div class="stats-grid">`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.moldsProduced}</div><div class="stat-label">Moldes</div></div>`;
+                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.moldsProduced}</div><div class="stat-label">Moldes Total</div></div>`;
                     reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.rowsProduced}</div><div class="stat-label">Filas</div></div>`;
                     reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.totalHours}h</div><div class="stat-label">Tiempo</div></div>`;
                     reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.rowsPerHour}</div><div class="stat-label">Filas/h</div></div>`;
                     reportHTML += `</div>`;
+                    if (prodPartials.length > 0) {
+                        reportHTML += `<div style="background:#e8f5e9; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:8px;">`;
+                        reportHTML += `<strong>📦 Cargas a almacén:</strong> ${prodPartials.length} cargas — ${prodPartialMolds} moldes cargados`;
+                        const remaining = prodKpis.moldsProduced - prodPartialMolds;
+                        if (remaining > 0) reportHTML += ` | Restante al cierre: ${remaining} moldes`;
+                        reportHTML += `</div>`;
+                    }
                     reportHTML += `<div style="background:#f8f9fa; padding:12px; border-radius:8px; font-size:13px;">`;
                     reportHTML += `<p><strong>Rango:</strong> ${prodRec.startRow}${prodRec.startCol} → ${prodRec.endRow}${prodRec.endCol}</p>`;
                     reportHTML += `<p><strong>Horario:</strong> ${prodRec.startTime} — ${prodRec.endTime} (${prodKpis.totalHours} horas)</p>`;
@@ -3906,6 +3916,18 @@
                     reportHTML += `<p><strong>Operadores:</strong> ${Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames}</p>`;
                     reportHTML += `</div>`;
                 } else {
+                    // Producción en curso
+                    reportHTML += `<div class="stats-grid">`;
+                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodPartialMolds > 0 ? prodPartialMolds : '—'}</div><div class="stat-label">Moldes Producidos</div></div>`;
+                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodPartials.length}</div><div class="stat-label">Cargas a Almacén</div></div>`;
+                    reportHTML += `</div>`;
+                    if (prodPartials.length > 0) {
+                        reportHTML += `<div style="background:#e8f5e9; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:8px;">`;
+                        prodPartials.forEach((p, i) => {
+                            reportHTML += `<div style="${i > 0 ? 'border-top:1px solid #c8e6c9; margin-top:4px; padding-top:4px;' : ''}">📦 Carga ${i + 1}: ${p.fromRow}${p.fromCol} → ${p.toRow}${p.toCol} = <strong>${p.moldsLoaded} moldes</strong></div>`;
+                        });
+                        reportHTML += `</div>`;
+                    }
                     reportHTML += `<div style="background:#fff3e0; padding:12px; border-radius:8px; font-size:13px;">`;
                     reportHTML += `<p><strong>Inicio:</strong> ${prodRec.startTime} | Posición: ${prodRec.startRow}${prodRec.startCol} | Temp: ${prodRec.startTemp || '-'}°C</p>`;
                     reportHTML += `<p><strong>Operadores:</strong> ${Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames}</p>`;
