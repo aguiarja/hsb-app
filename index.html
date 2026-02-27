@@ -1639,7 +1639,7 @@
             console.log('📥 Loading data from Firebase...');
 
             try {
-                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap] = await Promise.all([
+                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap, prodSnap, opSnap] = await Promise.all([
                     usersRef.once('value'),
                     tabsRef.once('value'),
                     sectionsRef.once('value'),
@@ -1650,11 +1650,33 @@
                     planExecutionsRef.once('value'),
                     notCompletedActivitiesRef.once('value'),
                     alertsRef.once('value'),
-                    novedadesRef.once('value')
+                    novedadesRef.once('value'),
+                    productionRecordsRef.once('value'),
+                    operatorsRef.once('value')
                 ]);
 
                 users = usersSnap.val() || [];
+                
+                // PARCHE: Asegurar permiso 'produccion' en todos los usuarios existentes
+                users.forEach(u => {
+                    if (u.permissions && !u.permissions.includes('produccion')) {
+                        u.permissions.push('produccion');
+                    }
+                });
                 tabs = tabsSnap.val() || [];
+                
+                // PARCHE: Asegurar que el tab 'produccion' exista
+                if (!tabs.find(t => t.id === 'produccion')) {
+                    tabs.push({ id: 'produccion', name: '🧊 Producción', order: 3 });
+                    // Reordenar: plan=4, historial=5, configuracion=6
+                    tabs.forEach(t => {
+                        if (t.id === 'plan' && t.order < 4) t.order = 4;
+                        if (t.id === 'historial' && t.order < 5) t.order = 5;
+                        if (t.id === 'configuracion' && t.order < 6) t.order = 6;
+                    });
+                    // Guardar en Firebase para futuras cargas
+                    tabsRef.set(tabs);
+                }
                 sections = sectionsSnap.val() || [];
                 activities = activitiesSnap.val() || [];
                 novedadesPredefinidas = novedadesSnap.val() || [];
@@ -1664,6 +1686,8 @@
                 notCompletedActivities = notCompletedSnap.val() || {};
                 alerts = alertsSnap.val() ? Object.values(alertsSnap.val()) : [];
                 novedades = novedadesFullSnap.val() || {};
+                productionRecords = prodSnap.val() || {};
+                operators = opSnap.val() || {};
                 
                 // ACTUALIZAR VARIABLES GLOBALES
                 window.sections = sections;
@@ -1672,6 +1696,8 @@
                 window.planActivities = planActivities;
                 window.planExecutions = planExecutions;
                 window.novedades = novedades;
+                window.productionRecords = productionRecords;
+                window.operators = operators;
 
                 console.log('✅ Data loaded successfully!');
                 console.log(`📊 Loaded: ${users.length} users, ${sections.length} sections, ${activities.length} activities`);
@@ -5768,6 +5794,10 @@
                 const savedUserData = JSON.parse(savedUser);
                 const updatedUser = users.find(u => u.id === savedUserData.id);
                 if (updatedUser) {
+                    // Parche: asegurar permiso 'produccion' en usuarios existentes
+                    if (updatedUser.permissions && !updatedUser.permissions.includes('produccion')) {
+                        updatedUser.permissions.push('produccion');
+                    }
                     currentUser = updatedUser;
                     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
                     showMainScreen();
