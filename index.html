@@ -871,6 +871,39 @@
         </div>
     </div>
 
+    <!-- Modal: Producción Parcial -->
+    <div id="prodPartialModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="partialModalTitle">📦 Producción Parcial</h2>
+                <span class="close" onclick="document.getElementById('prodPartialModal').style.display='none'">&times;</span>
+            </div>
+            <!-- Paso 1: Ingresar fila -->
+            <div id="partialStep1">
+                <p style="color:#666; margin-bottom:15px;">Ingresa hasta qué posición se ha producido para cargar a almacén:</p>
+                <div class="form-group">
+                    <label>📍 Fila hasta donde se cargará:</label>
+                    <div style="display:flex; gap:10px;">
+                        <select id="partialRow" style="flex:1;"></select>
+                        <select id="partialCol" style="flex:1;"></select>
+                    </div>
+                </div>
+                <p id="partialFromLabel" style="color:#999; font-size:13px; margin-top:10px;"></p>
+                <div style="text-align:center; margin-top:20px;">
+                    <button onclick="showPartialSummary()" class="btn" style="font-size:16px; padding:14px 40px;">Siguiente ➡️</button>
+                </div>
+            </div>
+            <!-- Paso 2: Resumen -->
+            <div id="partialStep2" style="display:none;">
+                <div id="partialSummaryContent" style="background:#f8f9fa; padding:20px; border-radius:8px; margin-bottom:20px; font-size:15px; line-height:2;"></div>
+                <div style="text-align:center; display:flex; gap:10px; justify-content:center;">
+                    <button onclick="showPartialStep1()" class="btn" style="background:#6c757d;">⬅️ Volver</button>
+                    <button onclick="savePartialLoad()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">📦 Cargar a Almacén</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para Novedades (existente) -->
     <div id="novedadesModal" class="modal">
         <div class="modal-content">
@@ -6182,6 +6215,31 @@
 
         function renderProdStarted(container, rec) {
             const opNames = getProductionOperatorNames(rec.operatorIds || []);
+            const partials = rec.partialLoads || [];
+            const totalPartialMolds = partials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
+            
+            let partialsHTML = '';
+            if (partials.length > 0) {
+                partialsHTML = `
+                    <div style="background:#e8f5e9; padding:15px; border-radius:8px; margin:15px 0;">
+                        <h4 style="color:#2e7d32; margin-bottom:10px;">📦 Cargas Parciales a Almacén</h4>
+                        <div style="font-size:14px;">`;
+                partials.forEach((p, i) => {
+                    partialsHTML += `
+                        <div style="display:flex; justify-content:space-between; padding:6px 0; ${i > 0 ? 'border-top:1px solid #c8e6c9;' : ''}">
+                            <span>Carga ${i + 1}: ${p.fromRow}${p.fromCol} → ${p.toRow}${p.toCol}</span>
+                            <strong>${p.moldsLoaded} moldes</strong>
+                        </div>`;
+                });
+                partialsHTML += `
+                        <div style="border-top:2px solid #2e7d32; margin-top:8px; padding-top:8px; display:flex; justify-content:space-between; font-weight:bold; color:#2e7d32;">
+                            <span>Total cargado a almacén:</span>
+                            <span>${totalPartialMolds} moldes</span>
+                        </div>
+                        </div>
+                    </div>`;
+            }
+            
             container.innerHTML = `
                 <div class="report-summary" style="border-left:4px solid #ffc107;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -6194,9 +6252,13 @@
                         <div class="stat-card"><div class="stat-number">${rec.startRow}${rec.startCol}</div><div class="stat-label">Fila Inicio</div></div>
                         <div class="stat-card"><div class="stat-number">${opNames.length}</div><div class="stat-label">Operadores</div></div>
                     </div>
-                    <p style="color:#666; margin-bottom:20px;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
-                    <div style="text-align:center;">
-                        <button onclick="openProdEndModal()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:16px; padding:14px 35px;">
+                    <p style="color:#666; margin-bottom:15px;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
+                    ${partialsHTML}
+                    <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
+                        <button onclick="openPartialModal()" class="btn" style="background:linear-gradient(135deg,#ff9800,#f57c00); font-size:15px; padding:14px 30px;">
+                            📦 Producción Parcial
+                        </button>
+                        <button onclick="openProdEndModal()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:15px; padding:14px 30px;">
                             ⏹️ Finalizar Producción
                         </button>
                     </div>
@@ -6206,6 +6268,21 @@
         function renderProdPendingConfirm(container, rec) {
             const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
             const opNames = getProductionOperatorNames(rec.operatorIds || []);
+            const partials = rec.partialLoads || [];
+            const totalPartialMolds = partials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
+            const remainingMolds = kpis ? kpis.moldsProduced - totalPartialMolds : 0;
+            
+            let partialsHTML = '';
+            if (partials.length > 0) {
+                partialsHTML = `<hr style="margin:10px 0; border-color:#e0e0e0;">
+                    <p><strong>📦 Cargas Parciales:</strong></p>`;
+                partials.forEach((p, i) => {
+                    partialsHTML += `<p style="padding-left:15px; color:#555;">Carga ${i + 1}: ${p.fromRow}${p.fromCol} → ${p.toRow}${p.toCol} = <strong>${p.moldsLoaded} moldes</strong></p>`;
+                });
+                partialsHTML += `<p style="padding-left:15px; color:#2e7d32;"><strong>Total parcial: ${totalPartialMolds} moldes</strong></p>`;
+                partialsHTML += `<p style="padding-left:15px; color:#1e3c72;"><strong>Restante al cierre: ${remainingMolds} moldes</strong></p>`;
+            }
+            
             container.innerHTML = `
                 <div class="report-summary" style="border-left:4px solid #667eea;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -6221,6 +6298,7 @@
                         <p><strong>Temperatura Inicio:</strong> ${rec.startTemp || '-'}°C</p>
                         <p><strong>Temperatura Fin:</strong> ${rec.endTemp || '-'}°C</p>
                         <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
+                        ${partialsHTML}
                     </div>
                     <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                         <button onclick="openProdEditModal()" class="btn" style="background:#ffc107; color:#333;">✏️ Editar</button>
@@ -6397,6 +6475,11 @@
             const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
             if (!kpis) return alert('Error en cálculo de KPIs. Verifique los datos.');
 
+            // Calcular moldes restantes no cargados en parciales
+            const partials = rec.partialLoads || [];
+            const totalPartialMolds = partials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
+            const remainingMolds = kpis.moldsProduced - totalPartialMolds;
+
             try {
                 showSyncIndicator('⚙️ Confirmando...', 'syncing');
                 await productionRecordsRef.child(currentDate).update({
@@ -6407,12 +6490,134 @@
                     totalMinutes: kpis.totalMinutes,
                     totalHours: kpis.totalHours,
                     rowsPerHour: kpis.rowsPerHour,
+                    totalPartialMolds: totalPartialMolds,
+                    remainingMoldsAtClose: remainingMolds,
                     confirmedAt: new Date().toISOString(),
                     confirmedBy: currentUser.fullName
                 });
                 showSyncIndicator('✅ Producción confirmada', 'synced');
             } catch (err) {
                 console.error('Error confirmando:', err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== PRODUCCIÓN PARCIAL ==========
+
+        /** Obtiene la posición desde donde calcular la siguiente carga parcial */
+        function getPartialFromPosition(rec) {
+            const partials = rec.partialLoads || [];
+            if (partials.length === 0) {
+                // Primera parcial: desde el inicio de producción
+                return { row: rec.startRow, col: rec.startCol };
+            }
+            // Desde la posición siguiente a la última carga parcial
+            const last = partials[partials.length - 1];
+            return getNextPosition(last.toRow, last.toCol);
+        }
+
+        /** Obtiene la posición siguiente a (row, col) en la secuencia de la cuba */
+        function getNextPosition(row, col) {
+            const colIdx = COL_INDEX_MAP[col];
+            if (colIdx < 4) {
+                // Siguiente columna en la misma fila
+                return { row: row, col: CUBA_COLS[colIdx] }; // colIdx is 1-based, array is 0-based, so CUBA_COLS[colIdx] = next col
+            }
+            // Siguiente fila, columna A
+            return { row: row + 1, col: 'A' };
+        }
+
+        function openPartialModal() {
+            const rec = productionRecords[currentDate];
+            if (!rec) return;
+
+            const from = getPartialFromPosition(rec);
+            document.getElementById('partialRow').innerHTML = buildProdRowOptions(from.row);
+            document.getElementById('partialCol').innerHTML = buildProdColOptions(from.col);
+            document.getElementById('partialFromLabel').textContent = `Calculando desde posición: ${from.row}${from.col}`;
+            document.getElementById('partialModalTitle').textContent = `📦 Producción Parcial (Carga ${(rec.partialLoads || []).length + 1})`;
+
+            // Mostrar paso 1, ocultar paso 2
+            document.getElementById('partialStep1').style.display = 'block';
+            document.getElementById('partialStep2').style.display = 'none';
+            document.getElementById('prodPartialModal').style.display = 'block';
+        }
+
+        function showPartialStep1() {
+            document.getElementById('partialStep1').style.display = 'block';
+            document.getElementById('partialStep2').style.display = 'none';
+        }
+
+        function showPartialSummary() {
+            const rec = productionRecords[currentDate];
+            if (!rec) return;
+
+            const toRow = parseInt(document.getElementById('partialRow').value);
+            const toCol = document.getElementById('partialCol').value;
+
+            if (!toRow || !toCol) return alert('Selecciona fila y columna');
+
+            const from = getPartialFromPosition(rec);
+            const fromIndex = prodCoordToIndex(from.row, from.col);
+            const toIndex = prodCoordToIndex(toRow, toCol);
+
+            if (toIndex < fromIndex) {
+                return alert(`La posición ${toRow}${toCol} debe ser igual o posterior a ${from.row}${from.col}`);
+            }
+
+            const modules = toIndex - fromIndex + 1;
+            const molds = modules * MOLDS_PER_MODULE;
+            const partials = rec.partialLoads || [];
+            const prevTotal = partials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
+
+            const summaryHTML = `
+                <p><strong>Desde:</strong> ${from.row}${from.col}</p>
+                <p><strong>Hasta:</strong> ${toRow}${toCol}</p>
+                <p><strong>Módulos en esta carga:</strong> ${modules}</p>
+                <p style="font-size:20px; color:#1e3c72; margin:15px 0;"><strong>Moldes a cargar: ${molds}</strong></p>
+                ${prevTotal > 0 ? `<hr style="margin:10px 0;"><p style="color:#666;">Moldes cargados anteriormente: ${prevTotal}</p><p style="color:#2e7d32; font-weight:bold;">Total acumulado si confirma: ${prevTotal + molds}</p>` : ''}
+            `;
+
+            document.getElementById('partialSummaryContent').innerHTML = summaryHTML;
+            document.getElementById('partialStep1').style.display = 'none';
+            document.getElementById('partialStep2').style.display = 'block';
+        }
+
+        async function savePartialLoad() {
+            const rec = productionRecords[currentDate];
+            if (!rec) return;
+
+            const toRow = parseInt(document.getElementById('partialRow').value);
+            const toCol = document.getElementById('partialCol').value;
+            const from = getPartialFromPosition(rec);
+            const fromIndex = prodCoordToIndex(from.row, from.col);
+            const toIndex = prodCoordToIndex(toRow, toCol);
+            const modules = toIndex - fromIndex + 1;
+            const molds = modules * MOLDS_PER_MODULE;
+
+            const partialEntry = {
+                fromRow: from.row,
+                fromCol: from.col,
+                toRow: toRow,
+                toCol: toCol,
+                modulesLoaded: modules,
+                moldsLoaded: molds,
+                timestamp: new Date().toISOString(),
+                user: currentUser.fullName
+            };
+
+            const partials = rec.partialLoads || [];
+            partials.push(partialEntry);
+
+            try {
+                showSyncIndicator('⚙️ Guardando carga parcial...', 'syncing');
+                await productionRecordsRef.child(currentDate).update({
+                    partialLoads: partials
+                });
+                document.getElementById('prodPartialModal').style.display = 'none';
+                showSyncIndicator(`✅ ${molds} moldes cargados a almacén`, 'synced');
+            } catch (err) {
+                console.error('Error guardando parcial:', err);
                 showSyncIndicator('✗ Error', 'error');
             }
         }
