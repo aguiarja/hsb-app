@@ -700,6 +700,16 @@
             </div>
         </div>
 
+        <!-- TAB: VENTAS -->
+        <div id="tab-ventas" class="tab-content">
+            <div class="section-header" style="margin-bottom:15px;">
+                <h2>💰 Ventas — Despacho de Moldes</h2>
+            </div>
+            <div id="ventasContent">
+                <p style="text-align: center; color: #999; padding: 40px;">Cargando ventas...</p>
+            </div>
+        </div>
+
         <!-- TAB: HISTORIAL -->
         <div id="tab-historial" class="tab-content">
             <div class="section-header">
@@ -717,6 +727,10 @@
                     <button id="btnHistorialProduccion" onclick="showHistorialMode('produccion')" 
                             class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
                         🧊 Producción
+                    </button>
+                    <button id="btnHistorialVentas" onclick="showHistorialMode('ventas')" 
+                            class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
+                        💰 Ventas
                     </button>
                 </div>
                 <!-- Sub-botones de Mantenimiento (ocultos por defecto) -->
@@ -900,6 +914,135 @@
                     <button onclick="showPartialStep1()" class="btn" style="background:#6c757d;">⬅️ Volver</button>
                     <button onclick="savePartialLoad()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">📦 Cargar a Almacén</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODALES DE VENTAS ==================== -->
+
+    <!-- Modal: Despacho (3 pasos) -->
+    <div id="dispatchModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="dispatchModalTitle">🚚 Nuevo Despacho</h2>
+                <span class="close" onclick="document.getElementById('dispatchModal').style.display='none'">&times;</span>
+            </div>
+            <!-- Paso 1: Seleccionar Cliente -->
+            <div id="dispatchStep1">
+                <div class="form-group">
+                    <label>🔍 Buscar Cliente:</label>
+                    <input type="text" id="dispatchClientSearch" placeholder="Nombre, cédula, email o teléfono..." oninput="filterDispatchClients()" autocomplete="off">
+                </div>
+                <div id="dispatchClientResults" style="max-height:250px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px;"></div>
+                <input type="hidden" id="dispatchSelectedClientId">
+                <div id="dispatchSelectedClientInfo" style="display:none; background:#e8f5e9; padding:12px; border-radius:8px; margin-top:10px;"></div>
+                <div style="text-align:center; margin-top:15px;">
+                    <button onclick="dispatchGoStep2()" class="btn" style="padding:12px 35px;">Siguiente ➡️</button>
+                </div>
+            </div>
+            <!-- Paso 2: Cantidad y Precio -->
+            <div id="dispatchStep2" style="display:none;">
+                <div id="dispatchInventoryBadge" style="text-align:center; margin-bottom:15px;"></div>
+                <div class="form-group">
+                    <label>📦 Número de Moldes:</label>
+                    <input type="number" id="dispatchMoldsQty" min="1" placeholder="Cantidad">
+                </div>
+                <div class="form-group">
+                    <label>💲 Tipo de Precio:</label>
+                    <select id="dispatchPriceType"></select>
+                </div>
+                <div class="form-group">
+                    <label>📝 Observaciones:</label>
+                    <textarea id="dispatchObs" rows="2" placeholder="Opcional..."></textarea>
+                </div>
+                <div id="dispatchInventoryWarning" style="display:none; background:#ffebee; color:#c62828; padding:10px; border-radius:8px; margin-bottom:10px; font-weight:bold;"></div>
+                <div style="text-align:center; display:flex; gap:10px; justify-content:center;">
+                    <button onclick="dispatchBackStep1()" class="btn" style="background:#6c757d;">⬅️ Volver</button>
+                    <button onclick="dispatchCargar()" class="btn btn-secondary" style="padding:12px 35px;">Cargar Venta</button>
+                </div>
+            </div>
+            <!-- Paso 3: Despacho -->
+            <div id="dispatchStep3" style="display:none;">
+                <div id="dispatchStep3Info" style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:15px; font-size:15px; line-height:2;"></div>
+                <div class="form-group">
+                    <label>🧊 Merma (moldes):</label>
+                    <input type="number" id="dispatchMerma" min="0" value="0" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label>📝 Observaciones de Despacho:</label>
+                    <textarea id="dispatchDespachoObs" rows="2" placeholder="Opcional..."></textarea>
+                </div>
+                <div style="text-align:center; margin-top:15px;">
+                    <button onclick="confirmDispatch()" class="btn" style="background:linear-gradient(135deg,#28a745,#218838); font-size:16px; padding:14px 40px;">✅ Confirmar Despacho</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Merma -->
+    <div id="mermaModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📦 Registrar Merma</h2>
+                <span class="close" onclick="document.getElementById('mermaModal').style.display='none'">&times;</span>
+            </div>
+            <div id="mermaInventoryBadge" style="text-align:center; margin-bottom:15px;"></div>
+            <div class="form-group">
+                <label>🧊 Moldes de Merma:</label>
+                <input type="number" id="mermaMoldsQty" min="1" placeholder="Cantidad">
+            </div>
+            <div class="form-group">
+                <label>📝 Motivo / Observación:</label>
+                <textarea id="mermaObs" rows="2" placeholder="Describe la merma..."></textarea>
+            </div>
+            <div style="text-align:center; margin-top:15px;">
+                <button onclick="saveMerma()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); padding:12px 35px;">💾 Registrar Merma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Cliente CRUD -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="clientModalTitle">Agregar Cliente</h2>
+                <span class="close" onclick="document.getElementById('clientModal').style.display='none'">&times;</span>
+            </div>
+            <input type="hidden" id="clientEditKey">
+            <div class="form-group"><label>👤 Nombre:</label><input type="text" id="clientName" placeholder="Nombre o razón social"></div>
+            <div class="form-group"><label>🆔 Cédula / RIF:</label><input type="text" id="clientRif" placeholder="V-12345678"></div>
+            <div class="form-group"><label>📧 Email:</label><input type="email" id="clientEmail" placeholder="email@ejemplo.com"></div>
+            <div class="form-group"><label>📱 Teléfono:</label><input type="text" id="clientPhone" placeholder="0412-1234567"></div>
+            <div class="form-group"><label>📍 Dirección:</label><input type="text" id="clientAddress" placeholder="Dirección"></div>
+            <hr style="margin:15px 0;">
+            <h4 style="color:#667eea;">Contacto de Cobranza</h4>
+            <div class="form-group"><label>👤 Nombre contacto:</label><input type="text" id="clientPayName" placeholder="Contacto de pago"></div>
+            <div class="form-group"><label>📱 Teléfono contacto:</label><input type="text" id="clientPayPhone" placeholder="Teléfono"></div>
+            <hr style="margin:15px 0;">
+            <h4 style="color:#667eea;">Crédito</h4>
+            <div class="form-group"><label><input type="checkbox" id="clientHasCredit" onchange="document.getElementById('clientCreditDaysDiv').style.display=this.checked?'block':'none'"> ✅ ¿Tiene crédito?</label></div>
+            <div id="clientCreditDaysDiv" style="display:none;"><div class="form-group"><label>📅 Días de crédito:</label><input type="number" id="clientCreditDays" min="1" value="30"></div></div>
+            <hr style="margin:15px 0;">
+            <h4 style="color:#667eea;">Tipos de Precio Permitidos</h4>
+            <div id="clientPriceTypes" style="max-height:150px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:10px;"></div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="saveClient()" class="btn btn-secondary" style="padding:14px 40px;">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Tipo de Precio -->
+    <div id="priceTypeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="priceTypeModalTitle">Agregar Tipo de Precio</h2>
+                <span class="close" onclick="document.getElementById('priceTypeModal').style.display='none'">&times;</span>
+            </div>
+            <input type="hidden" id="priceTypeEditKey">
+            <div class="form-group"><label>📝 Nombre:</label><input type="text" id="priceTypeName" placeholder="Ej: Mayorista, VIP..."></div>
+            <div class="form-group"><label>💲 Precio por Molde (USD):</label><input type="number" step="0.01" id="priceTypeValue" min="0" placeholder="0.00"></div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="savePriceType()" class="btn btn-secondary" style="padding:14px 40px;">💾 Guardar</button>
             </div>
         </div>
     </div>
@@ -1476,6 +1619,10 @@
         let novedadesRef;
         let productionRecordsRef;
         let operatorsRef;
+        let salesClientsRef;
+        let salesPriceTypesRef;
+        let salesInventoryRef;
+        let salesDispatchesRef;
 
         function initializeRefs() {
             usersRef = database.ref('users');
@@ -1491,6 +1638,10 @@
             novedadesRef = database.ref('novedades');
             productionRecordsRef = database.ref('production_records');
             operatorsRef = database.ref('operators');
+            salesClientsRef = database.ref('sales_clients');
+            salesPriceTypesRef = database.ref('sales_priceTypes');
+            salesInventoryRef = database.ref('sales_inventory');
+            salesDispatchesRef = database.ref('sales_dispatches');
         }
 
         // Local cache - HACER GLOBALES DIRECTAMENTE
@@ -1502,6 +1653,10 @@
         window.novedades = {};
         window.productionRecords = {};
         window.operators = {};
+        window.salesClients = {};
+        window.salesPriceTypes = {};
+        window.salesInventory = { available: 0 };
+        window.salesDispatches = {};
         
         // Referencias locales para compatibilidad
         let users = [];
@@ -1517,6 +1672,10 @@
         let novedades = window.novedades;
         let productionRecords = window.productionRecords;
         let operators = window.operators;
+        let salesClients = window.salesClients;
+        let salesPriceTypes = window.salesPriceTypes;
+        let salesInventory = window.salesInventory;
+        let salesDispatches = window.salesDispatches;
 
         // ==================== FIREBASE HELPERS ====================
         
@@ -1565,7 +1724,7 @@
                 password: 'admin123', 
                 fullName: 'Administrador',
                 role: 'admin',
-                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial', 'configuracion'],
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion'],
                 planPermissions: {
                     canView: true,
                     canApprove: true
@@ -1577,7 +1736,7 @@
                 password: 'super123', 
                 fullName: 'Supervisor',
                 role: 'supervisor',
-                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial'],
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial'],
                 planPermissions: {
                     canView: true,
                     canApprove: true
@@ -1589,7 +1748,7 @@
                 password: 'operador123', 
                 fullName: 'Operador General',
                 role: 'operador',
-                permissions: ['mantenimiento-preventivo', 'reporte-diario', 'produccion'],
+                permissions: ['mantenimiento-preventivo', 'reporte-diario', 'produccion', 'ventas'],
                 planPermissions: {
                     canView: false,
                     canApprove: false
@@ -1601,9 +1760,10 @@
             { id: 'reporte-diario', name: '📊 Reporte Diario', order: 1 },
             { id: 'mantenimiento-preventivo', name: '🔧 Mantenimiento', order: 2 },
             { id: 'produccion', name: '🧊 Producción', order: 3 },
-            { id: 'plan', name: '📅 Plan', order: 4 },
-            { id: 'historial', name: '📋 Historial', order: 5 },
-            { id: 'configuracion', name: '⚙️ Configuración', order: 6 }
+            { id: 'ventas', name: '💰 Ventas', order: 4 },
+            { id: 'plan', name: '📅 Plan', order: 5 },
+            { id: 'historial', name: '📋 Historial', order: 6 },
+            { id: 'configuracion', name: '⚙️ Configuración', order: 7 }
         ];
 
         const defaultSections = [
@@ -1684,7 +1844,7 @@
             console.log('📥 Loading data from Firebase...');
 
             try {
-                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap, prodSnap, opSnap] = await Promise.all([
+                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap, prodSnap, opSnap, sCliSnap, sPtSnap, sInvSnap, sDispSnap] = await Promise.all([
                     usersRef.once('value'),
                     tabsRef.once('value'),
                     sectionsRef.once('value'),
@@ -1697,30 +1857,42 @@
                     alertsRef.once('value'),
                     novedadesRef.once('value'),
                     productionRecordsRef.once('value'),
-                    operatorsRef.once('value')
+                    operatorsRef.once('value'),
+                    salesClientsRef.once('value'),
+                    salesPriceTypesRef.once('value'),
+                    salesInventoryRef.once('value'),
+                    salesDispatchesRef.once('value')
                 ]);
 
                 users = usersSnap.val() || [];
                 
-                // PARCHE: Asegurar permiso 'produccion' en todos los usuarios existentes
+                // PARCHE: Asegurar permiso 'produccion' y 'ventas' en todos los usuarios existentes
                 users.forEach(u => {
                     if (u.permissions && !u.permissions.includes('produccion')) {
                         u.permissions.push('produccion');
                     }
+                    if (u.permissions && !u.permissions.includes('ventas')) {
+                        u.permissions.push('ventas');
+                    }
                 });
                 tabs = tabsSnap.val() || [];
                 
-                // PARCHE: Asegurar que el tab 'produccion' exista y renombrar mantenimiento
+                // PARCHE: Asegurar que tabs 'produccion' y 'ventas' existan y renombrar mantenimiento
                 let tabsChanged = false;
                 if (!tabs.find(t => t.id === 'produccion')) {
                     tabs.push({ id: 'produccion', name: '🧊 Producción', order: 3 });
-                    tabs.forEach(t => {
-                        if (t.id === 'plan' && t.order < 4) t.order = 4;
-                        if (t.id === 'historial' && t.order < 5) t.order = 5;
-                        if (t.id === 'configuracion' && t.order < 6) t.order = 6;
-                    });
                     tabsChanged = true;
                 }
+                if (!tabs.find(t => t.id === 'ventas')) {
+                    tabs.push({ id: 'ventas', name: '💰 Ventas', order: 4 });
+                    tabsChanged = true;
+                }
+                // Reordenar
+                tabs.forEach(t => {
+                    if (t.id === 'plan') t.order = 5;
+                    if (t.id === 'historial') t.order = 6;
+                    if (t.id === 'configuracion') t.order = 7;
+                });
                 // Renombrar "Mantenimiento Preventivo" → "Mantenimiento"
                 const mantTab = tabs.find(t => t.id === 'mantenimiento-preventivo');
                 if (mantTab && mantTab.name !== '🔧 Mantenimiento') {
@@ -1739,6 +1911,10 @@
                 novedades = novedadesFullSnap.val() || {};
                 productionRecords = prodSnap.val() || {};
                 operators = opSnap.val() || {};
+                salesClients = sCliSnap.val() || {};
+                salesPriceTypes = sPtSnap.val() || {};
+                salesInventory = sInvSnap.val() || { available: 0 };
+                salesDispatches = sDispSnap.val() || {};
                 
                 // ACTUALIZAR VARIABLES GLOBALES
                 window.sections = sections;
@@ -1749,6 +1925,10 @@
                 window.novedades = novedades;
                 window.productionRecords = productionRecords;
                 window.operators = operators;
+                window.salesClients = salesClients;
+                window.salesPriceTypes = salesPriceTypes;
+                window.salesInventory = salesInventory;
+                window.salesDispatches = salesDispatches;
 
                 console.log('✅ Data loaded successfully!');
                 console.log(`📊 Loaded: ${users.length} users, ${sections.length} sections, ${activities.length} activities`);
@@ -1902,6 +2082,34 @@
                 operators = snapshot.val() || {};
                 window.operators = operators;
                 console.log('👷 Operators updated');
+            });
+
+            // Listeners de ventas
+            salesClientsRef.on('value', (snapshot) => {
+                salesClients = snapshot.val() || {};
+                window.salesClients = salesClients;
+                console.log('💰 Sales clients updated');
+            });
+            salesPriceTypesRef.on('value', (snapshot) => {
+                salesPriceTypes = snapshot.val() || {};
+                window.salesPriceTypes = salesPriceTypes;
+                console.log('💰 Price types updated');
+            });
+            salesInventoryRef.on('value', (snapshot) => {
+                salesInventory = snapshot.val() || { available: 0 };
+                window.salesInventory = salesInventory;
+                console.log('📦 Sales inventory updated:', salesInventory.available);
+                if (document.getElementById('tab-ventas') && document.getElementById('tab-ventas').classList.contains('active')) {
+                    renderVentas();
+                }
+            });
+            salesDispatchesRef.on('value', (snapshot) => {
+                salesDispatches = snapshot.val() || {};
+                window.salesDispatches = salesDispatches;
+                console.log('🚚 Dispatches updated');
+                if (document.getElementById('tab-ventas') && document.getElementById('tab-ventas').classList.contains('active')) {
+                    renderVentas();
+                }
             });
 
             console.log('✅ Real-time sync active!');
@@ -2288,9 +2496,12 @@
             console.log('User found:', user ? user.username : 'NOT FOUND');
             
             if (user) {
-                // Parche: asegurar que 'produccion' exista en permisos de todos los usuarios
+                // Parche: asegurar permisos produccion y ventas
                 if (user.permissions && !user.permissions.includes('produccion')) {
                     user.permissions.push('produccion');
+                }
+                if (user.permissions && !user.permissions.includes('ventas')) {
+                    user.permissions.push('ventas');
                 }
                 currentUser = user;
                 localStorage.setItem('currentUser', JSON.stringify(user));
@@ -2386,6 +2597,8 @@
                     renderHistorial();
                 } else if (tabId === 'produccion') {
                     renderProduccion();
+                } else if (tabId === 'ventas') {
+                    renderVentas();
                 } else if (tabId === 'configuracion') {
                     renderConfiguracion();
                 }
@@ -3937,6 +4150,9 @@
                 reportHTML += `</div>`;
             }
 
+            // ========== SECCIÓN DE VENTAS EN REPORTE DIARIO ==========
+            reportHTML += renderVentasReportSection(dateStr);
+
             return reportHTML;
         }
         
@@ -4192,14 +4408,13 @@
             const isVisible = subBtns.style.display !== 'none';
             
             if (isVisible) {
-                // Colapsar
                 subBtns.style.display = 'none';
                 document.getElementById('btnHistorialMantenimiento').style.background = '#6c757d';
             } else {
-                // Expandir y mostrar por fecha por defecto
                 subBtns.style.display = 'block';
                 document.getElementById('btnHistorialMantenimiento').style.background = '#667eea';
                 document.getElementById('btnHistorialProduccion').style.background = '#6c757d';
+                document.getElementById('btnHistorialVentas').style.background = '#6c757d';
                 showHistorialMode('porFecha');
             }
         }
@@ -4209,26 +4424,30 @@
             
             const btnMant = document.getElementById('btnHistorialMantenimiento');
             const btnProd = document.getElementById('btnHistorialProduccion');
+            const btnVentas = document.getElementById('btnHistorialVentas');
             const btnFecha = document.getElementById('btnHistorialPorFecha');
             const btnSeccion = document.getElementById('btnHistorialPorSeccion');
             const subBtns = document.getElementById('historialSubButtons');
             
+            // Reset all main buttons
+            btnMant.style.background = '#6c757d';
+            btnProd.style.background = '#6c757d';
+            btnVentas.style.background = '#6c757d';
+            subBtns.style.display = 'none';
+            if (btnFecha) btnFecha.style.background = '#6c757d';
+            if (btnSeccion) btnSeccion.style.background = '#6c757d';
+            
             if (mode === 'produccion') {
-                // Producción activa, colapsar mantenimiento
                 btnProd.style.background = '#667eea';
-                btnMant.style.background = '#6c757d';
-                subBtns.style.display = 'none';
-                if (btnFecha) btnFecha.style.background = '#6c757d';
-                if (btnSeccion) btnSeccion.style.background = '#6c757d';
                 renderHistorialProduccion();
+            } else if (mode === 'ventas') {
+                btnVentas.style.background = '#667eea';
+                renderHistorialVentas();
             } else {
-                // Modo mantenimiento
-                btnProd.style.background = '#6c757d';
                 btnMant.style.background = '#667eea';
                 subBtns.style.display = 'block';
                 if (btnFecha) btnFecha.style.background = mode === 'porFecha' ? '#667eea' : '#6c757d';
                 if (btnSeccion) btnSeccion.style.background = mode === 'porSeccion' ? '#667eea' : '#6c757d';
-                
                 if (mode === 'porFecha') {
                     renderHistorialPorFecha();
                 } else {
@@ -4893,6 +5112,16 @@
                                        border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
                             👷 Operadores
                         </button>
+                        <button onclick="showConfigTab('clientes')" id="configTabClientes"
+                                style="padding: 10px 20px; background: #ddd; color: #666; border: none; 
+                                       border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
+                            🧑‍💼 Clientes
+                        </button>
+                        <button onclick="showConfigTab('precios')" id="configTabPrecios"
+                                style="padding: 10px 20px; background: #ddd; color: #666; border: none; 
+                                       border-radius: 5px 5px 0 0; cursor: pointer; font-size: 14px;">
+                            💲 Precios
+                        </button>
                     </div>
                     
                     <!-- Contenido de tabs -->
@@ -4906,7 +5135,7 @@
         
         function showConfigTab(tabName) {
             // Actualizar botones
-            ['users', 'sections', 'activities', 'novedades', 'operadores'].forEach(tab => {
+            ['users', 'sections', 'activities', 'novedades', 'operadores', 'clientes', 'precios'].forEach(tab => {
                 const btn = document.getElementById(`configTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
                 if (btn) {
                     if (tab === tabName) {
@@ -4919,7 +5148,6 @@
                 }
             });
             
-            // Mostrar contenido
             const content = document.getElementById('configTabContent');
             
             switch(tabName) {
@@ -4937,6 +5165,12 @@
                     break;
                 case 'operadores':
                     content.innerHTML = renderOperadoresConfig();
+                    break;
+                case 'clientes':
+                    content.innerHTML = renderClientesConfig();
+                    break;
+                case 'precios':
+                    content.innerHTML = renderPreciosConfig();
                     break;
             }
         }
@@ -5058,7 +5292,7 @@
             
             // Admin y Supervisor tienen todos los permisos automáticamente
             if (role === 'admin' || role === 'supervisor') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial', 'configuracion');
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion');
             } else {
                 // Operadores y otros roles: usar checkboxes
                 if (canViewReporte) permissions.push('reporte-diario');
@@ -5179,7 +5413,7 @@
             
             // Admin y Supervisor tienen todos los permisos automáticamente
             if (role === 'admin' || role === 'supervisor') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial', 'configuracion');
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion');
             } else {
                 // Operadores y otros roles: usar checkboxes
                 if (canViewReporte) permissions.push('reporte-diario');
@@ -5899,9 +6133,12 @@
                 const savedUserData = JSON.parse(savedUser);
                 const updatedUser = users.find(u => u.id === savedUserData.id);
                 if (updatedUser) {
-                    // Parche: asegurar permiso 'produccion' en usuarios existentes
+                    // Parche: asegurar permisos produccion y ventas
                     if (updatedUser.permissions && !updatedUser.permissions.includes('produccion')) {
                         updatedUser.permissions.push('produccion');
+                    }
+                    if (updatedUser.permissions && !updatedUser.permissions.includes('ventas')) {
+                        updatedUser.permissions.push('ventas');
                     }
                     currentUser = updatedUser;
                     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
@@ -6517,6 +6754,18 @@
                     confirmedAt: new Date().toISOString(),
                     confirmedBy: currentUser.fullName
                 });
+                
+                // ✅ INTEGRACIÓN VENTAS: Sumar moldes al inventario de ventas
+                const currentAvailable = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+                const newAvailable = currentAvailable + kpis.moldsProduced;
+                await salesInventoryRef.update({
+                    available: newAvailable,
+                    lastUpdated: new Date().toISOString(),
+                    lastSource: 'production_' + currentDate,
+                    lastAdded: kpis.moldsProduced
+                });
+                console.log(`📦 Inventario ventas: ${currentAvailable} + ${kpis.moldsProduced} = ${newAvailable}`);
+                
                 showSyncIndicator('✅ Producción confirmada', 'synced');
             } catch (err) {
                 console.error('Error confirmando:', err);
@@ -6761,6 +7010,702 @@
             } catch (err) {
                 showSyncIndicator('✗ Error', 'error');
             }
+        }
+
+        // ==================== MÓDULO DE VENTAS ====================
+        
+        // ========== RENDER PRINCIPAL VENTAS ==========
+        function renderVentas() {
+            const container = document.getElementById('ventasContent');
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            
+            // Despachos de hoy
+            const todayDispatches = getDispatchesByDate(currentDate);
+            const todayMolds = todayDispatches.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+            const todayMerma = todayDispatches.reduce((s, d) => s + (d.merma || 0), 0);
+            const todayPending = todayDispatches.filter(d => d.status === 'pending_approval');
+            
+            let html = `
+                <div class="stats-grid" style="margin-bottom:20px;">
+                    <div class="stat-card" style="border-top:3px solid #667eea;">
+                        <div class="stat-number" style="color:#667eea; font-size:28px;">${avail}</div>
+                        <div class="stat-label">Moldes Disponibles</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #28a745;">
+                        <div class="stat-number" style="color:#28a745;">${todayMolds}</div>
+                        <div class="stat-label">Despachados Hoy</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #ffc107;">
+                        <div class="stat-number" style="color:#ffc107;">${todayMerma}</div>
+                        <div class="stat-label">Merma Hoy</div>
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #dc3545;">
+                        <div class="stat-number" style="color:#dc3545;">${todayPending.length}</div>
+                        <div class="stat-label">Pendientes Aprobación</div>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                    <button onclick="openDispatchModal()" class="btn btn-secondary" style="flex:1; min-width:140px; font-size:15px; padding:14px;">
+                        🚚 Nuevo Despacho
+                    </button>
+                    <button onclick="openMermaModal()" class="btn" style="flex:1; min-width:140px; background:linear-gradient(135deg,#dc3545,#c82333); font-size:15px; padding:14px;">
+                        📦 Registrar Merma
+                    </button>
+                </div>`;
+            
+            // Pendientes de aprobación
+            if (todayPending.length > 0) {
+                html += `<div class="report-summary" style="border-left:4px solid #ffc107; margin-bottom:15px;">
+                    <h4 style="color:#856404; margin-bottom:10px;">⏳ Pendientes de Aprobación (${todayPending.length})</h4>`;
+                todayPending.forEach(d => {
+                    const cli = salesClients[d.clientId] || {};
+                    html += `<div style="background:#fff3e0; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <strong>${cli.name || 'N/A'}</strong> — ${d.moldsRequested} moldes
+                            <br><small style="color:#666;">${d.observations || ''}</small>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <button onclick="approveDispatch('${d._key}')" class="btn" style="background:#28a745; padding:8px 15px; font-size:12px;">✅ Aprobar</button>
+                            <button onclick="rejectDispatch('${d._key}')" class="btn" style="background:#dc3545; padding:8px 15px; font-size:12px;">❌ Rechazar</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            
+            // Despachos completados de hoy
+            const todayCompleted = todayDispatches.filter(d => d.status === 'dispatched');
+            if (todayCompleted.length > 0) {
+                html += `<div class="report-summary" style="border-left:4px solid #28a745;">
+                    <h4 style="color:#1e3c72; margin-bottom:10px;">✅ Despachos de Hoy (${todayCompleted.length})</h4>`;
+                todayCompleted.forEach(d => {
+                    const cli = salesClients[d.clientId] || {};
+                    const pt = salesPriceTypes[d.priceTypeId] || {};
+                    html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px;">
+                        <strong>${cli.name || 'N/A'}</strong> — ${d.moldsDispatched} moldes
+                        ${d.merma > 0 ? ` | Merma: ${d.merma}` : ''}
+                        | ${pt.name || ''}
+                        ${d.dispatchObs ? `<br><small style="color:#666;">${d.dispatchObs}</small>` : ''}
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        /** Obtiene despachos de una fecha */
+        function getDispatchesByDate(dateStr) {
+            return Object.entries(salesDispatches)
+                .filter(([, d]) => d.date === dateStr)
+                .map(([k, d]) => ({ ...d, _key: k }));
+        }
+
+        // ========== DESPACHO — MODAL 3 PASOS ==========
+        function openDispatchModal() {
+            document.getElementById('dispatchClientSearch').value = '';
+            document.getElementById('dispatchSelectedClientId').value = '';
+            document.getElementById('dispatchSelectedClientInfo').style.display = 'none';
+            document.getElementById('dispatchClientResults').innerHTML = '';
+            document.getElementById('dispatchStep1').style.display = 'block';
+            document.getElementById('dispatchStep2').style.display = 'none';
+            document.getElementById('dispatchStep3').style.display = 'none';
+            document.getElementById('dispatchModalTitle').textContent = '🚚 Nuevo Despacho';
+            document.getElementById('dispatchModal').style.display = 'block';
+            filterDispatchClients();
+        }
+
+        function filterDispatchClients() {
+            const q = (document.getElementById('dispatchClientSearch').value || '').toLowerCase().trim();
+            const container = document.getElementById('dispatchClientResults');
+            const clients = Object.entries(salesClients).filter(([, c]) => {
+                if (!q) return true;
+                return (c.name || '').toLowerCase().includes(q) ||
+                       (c.rif || '').toLowerCase().includes(q) ||
+                       (c.email || '').toLowerCase().includes(q) ||
+                       (c.phone || '').toLowerCase().includes(q);
+            });
+            
+            if (clients.length === 0) {
+                container.innerHTML = '<p style="padding:15px; color:#999; text-align:center;">No se encontraron clientes</p>';
+                return;
+            }
+            container.innerHTML = clients.map(([id, c]) => {
+                const creditBadge = c.hasCredit ? '<span style="background:#28a745; color:white; padding:2px 6px; border-radius:8px; font-size:10px;">Crédito</span>' : '<span style="background:#ffc107; color:#333; padding:2px 6px; border-radius:8px; font-size:10px;">Sin crédito</span>';
+                return `<div onclick="selectDispatchClient('${id}')" style="padding:12px; border-bottom:1px solid #eee; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background=''">
+                    <strong>${c.name}</strong> ${creditBadge}
+                    <br><small style="color:#666;">${c.rif || ''} | ${c.phone || ''}</small>
+                </div>`;
+            }).join('');
+        }
+
+        function selectDispatchClient(id) {
+            const c = salesClients[id];
+            if (!c) return;
+            document.getElementById('dispatchSelectedClientId').value = id;
+            document.getElementById('dispatchSelectedClientInfo').style.display = 'block';
+            document.getElementById('dispatchSelectedClientInfo').innerHTML = `
+                <strong>✅ ${c.name}</strong><br>
+                <small>${c.rif || ''} | ${c.phone || ''} | ${c.hasCredit ? 'Crédito: ' + (c.creditDays || 0) + ' días' : 'Sin crédito'}</small>`;
+            document.getElementById('dispatchClientResults').innerHTML = '';
+            document.getElementById('dispatchClientSearch').value = c.name;
+        }
+
+        function dispatchGoStep2() {
+            const clientId = document.getElementById('dispatchSelectedClientId').value;
+            if (!clientId) return alert('Selecciona un cliente');
+            
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            document.getElementById('dispatchInventoryBadge').innerHTML = `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
+            document.getElementById('dispatchMoldsQty').value = '';
+            document.getElementById('dispatchObs').value = '';
+            document.getElementById('dispatchInventoryWarning').style.display = 'none';
+            
+            // Cargar tipos de precio del cliente
+            const client = salesClients[clientId];
+            const allowedPrices = client.allowedPriceTypes || [];
+            const select = document.getElementById('dispatchPriceType');
+            select.innerHTML = '<option value="">-- Seleccionar --</option>';
+            Object.entries(salesPriceTypes).forEach(([id, pt]) => {
+                if (allowedPrices.length === 0 || allowedPrices.includes(id)) {
+                    select.innerHTML += `<option value="${id}">${pt.name} — $${parseFloat(pt.price).toFixed(2)}</option>`;
+                }
+            });
+            
+            document.getElementById('dispatchStep1').style.display = 'none';
+            document.getElementById('dispatchStep2').style.display = 'block';
+        }
+
+        function dispatchBackStep1() {
+            document.getElementById('dispatchStep1').style.display = 'block';
+            document.getElementById('dispatchStep2').style.display = 'none';
+        }
+
+        function dispatchCargar() {
+            const clientId = document.getElementById('dispatchSelectedClientId').value;
+            const molds = parseInt(document.getElementById('dispatchMoldsQty').value);
+            const priceTypeId = document.getElementById('dispatchPriceType').value;
+            const obs = document.getElementById('dispatchObs').value.trim();
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            const warn = document.getElementById('dispatchInventoryWarning');
+            
+            if (!molds || molds <= 0) return alert('Ingresa una cantidad válida');
+            if (!priceTypeId) return alert('Selecciona un tipo de precio');
+            
+            if (molds > avail) {
+                warn.textContent = `⚠️ Inventario insuficiente. Disponible: ${avail} moldes. Solicitado: ${molds}`;
+                warn.style.display = 'block';
+                return;
+            }
+            warn.style.display = 'none';
+            
+            const client = salesClients[clientId];
+            if (!client.hasCredit) {
+                // Sin crédito → pendiente de aprobación
+                savePendingDispatch(clientId, molds, priceTypeId, obs);
+            } else {
+                // Con crédito → ir a paso 3 despacho
+                showDispatchStep3(clientId, molds, priceTypeId, obs);
+            }
+        }
+
+        async function savePendingDispatch(clientId, molds, priceTypeId, obs) {
+            const client = salesClients[clientId] || {};
+            const pt = salesPriceTypes[priceTypeId] || {};
+            try {
+                showSyncIndicator('⚙️ Guardando...', 'syncing');
+                await salesDispatchesRef.push({
+                    date: currentDate,
+                    clientId, clientName: client.name,
+                    moldsRequested: molds, moldsDispatched: 0,
+                    priceTypeId, priceTypeName: pt.name, priceValue: pt.price || 0,
+                    merma: 0, observations: obs, dispatchObs: '',
+                    status: 'pending_approval',
+                    createdBy: currentUser.fullName,
+                    createdAt: new Date().toISOString()
+                });
+                document.getElementById('dispatchModal').style.display = 'none';
+                showSyncIndicator('⏳ Venta pendiente de aprobación', 'synced');
+            } catch (err) {
+                console.error(err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        function showDispatchStep3(clientId, molds, priceTypeId, obs) {
+            const client = salesClients[clientId] || {};
+            const pt = salesPriceTypes[priceTypeId] || {};
+            const total = molds * (pt.price || 0);
+            
+            document.getElementById('dispatchStep3Info').innerHTML = `
+                <p><strong>Cliente:</strong> ${client.name}</p>
+                <p><strong>Moldes:</strong> ${molds}</p>
+                <p><strong>Precio:</strong> ${pt.name} — $${parseFloat(pt.price || 0).toFixed(2)} c/u</p>
+                <p><strong>Total:</strong> $${total.toFixed(2)}</p>
+                ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ''}`;
+            document.getElementById('dispatchMerma').value = '0';
+            document.getElementById('dispatchDespachoObs').value = '';
+            document.getElementById('dispatchStep2').style.display = 'none';
+            document.getElementById('dispatchStep3').style.display = 'block';
+            
+            // Guardar datos en hidden para el confirm
+            document.getElementById('dispatchStep3').dataset.clientId = clientId;
+            document.getElementById('dispatchStep3').dataset.molds = molds;
+            document.getElementById('dispatchStep3').dataset.priceTypeId = priceTypeId;
+            document.getElementById('dispatchStep3').dataset.obs = obs;
+        }
+
+        async function confirmDispatch() {
+            const ds = document.getElementById('dispatchStep3').dataset;
+            const clientId = ds.clientId;
+            const molds = parseInt(ds.molds);
+            const priceTypeId = ds.priceTypeId;
+            const obs = ds.obs || '';
+            const merma = parseInt(document.getElementById('dispatchMerma').value) || 0;
+            const dispatchObs = document.getElementById('dispatchDespachoObs').value.trim();
+            
+            if (merma < 0) return alert('La merma no puede ser negativa');
+            
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            const totalDeduct = molds + merma;
+            if (totalDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail}. Necesario: ${totalDeduct} (${molds} + ${merma} merma)`);
+            
+            const client = salesClients[clientId] || {};
+            const pt = salesPriceTypes[priceTypeId] || {};
+            
+            try {
+                showSyncIndicator('⚙️ Despachando...', 'syncing');
+                await salesDispatchesRef.push({
+                    date: currentDate,
+                    clientId, clientName: client.name,
+                    moldsRequested: molds, moldsDispatched: molds,
+                    priceTypeId, priceTypeName: pt.name, priceValue: pt.price || 0,
+                    merma, observations: obs, dispatchObs,
+                    totalAmount: molds * (pt.price || 0),
+                    status: 'dispatched',
+                    createdBy: currentUser.fullName,
+                    createdAt: new Date().toISOString(),
+                    dispatchedAt: new Date().toISOString()
+                });
+                
+                // Descontar inventario
+                const newAvail = avail - totalDeduct;
+                await salesInventoryRef.update({ available: newAvail, lastUpdated: new Date().toISOString() });
+                
+                document.getElementById('dispatchModal').style.display = 'none';
+                showSyncIndicator(`✅ Despachado: ${molds} moldes`, 'synced');
+            } catch (err) {
+                console.error(err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        async function approveDispatch(key) {
+            const d = salesDispatches[key];
+            if (!d) return;
+            
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            if (d.moldsRequested > avail) return alert(`Inventario insuficiente (${avail} disponible). No se puede aprobar.`);
+            
+            // Aprobar → ir directo a paso 3
+            showDispatchStep3(d.clientId, d.moldsRequested, d.priceTypeId, d.observations || '');
+            
+            // Marcar pendiente como "aprobado, en despacho" y reasignar el key
+            document.getElementById('dispatchStep3').dataset.pendingKey = key;
+            document.getElementById('dispatchModal').style.display = 'block';
+            
+            // Override confirmDispatch para actualizar en vez de crear nuevo
+            const originalConfirm = confirmDispatch;
+            window._approveKey = key;
+        }
+
+        // Override para manejar aprobaciones
+        const _originalConfirmDispatch = confirmDispatch;
+        window.confirmDispatch = async function() {
+            const approveKey = window._approveKey;
+            if (approveKey) {
+                // Aprobar un pendiente existente
+                const d = salesDispatches[approveKey];
+                if (!d) return;
+                const merma = parseInt(document.getElementById('dispatchMerma').value) || 0;
+                const dispatchObs = document.getElementById('dispatchDespachoObs').value.trim();
+                const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+                const totalDeduct = d.moldsRequested + merma;
+                
+                if (merma < 0) return alert('La merma no puede ser negativa');
+                if (totalDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail}`);
+                
+                try {
+                    showSyncIndicator('⚙️ Aprobando...', 'syncing');
+                    const pt = salesPriceTypes[d.priceTypeId] || {};
+                    await salesDispatchesRef.child(approveKey).update({
+                        moldsDispatched: d.moldsRequested,
+                        merma, dispatchObs,
+                        totalAmount: d.moldsRequested * (pt.price || 0),
+                        status: 'dispatched',
+                        approvedBy: currentUser.fullName,
+                        dispatchedAt: new Date().toISOString()
+                    });
+                    await salesInventoryRef.update({ available: avail - totalDeduct, lastUpdated: new Date().toISOString() });
+                    document.getElementById('dispatchModal').style.display = 'none';
+                    window._approveKey = null;
+                    showSyncIndicator('✅ Aprobado y despachado', 'synced');
+                } catch (err) {
+                    console.error(err);
+                    showSyncIndicator('✗ Error', 'error');
+                }
+            } else {
+                await _originalConfirmDispatch();
+            }
+        };
+
+        async function rejectDispatch(key) {
+            if (!confirm('¿Rechazar esta venta?')) return;
+            try {
+                await salesDispatchesRef.child(key).update({ status: 'rejected', rejectedBy: currentUser.fullName, rejectedAt: new Date().toISOString() });
+                showSyncIndicator('❌ Venta rechazada', 'synced');
+            } catch (err) {
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== MERMA ==========
+        function openMermaModal() {
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            document.getElementById('mermaInventoryBadge').innerHTML = `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
+            document.getElementById('mermaMoldsQty').value = '';
+            document.getElementById('mermaObs').value = '';
+            document.getElementById('mermaModal').style.display = 'block';
+        }
+
+        async function saveMerma() {
+            const molds = parseInt(document.getElementById('mermaMoldsQty').value);
+            const obs = document.getElementById('mermaObs').value.trim();
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            
+            if (!molds || molds <= 0) return alert('Ingresa una cantidad válida');
+            if (molds > avail) return alert(`Inventario insuficiente. Disponible: ${avail}`);
+            if (!obs) return alert('Describe el motivo de la merma');
+            
+            try {
+                showSyncIndicator('⚙️ Registrando merma...', 'syncing');
+                await salesDispatchesRef.push({
+                    date: currentDate,
+                    clientId: '', clientName: 'MERMA',
+                    moldsRequested: 0, moldsDispatched: 0,
+                    merma: molds, observations: obs,
+                    status: 'merma',
+                    createdBy: currentUser.fullName,
+                    createdAt: new Date().toISOString()
+                });
+                await salesInventoryRef.update({ available: avail - molds, lastUpdated: new Date().toISOString() });
+                document.getElementById('mermaModal').style.display = 'none';
+                showSyncIndicator(`✅ Merma registrada: ${molds} moldes`, 'synced');
+            } catch (err) {
+                console.error(err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== CONFIG: CLIENTES ==========
+        function renderClientesConfig() {
+            const list = Object.entries(salesClients);
+            let html = '<div><h3 style="color:#1e3c72; margin-bottom:15px;">🧑‍💼 Clientes</h3>';
+            html += `<button onclick="openAddClientModal()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:15px;">➕ Agregar Cliente</button>`;
+            if (list.length === 0) {
+                html += '<p style="color:#999;">No hay clientes registrados.</p>';
+            } else {
+                list.forEach(([id, c]) => {
+                    const creditBadge = c.hasCredit ? `<span style="background:#28a745; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Crédito ${c.creditDays || 0}d</span>` : '<span style="background:#ffc107; color:#333; padding:2px 8px; border-radius:10px; font-size:11px;">Sin crédito</span>';
+                    html += `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:12px; margin-bottom:8px; background:white;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:5px;">
+                            <div><strong>${c.name}</strong> ${creditBadge}<br><small style="color:#666;">${c.rif || ''} | ${c.phone || ''} | ${c.email || ''}</small></div>
+                            <button onclick="openEditClientModal('${id}')" style="background:#667eea; color:white; border:none; padding:5px 12px; border-radius:5px; cursor:pointer; font-size:12px;">✏️ Editar</button>
+                        </div>
+                    </div>`;
+                });
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function openAddClientModal() {
+            document.getElementById('clientModalTitle').textContent = 'Agregar Cliente';
+            document.getElementById('clientEditKey').value = '';
+            document.getElementById('clientName').value = '';
+            document.getElementById('clientRif').value = '';
+            document.getElementById('clientEmail').value = '';
+            document.getElementById('clientPhone').value = '';
+            document.getElementById('clientAddress').value = '';
+            document.getElementById('clientPayName').value = '';
+            document.getElementById('clientPayPhone').value = '';
+            document.getElementById('clientHasCredit').checked = false;
+            document.getElementById('clientCreditDaysDiv').style.display = 'none';
+            document.getElementById('clientCreditDays').value = 30;
+            buildClientPriceTypeCheckboxes([]);
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function openEditClientModal(key) {
+            const c = salesClients[key];
+            if (!c) return;
+            document.getElementById('clientModalTitle').textContent = 'Editar Cliente';
+            document.getElementById('clientEditKey').value = key;
+            document.getElementById('clientName').value = c.name || '';
+            document.getElementById('clientRif').value = c.rif || '';
+            document.getElementById('clientEmail').value = c.email || '';
+            document.getElementById('clientPhone').value = c.phone || '';
+            document.getElementById('clientAddress').value = c.address || '';
+            document.getElementById('clientPayName').value = c.payContactName || '';
+            document.getElementById('clientPayPhone').value = c.payContactPhone || '';
+            document.getElementById('clientHasCredit').checked = !!c.hasCredit;
+            document.getElementById('clientCreditDaysDiv').style.display = c.hasCredit ? 'block' : 'none';
+            document.getElementById('clientCreditDays').value = c.creditDays || 30;
+            buildClientPriceTypeCheckboxes(c.allowedPriceTypes || []);
+            document.getElementById('clientModal').style.display = 'block';
+        }
+
+        function buildClientPriceTypeCheckboxes(selected) {
+            const container = document.getElementById('clientPriceTypes');
+            const pts = Object.entries(salesPriceTypes);
+            if (pts.length === 0) {
+                container.innerHTML = '<p style="color:#999; font-size:13px;">No hay tipos de precio. Créalos en Configuración → Precios.</p>';
+                return;
+            }
+            container.innerHTML = pts.map(([id, pt]) =>
+                `<label style="display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer;">
+                    <input type="checkbox" name="clientPriceCheck" value="${id}" ${selected.includes(id) ? 'checked' : ''} style="width:18px; height:18px;">
+                    <span>${pt.name} — $${parseFloat(pt.price).toFixed(2)}</span>
+                </label>`
+            ).join('');
+        }
+
+        async function saveClient() {
+            const name = document.getElementById('clientName').value.trim();
+            if (!name) return alert('El nombre es requerido');
+            
+            const data = {
+                name,
+                rif: document.getElementById('clientRif').value.trim(),
+                email: document.getElementById('clientEmail').value.trim(),
+                phone: document.getElementById('clientPhone').value.trim(),
+                address: document.getElementById('clientAddress').value.trim(),
+                payContactName: document.getElementById('clientPayName').value.trim(),
+                payContactPhone: document.getElementById('clientPayPhone').value.trim(),
+                hasCredit: document.getElementById('clientHasCredit').checked,
+                creditDays: document.getElementById('clientHasCredit').checked ? parseInt(document.getElementById('clientCreditDays').value) || 30 : 0,
+                allowedPriceTypes: Array.from(document.querySelectorAll('input[name="clientPriceCheck"]:checked')).map(cb => cb.value),
+                updatedAt: new Date().toISOString()
+            };
+            
+            const editKey = document.getElementById('clientEditKey').value;
+            try {
+                showSyncIndicator('⚙️ Guardando cliente...', 'syncing');
+                if (editKey) {
+                    await salesClientsRef.child(editKey).update(data);
+                } else {
+                    data.createdAt = new Date().toISOString();
+                    await salesClientsRef.push(data);
+                }
+                document.getElementById('clientModal').style.display = 'none';
+                showSyncIndicator('✓ Cliente guardado', 'synced');
+                renderConfiguracion();
+            } catch (err) {
+                console.error(err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== CONFIG: TIPOS DE PRECIO ==========
+        function renderPreciosConfig() {
+            const list = Object.entries(salesPriceTypes);
+            let html = '<div><h3 style="color:#1e3c72; margin-bottom:15px;">💲 Tipos de Precio</h3>';
+            html += `<button onclick="openAddPriceTypeModal()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:15px;">➕ Agregar Precio</button>`;
+            if (list.length === 0) {
+                html += '<p style="color:#999;">No hay tipos de precio.</p>';
+            } else {
+                list.forEach(([id, pt]) => {
+                    html += `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:12px; margin-bottom:8px; background:white; display:flex; justify-content:space-between; align-items:center;">
+                        <div><strong>${pt.name}</strong> — <span style="color:#28a745; font-size:18px; font-weight:bold;">$${parseFloat(pt.price).toFixed(2)}</span> por molde</div>
+                        <button onclick="openEditPriceTypeModal('${id}')" style="background:#667eea; color:white; border:none; padding:5px 12px; border-radius:5px; cursor:pointer; font-size:12px;">✏️</button>
+                    </div>`;
+                });
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function openAddPriceTypeModal() {
+            document.getElementById('priceTypeModalTitle').textContent = 'Agregar Tipo de Precio';
+            document.getElementById('priceTypeEditKey').value = '';
+            document.getElementById('priceTypeName').value = '';
+            document.getElementById('priceTypeValue').value = '';
+            document.getElementById('priceTypeModal').style.display = 'block';
+        }
+
+        function openEditPriceTypeModal(key) {
+            const pt = salesPriceTypes[key];
+            if (!pt) return;
+            document.getElementById('priceTypeModalTitle').textContent = 'Editar Tipo de Precio';
+            document.getElementById('priceTypeEditKey').value = key;
+            document.getElementById('priceTypeName').value = pt.name;
+            document.getElementById('priceTypeValue').value = pt.price;
+            document.getElementById('priceTypeModal').style.display = 'block';
+        }
+
+        async function savePriceType() {
+            const name = document.getElementById('priceTypeName').value.trim();
+            const price = parseFloat(document.getElementById('priceTypeValue').value);
+            if (!name) return alert('El nombre es requerido');
+            if (isNaN(price) || price < 0) return alert('Precio inválido');
+            
+            const editKey = document.getElementById('priceTypeEditKey').value;
+            try {
+                showSyncIndicator('⚙️ Guardando...', 'syncing');
+                if (editKey) {
+                    await salesPriceTypesRef.child(editKey).update({ name, price, updatedAt: new Date().toISOString() });
+                } else {
+                    await salesPriceTypesRef.push({ name, price, createdAt: new Date().toISOString() });
+                }
+                document.getElementById('priceTypeModal').style.display = 'none';
+                showSyncIndicator('✓ Precio guardado', 'synced');
+                renderConfiguracion();
+            } catch (err) {
+                console.error(err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== HISTORIAL DE VENTAS ==========
+        function renderHistorialVentas() {
+            const container = document.getElementById('historialContent');
+            const allDispatches = Object.entries(salesDispatches).filter(([, d]) => d.status === 'dispatched' || d.status === 'merma');
+            
+            // Agrupar por fecha
+            const byDate = {};
+            allDispatches.forEach(([k, d]) => {
+                if (!byDate[d.date]) byDate[d.date] = [];
+                byDate[d.date].push({ ...d, _key: k });
+            });
+            
+            const dates = Object.keys(byDate).sort().reverse();
+            if (dates.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">No hay historial de ventas.</p>';
+                return;
+            }
+            
+            let html = '';
+            dates.forEach(date => {
+                const dispatches = byDate[date];
+                const sales = dispatches.filter(d => d.status === 'dispatched');
+                const mermas = dispatches.filter(d => d.status === 'merma');
+                const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+                const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0);
+                const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
+                
+                // Agrupar ventas por cliente
+                const byClient = {};
+                sales.forEach(d => {
+                    if (!byClient[d.clientId]) byClient[d.clientId] = { name: d.clientName, dispatches: [] };
+                    byClient[d.clientId].dispatches.push(d);
+                });
+                
+                const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                
+                html += `<div class="report-summary" style="margin-bottom:15px; border-left:4px solid #28a745;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="color:#1e3c72; font-size:15px;">📅 ${dateLabel}</h3>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:12px;">
+                        <div style="background:#e8f5e9; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">${totalMolds}</strong><br><small>Moldes</small></div>
+                        <div style="background:#e3f2fd; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">${sales.length}</strong><br><small>Despachos</small></div>
+                        <div style="background:#fff8e1; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#f57f17; font-size:18px;">${totalMerma}</strong><br><small>Merma</small></div>
+                        <div style="background:#f3e5f5; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$${totalAmount.toFixed(0)}</strong><br><small>Total</small></div>
+                    </div>`;
+                
+                // Detalle por cliente con expandible
+                Object.entries(byClient).forEach(([cId, cData]) => {
+                    const cMolds = cData.dispatches.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+                    const cMerma = cData.dispatches.reduce((s, d) => s + (d.merma || 0), 0);
+                    const toggleId = `hist_${date}_${cId}`.replace(/[^a-zA-Z0-9_]/g, '_');
+                    
+                    html += `<div style="background:#f8f9fa; border-radius:8px; margin-bottom:6px; overflow:hidden;">
+                        <div onclick="document.getElementById('${toggleId}').style.display = document.getElementById('${toggleId}').style.display==='none'?'block':'none'" 
+                             style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                            <span><strong>${cData.name}</strong> — ${cMolds} moldes (${cData.dispatches.length} despachos)${cMerma > 0 ? ' | Merma: ' + cMerma : ''}</span>
+                            <span style="color:#667eea;">▼</span>
+                        </div>
+                        <div id="${toggleId}" style="display:none; padding:8px 12px; border-top:1px solid #e0e0e0; font-size:13px;">`;
+                    cData.dispatches.forEach((d, i) => {
+                        const pt = salesPriceTypes[d.priceTypeId] || {};
+                        html += `<div style="${i > 0 ? 'border-top:1px solid #eee; margin-top:4px; padding-top:4px;' : ''}">
+                            📦 ${d.moldsDispatched} moldes${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''} — ${pt.name || d.priceTypeName || 'N/A'} $${(d.totalAmount || 0).toFixed(2)}
+                            ${d.dispatchObs ? '<br><small style="color:#666;">' + d.dispatchObs + '</small>' : ''}
+                        </div>`;
+                    });
+                    html += `</div></div>`;
+                });
+                
+                // Mermas del día
+                if (mermas.length > 0) {
+                    html += `<div style="background:#ffebee; padding:8px 12px; border-radius:6px; font-size:13px; margin-top:6px;">`;
+                    mermas.forEach(m => {
+                        html += `<div>📦 Merma: ${m.merma} moldes — ${m.observations || 'Sin detalle'}</div>`;
+                    });
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // ========== REPORTE DIARIO — SECCIÓN VENTAS ==========
+        // (Se llama desde renderDayReport, inyecta HTML de ventas)
+        function renderVentasReportSection(dateStr) {
+            const dispatches = Object.entries(salesDispatches)
+                .filter(([, d]) => d.date === dateStr && (d.status === 'dispatched' || d.status === 'merma'))
+                .map(([k, d]) => ({ ...d, _key: k }));
+            
+            if (dispatches.length === 0) return '';
+            
+            const sales = dispatches.filter(d => d.status === 'dispatched');
+            const mermas = dispatches.filter(d => d.status === 'merma');
+            const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+            const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0);
+            const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
+            
+            let html = `<div class="report-summary" style="border-left:4px solid #28a745; margin-top:15px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="color:#1e3c72;">💰 Ventas</h3>
+                    <span style="background:#28a745; color:white; padding:4px 12px; border-radius:15px; font-size:12px; font-weight:bold;">${sales.length} despachos</span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number">${totalMolds}</div><div class="stat-label">Moldes Vendidos</div></div>
+                    <div class="stat-card"><div class="stat-number">$${totalAmount.toFixed(0)}</div><div class="stat-label">Total USD</div></div>
+                    <div class="stat-card"><div class="stat-number">${totalMerma}</div><div class="stat-label">Merma</div></div>
+                </div>`;
+            
+            // Desglose por cliente
+            const byClient = {};
+            sales.forEach(d => {
+                if (!byClient[d.clientId]) byClient[d.clientId] = { name: d.clientName, total: 0, count: 0 };
+                byClient[d.clientId].total += d.moldsDispatched || 0;
+                byClient[d.clientId].count++;
+            });
+            
+            if (Object.keys(byClient).length > 0) {
+                html += `<div style="background:#f8f9fa; padding:12px; border-radius:8px; font-size:13px;">`;
+                Object.values(byClient).forEach(c => {
+                    html += `<p><strong>${c.name}:</strong> ${c.total} moldes (${c.count} despacho${c.count > 1 ? 's' : ''})</p>`;
+                });
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
         }
     </script>
     
