@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HSB APP - Sistema de Mantenimiento v3.0 Completo</title>
+    <title>HSB App — Planta de Hielo</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
@@ -53,27 +53,28 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f0f2f5;
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border-radius: 0;
+            box-shadow: none;
             overflow: hidden;
+            min-height: 100vh;
         }
 
         .login-container {
-            max-width: 450px;
-            margin: 100px auto;
+            max-width: 400px;
+            margin: 60px auto;
             background: white;
             border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
         }
 
         .login-header {
@@ -90,48 +91,51 @@
         .header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 15px 30px;
+            padding: 8px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header-left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
         }
 
         .header-text h1 {
-            font-size: 22px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            margin-bottom: 0;
         }
 
         .header-text p {
-            opacity: 0.9;
-            font-size: 12px;
+            display: none;
         }
 
         .header-right {
-            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .user-info {
-            background: rgba(255,255,255,0.2);
-            padding: 8px 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 13px;
+            background: rgba(255,255,255,0.15);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
         }
 
         .btn-logout {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.2);
             color: white;
-            border: 1px solid white;
-            padding: 6px 12px;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 4px 10px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             transition: all 0.3s;
         }
 
@@ -141,20 +145,23 @@
 
         .tabs {
             display: flex;
+            flex-wrap: wrap;
             background: #f8f9fa;
             border-bottom: 2px solid #dee2e6;
-            overflow-x: auto;
+            position: sticky;
+            top: 44px;
+            z-index: 99;
         }
 
         .tab {
-            flex: 1;
-            min-width: 120px;
-            padding: 12px;
+            flex: 0 0 auto;
+            min-width: 0;
+            padding: 8px 12px;
             text-align: center;
             cursor: pointer;
             background: #f8f9fa;
             border: none;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 600;
             color: #495057;
             transition: all 0.3s;
@@ -173,7 +180,7 @@
 
         .tab-content {
             display: none;
-            padding: 25px;
+            padding: 15px;
         }
 
         .tab-content.active {
@@ -315,14 +322,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
             border-bottom: 2px solid #e0e0e0;
         }
 
         .section-header h2 {
             color: #1e3c72;
-            font-size: 22px;
+            font-size: 16px;
         }
 
         .btn {
@@ -529,53 +536,55 @@
         .report-summary {
             background: white;
             border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 12px;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
         .stat-card {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
-            border-left: 4px solid #667eea;
+            border-left: none;
         }
 
         .stat-number {
-            font-size: 32px;
+            font-size: 20px;
             font-weight: bold;
             color: #1e3c72;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-size: 11px;
             color: #666;
+        }
+
+        @media (min-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .container {
+                max-width: 900px;
+                margin: 0 auto;
+                border-radius: 0;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
         }
 
         @media (max-width: 768px) {
             .header {
-                flex-direction: column;
-                text-align: center;
+                padding: 6px 10px;
             }
-
-            .header-left {
-                flex-direction: column;
-            }
-
-            .header-right {
-                margin-top: 10px;
-            }
-
-            .tabs {
-                flex-direction: column;
+            .tab-content {
+                padding: 10px;
             }
         }
     </style>
@@ -594,8 +603,8 @@
     <!-- PANTALLA DE LOGIN -->
     <div id="loginScreen" class="login-container">
         <div class="login-header">
-            <h1>🧊 HSB APP v3.0 Complete</h1>
-            <p>Sistema de Mantenimiento - Firebase Sync</p>
+            <h1>🧊 HSB App</h1>
+            <p>Sistema de Gestión — Planta de Hielo</p>
         </div>
         <div id="loginLoading" style="text-align: center; padding: 20px;">
             <div class="loading-spinner" style="margin: 0 auto;"></div>
@@ -619,24 +628,16 @@
     <div id="mainScreen" class="container hidden">
         <div class="header">
             <div class="header-left">
-                <img src="Logo_HSB_APP.png" alt="HSB Logo" style="height: 50px; margin-right: 15px; border-radius: 8px;">
+                <img src="Logo_HSB_APP.png" alt="HSB" style="height: 30px; border-radius: 4px;">
                 <div class="header-text">
-                    <h1>Sistema de Mantenimiento HSB v3.0</h1>
-                    <p>Con sincronización en tiempo real</p>
+                    <h1>HSB App</h1>
                 </div>
             </div>
             <div class="header-right">
                 <div class="user-info">
-                    <strong id="currentUserName"></strong>
-                    <div><small id="currentUserRole"></small></div>
+                    👤 <strong id="currentUserName"></strong>
                 </div>
-                
-                <div id="systemClock" style="background: #667eea; color: white; padding: 8px 15px; border-radius: 8px; font-size: 13px; text-align: center; margin: 10px 0; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="font-weight: bold; font-size: 16px;" id="clockTime">--:--:--</div>
-                    <div style="font-size: 11px; opacity: 0.9;" id="clockDate">Cargando...</div>
-                    <div style="font-size: 10px; margin-top: 3px; opacity: 0.8;" id="clockDay">Día actual: --</div>
-                </div>
-                <button class="btn-logout" onclick="logout()">🚪 Cerrar Sesión</button>
+                <button class="btn-logout" onclick="logout()">🚪</button>
             </div>
         </div>
 
@@ -644,11 +645,16 @@
 
         <!-- TAB: REPORTE DIARIO -->
         <div id="tab-reporte-diario" class="tab-content">
-            <div class="section-header">
-                <h2>📊 Reporte Diario</h2>
+            <div id="systemClock" style="background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:10px 15px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <button onclick="shareReport()" class="btn btn-secondary btn-small">📱 Compartir WhatsApp</button>
+                    <div style="font-weight:bold; font-size:14px;" id="clockDate">Cargando...</div>
+                    <div style="font-size:11px; opacity:0.9;" id="clockDay">Día actual: --</div>
                 </div>
+                <div style="font-size:20px; font-weight:bold; font-family:monospace;" id="clockTime">--:--</div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="color:#1e3c72; font-size:16px;">📊 Reporte Diario</h3>
+                <button onclick="shareReport()" class="btn btn-secondary" style="padding:6px 12px; font-size:11px;">📱 WhatsApp</button>
             </div>
             <div id="reportContent"></div>
         </div>
@@ -2526,7 +2532,8 @@
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainScreen').classList.remove('hidden');
             document.getElementById('currentUserName').textContent = currentUser.fullName;
-            document.getElementById('currentUserRole').textContent = 
+            const roleEl = document.getElementById('currentUserRole');
+            if (roleEl) roleEl.textContent = 
                 currentUser.role === 'admin' ? 'Administrador' : 
                 currentUser.role === 'supervisor' ? 'Supervisor' : 'Operador';
             
@@ -3618,479 +3625,158 @@
             const container = document.getElementById('reportContent');
             
             if (!dailyLogs[currentDate]) {
-                container.innerHTML = '<div class="report-summary"><p>No hay datos para el día actual. Completa algunas actividades primero.</p></div>';
+                container.innerHTML = '<div class="report-summary"><p>No hay datos para el día actual.</p></div>';
                 return;
             }
             
-            let fullHTML = '';
-            
-            // Solo mostrar el día actual (En proceso)
-            fullHTML += renderDayReport(currentDate, true);
-            
-            container.innerHTML = fullHTML;
+            container.innerHTML = renderDayReport(currentDate, true);
         }
         
         function renderDayReport(dateStr, isCurrentDay) {
-            if (!dailyLogs[dateStr]) {
-                return '';
-            }
+            if (!dailyLogs[dateStr]) return '';
             
             const statusLabel = isCurrentDay ? '🟢 En proceso' : '🔴 Cerrado';
             const statusColor = isCurrentDay ? '#28a745' : '#dc3545';
             
             let totalActivities = 0;
             let completedActivities = 0;
-            let reportHTML = '';
+            let sectionData = [];
 
-            // Calcular estadísticas
             sections.forEach(section => {
-                // Verificar que la sección existe en el dailyLog
-                if (!dailyLogs[dateStr].sections[section.id]) {
-                    console.warn(`Sección ${section.name} (id:${section.id}) no existe en el log de ${dateStr}`);
-                    return; // Skip esta sección
-                }
+                if (!dailyLogs[dateStr].sections || !dailyLogs[dateStr].sections[section.id]) return;
+                
+                const showInSummary = section.showInSummary || 'resumido';
+                if (showInSummary === 'no') return;
                 
                 const sectionActivities = activities.filter(a => a.sectionId === section.id);
+                let sTotal = 0, sCompleted = 0;
+                let detailHTML = '';
                 
                 sectionActivities.forEach(activity => {
                     if (activity.frequency === '2 veces al dia') {
-                        totalActivities += 2;
-                        const dataMorning = dailyLogs[dateStr].sections[section.id].activities[`${activity.id}_manana`];
-                        const dataAfternoon = dailyLogs[dateStr].sections[section.id].activities[`${activity.id}_tarde`];
+                        sTotal += 2;
+                        const dm = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_manana'];
+                        const da = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_tarde'];
                         
                         if (activity.type === 'parametros') {
-                            // Cuenta como completado si tiene CUALQUIER valor válido (incluso fuera de rango)
-                            if (dataMorning && dataMorning.value !== null && dataMorning.value !== undefined && dataMorning.value !== '' && !isNaN(dataMorning.value)) {
-                                completedActivities++;
+                            if (dm && dm.value !== null && dm.value !== undefined && dm.value !== '' && !isNaN(dm.value)) sCompleted++;
+                            if (da && da.value !== null && da.value !== undefined && da.value !== '' && !isNaN(da.value)) sCompleted++;
+                            if (dm && dm.value !== null && !isNaN(dm.value)) {
+                                const v = parseFloat(dm.value);
+                                const oor = (activity.min != null && v < activity.min) || (activity.max != null && v > activity.max);
+                                detailHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + activity.name + ' (AM):</strong> ' + (oor ? '⚠️ ' : '') + dm.value + ' ' + (activity.unit || '') + ' <small style="color:#999;">' + (dm.user || '') + '</small></p>';
                             }
-                            if (dataAfternoon && dataAfternoon.value !== null && dataAfternoon.value !== undefined && dataAfternoon.value !== '' && !isNaN(dataAfternoon.value)) {
-                                completedActivities++;
+                            if (da && da.value !== null && !isNaN(da.value)) {
+                                const v = parseFloat(da.value);
+                                const oor = (activity.min != null && v < activity.min) || (activity.max != null && v > activity.max);
+                                detailHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + activity.name + ' (PM):</strong> ' + (oor ? '⚠️ ' : '') + da.value + ' ' + (activity.unit || '') + ' <small style="color:#999;">' + (da.user || '') + '</small></p>';
+                            }
+                        } else if (activity.type === 'nivel_aceite') {
+                            if (dm && dm.oilLevel) sCompleted++;
+                            if (da && da.oilLevel) sCompleted++;
+                            const oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
+                            if (dm && dm.oilLevel) detailHTML += '<p><strong>' + activity.name + ' (AM):</strong> ' + (oilMap[dm.oilLevel] || dm.oilLevel) + '</p>';
+                            if (da && da.oilLevel) detailHTML += '<p><strong>' + activity.name + ' (PM):</strong> ' + (oilMap[da.oilLevel] || da.oilLevel) + '</p>';
+                        } else {
+                            if (dm && (dm.status === 'ok' || dm.oilLevel)) sCompleted++;
+                            if (da && (da.status === 'ok' || da.oilLevel)) sCompleted++;
+                            if (dm && dm.status === 'ok') detailHTML += '<p><strong>' + activity.name + ' (AM):</strong> ✓ OK</p>';
+                            if (da && da.status === 'ok') detailHTML += '<p><strong>' + activity.name + ' (PM):</strong> ✓ OK</p>';
+                        }
+                    } else if (activity.frequency === 'Diario') {
+                        sTotal += 1;
+                        const ad = dailyLogs[dateStr].sections[section.id].activities[activity.id];
+                        if (activity.type === 'parametros') {
+                            if (ad && ad.value !== null && !isNaN(ad.value)) { sCompleted++;
+                                const v = parseFloat(ad.value);
+                                const oor = (activity.min != null && v < activity.min) || (activity.max != null && v > activity.max);
+                                detailHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + activity.name + ':</strong> ' + (oor ? '⚠️ ' : '') + ad.value + ' ' + (activity.unit || '') + '</p>';
+                            }
+                        } else if (activity.type === 'nivel_aceite') {
+                            if (ad && ad.oilLevel) { sCompleted++;
+                                const oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
+                                detailHTML += '<p><strong>' + activity.name + ':</strong> ' + (oilMap[ad.oilLevel] || ad.oilLevel) + '</p>';
                             }
                         } else {
-                            // Para chequeos, cuenta si está marcado OK o tiene nivel de aceite
-                            if (dataMorning && (dataMorning.status === 'ok' || dataMorning.oilLevel)) completedActivities++;
-                            if (dataAfternoon && (dataAfternoon.status === 'ok' || dataAfternoon.oilLevel)) completedActivities++;
+                            if (ad && ad.status === 'ok') { sCompleted++;
+                                detailHTML += '<p><strong>' + activity.name + ':</strong> ✓ OK</p>';
+                            }
                         }
                     }
                 });
                 
-                // Agregar actividades programadas ejecutadas este día
-                const periodicActivitiesForSection = Object.entries(planActivities || {})
-                    .filter(([key, activity]) => {
-                        if (activity.sectionId != section.id) return false;
-                        if (activity.status !== 'approved') return false;
-                        // Ejecutada este día → siempre incluir
-                        if (activity.lastExecution === dateStr) return true;
-                        // Pendiente: fecha objetivo era hoy o antes
-                        const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
-                        return targetDate <= dateStr;
+                const periodicForSection = Object.entries(window.planActivities || {}).filter(function(entry) {
+                    const a = entry[1];
+                    if (a.sectionId != section.id || a.status !== 'approved') return false;
+                    if (a.lastExecution === dateStr) return true;
+                    const td = a.lastExecution ? a.nextExecution : a.firstExecution;
+                    return td <= dateStr;
+                });
+                sTotal += periodicForSection.length;
+                periodicForSection.forEach(function(entry) { if (entry[1].lastExecution === dateStr) sCompleted++; });
+                
+                if (window.planExecutions && window.planExecutions[dateStr]) {
+                    const sectionExecs = Object.values(window.planExecutions[dateStr]).filter(function(e) { return e.sectionId == section.id; });
+                    sectionExecs.forEach(function(exec) {
+                        detailHTML += '<div style="background:#e3f2fd; padding:6px 8px; border-radius:6px; margin:4px 0; border-left:3px solid #2196f3;">';
+                        detailHTML += '<strong>🔵 ' + exec.activityName + '</strong> <small style="color:#666;">' + (exec.user || '') + '</small>';
+                        if (exec.description) detailHTML += '<br><small style="color:#555;">' + exec.description + '</small>';
+                        if (exec.photos && exec.photos.length > 0) {
+                            const regId = window.registerPhotos(exec.photos);
+                            detailHTML += '<div style="display:flex; gap:4px; margin-top:4px;">';
+                            exec.photos.forEach(function(url, idx) {
+                                detailHTML += '<img src="' + url + '" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="window.openCarouselById(\'' + regId + '\',' + idx + ')">';
+                            });
+                            detailHTML += '</div>';
+                        }
+                        detailHTML += '</div>';
                     });
+                }
                 
-                totalActivities += periodicActivitiesForSection.length;
+                if (sTotal === 0) return;
                 
-                // Contar ejecutadas
-                periodicActivitiesForSection.forEach(([key, activity]) => {
-                    if (activity.lastExecution === dateStr) {
-                        completedActivities++;
-                    }
+                totalActivities += sTotal;
+                completedActivities += sCompleted;
+                
+                sectionData.push({
+                    name: section.name, icon: section.icon,
+                    total: sTotal, completed: sCompleted,
+                    pct: Math.round((sCompleted / sTotal) * 100),
+                    detailHTML: detailHTML
                 });
             });
 
             const percentage = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
-            const pendingActivities = totalActivities - completedActivities;
 
-            // Encabezado con fecha y estado
-            reportHTML = `
-                <div class="report-summary" style="border-left: 4px solid ${statusColor};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="color: #1e3c72; margin: 0;">
-                            ${new Date(dateStr + 'T00:00:00').toLocaleDateString('es-ES', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}
-                        </h3>
-                        <span style="background: ${statusColor}; color: white; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: bold;">
-                            ${statusLabel}
-                        </span>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number">${totalActivities}</div>
-                            <div class="stat-label">Total Actividades</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${completedActivities}</div>
-                            <div class="stat-label">Completadas</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${pendingActivities}</div>
-                            <div class="stat-label">Pendientes</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${percentage}%</div>
-                            <div class="stat-label">Porcentaje</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Mostrar detalles por sección según configuración showInSummary
-            sections.forEach(section => {
-                // Verificar que la sección existe en el dailyLog
-                if (!dailyLogs[dateStr].sections[section.id]) {
-                    return; // Skip esta sección
-                }
+            let reportHTML = '';
+            reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+            reportHTML += '<span style="font-size:13px; color:#666;">' + new Date(dateStr + 'T00:00:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'}) + '</span>';
+            reportHTML += '<span style="background:' + statusColor + '; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:bold;">' + statusLabel + '</span>';
+            reportHTML += '</div>';
+            reportHTML += '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px;">';
+            reportHTML += '<div style="background:#e8f5e9; padding:8px; border-radius:8px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">' + completedActivities + '/' + totalActivities + '</strong><br><small>Actividades</small></div>';
+            reportHTML += '<div style="background:' + (percentage === 100 ? '#e8f5e9' : '#fff8e1') + '; padding:8px; border-radius:8px; text-align:center;"><strong style="color:' + (percentage === 100 ? '#2e7d32' : '#f57f17') + '; font-size:18px;">' + percentage + '%</strong><br><small>Completado</small></div>';
+            reportHTML += '</div>';
+            
+            sectionData.forEach(function(s, idx) {
+                var cardColor = s.pct === 100 ? '#e8f5e9' : (s.pct >= 50 ? '#fff8e1' : '#ffebee');
+                var textColor = s.pct === 100 ? '#2e7d32' : (s.pct >= 50 ? '#f57f17' : '#c62828');
+                var toggleId = 'rpt_section_' + dateStr.replace(/-/g,'') + '_' + idx;
                 
-                // Usar showInSummary de la sección (por defecto "resumido" si no existe)
-                const showInSummary = section.showInSummary || 'resumido';
-                
-                // Si la sección está configurada como "no", no mostrarla
-                if (showInSummary === 'no') {
-                    return;
-                }
-                
-                // Calcular estadísticas de la sección
-                const sectionActivities = activities.filter(a => a.sectionId === section.id);
-                let sectionTotal = 0;
-                let sectionCompleted = 0;
-                
-                sectionActivities.forEach(activity => {
-                    if (activity.frequency === '2 veces al dia') {
-                        sectionTotal += 2;
-                        const dataMorning = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_manana'];
-                        const dataAfternoon = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_tarde'];
-                        
-                        if (activity.type === 'parametros') {
-                            if (dataMorning && dataMorning.value !== null && !isNaN(dataMorning.value)) sectionCompleted++;
-                            if (dataAfternoon && dataAfternoon.value !== null && !isNaN(dataAfternoon.value)) sectionCompleted++;
-                        } else if (activity.type === 'nivel_aceite') {
-                            if (dataMorning && dataMorning.oilLevel) sectionCompleted++;
-                            if (dataAfternoon && dataAfternoon.oilLevel) sectionCompleted++;
-                        } else {
-                            if (dataMorning && dataMorning.status === 'ok') sectionCompleted++;
-                            if (dataAfternoon && dataAfternoon.status === 'ok') sectionCompleted++;
-                        }
-                    } else if (activity.frequency === 'Diario') {
-                        sectionTotal += 1;
-                        const activityData = dailyLogs[dateStr].sections[section.id].activities[activity.id];
-                        
-                        if (activity.type === 'parametros') {
-                            if (activityData && activityData.value !== null && !isNaN(activityData.value)) sectionCompleted++;
-                        } else if (activity.type === 'nivel_aceite') {
-                            if (activityData && activityData.oilLevel) sectionCompleted++;
-                        } else {
-                            if (activityData && activityData.status === 'ok') sectionCompleted++;
-                        }
-                    }
-                });
-                
-                // Agregar actividades programadas pendientes y ejecutadas
-                const periodicActivitiesForSection = Object.entries(window.planActivities || {})
-                    .filter(([key, activity]) => {
-                        if (activity.sectionId != section.id) return false;
-                        if (activity.status !== 'approved') return false;
-                        // Ejecutada ese día → siempre incluir
-                        if (activity.lastExecution === dateStr) return true;
-                        // Pendiente
-                        const targetDate = activity.lastExecution ? activity.nextExecution : activity.firstExecution;
-                        return targetDate <= dateStr;
-                    });
-                
-                sectionTotal += periodicActivitiesForSection.length;
-                
-                // Contar ejecutadas ese día
-                periodicActivitiesForSection.forEach(([key, activity]) => {
-                    if (activity.lastExecution === dateStr) sectionCompleted++;
-                });
-                
-                // Si no hay actividades en la sección, no mostrarla
-                if (sectionTotal === 0) return;
-                
-                const sectionPercentage = Math.round((sectionCompleted / sectionTotal) * 100);
-                
-                // MODO RESUMIDO: Mostrar porcentaje + actividades programadas ejecutadas
-                if (showInSummary === 'resumido') {
-                    reportHTML += '<div class="report-summary">';
-                    reportHTML += '<h3>' + section.icon + ' ' + section.name + '</h3>';
-                    reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold; margin-bottom: 10px;">';
-                    reportHTML += sectionCompleted + '/' + sectionTotal + ' (' + sectionPercentage + '%)';
-                    reportHTML += '</p>';
-                    
-                    // Mostrar actividades programadas ejecutadas este día (también en modo resumido)
-                    if (window.planExecutions && window.planExecutions[dateStr]) {
-                        const executions = Object.values(window.planExecutions[dateStr]);
-                        const sectionExecs = executions.filter(exec => exec.sectionId == section.id);
-                        
-                        if (sectionExecs.length > 0) {
-                            reportHTML += '<div style="margin-top: 10px; padding-top: 10px; border-top: 2px solid #e3f2fd;">';
-                            reportHTML += '<h4 style="color: #2196f3; font-size: 14px; margin-bottom: 10px;">📋 Actividades Programadas Ejecutadas</h4>';
-                            
-                            sectionExecs.forEach(exec => {
-                                const timeInfo = exec.timestamp ? new Date(exec.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                
-                                reportHTML += '<div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #2196f3;">';
-                                reportHTML += '<p style="margin: 0;"><strong>🔵 ' + exec.activityName + '</strong>';
-                                if (timeInfo) reportHTML += ' <small style="color: #999;">(' + exec.user + ' - ' + timeInfo + ')</small>';
-                                reportHTML += '</p>';
-                                
-                                if (exec.description) {
-                                    reportHTML += '<p style="margin: 5px 0 0 0; font-size: 13px; color: #666; font-style: italic;">' + exec.description + '</p>';
-                                }
-                                
-                                if (exec.photos && exec.photos.length > 0) {
-                                    const regId = window.registerPhotos(exec.photos);
-                                    reportHTML += '<div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">';
-                                    exec.photos.forEach((photoUrl, idx) => {
-                                        reportHTML += `<img src="${photoUrl}" 
-                                            style="width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid #2196f3;transition:transform .2s;"
-                                            onmouseover="this.style.transform='scale(1.08)'" 
-                                            onmouseout="this.style.transform='scale(1)'"
-                                            onclick="window.openCarouselById('${regId}', ${idx})">`;
-                                    });
-                                    if (exec.photos.length > 1) {
-                                        reportHTML += `<span style="font-size:12px;color:#666;margin-left:4px;">📷 ${exec.photos.length} fotos</span>`;
-                                    }
-                                    reportHTML += '</div>';
-                                }
-                                
-                                reportHTML += '</div>';
-                            });
-                            
-                            reportHTML += '</div>';
-                        }
-                    }
-                    
-                    reportHTML += '</div>';
-                    return;
-                }
-                
-                // MODO DETALLE: Mostrar porcentaje + actividades
-                let sectionHTML = '';
-                
-                sectionActivities.forEach(activity => {
-                    if (activity.frequency === '2 veces al dia') {
-                        const dataMorning = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_manana'];
-                        const dataAfternoon = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_tarde'];
-                        
-                        if (activity.type === 'parametros') {
-                            if (dataMorning && dataMorning.value !== null && !isNaN(dataMorning.value)) {
-                                const userInfo = dataMorning.user || 'Usuario';
-                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const value = parseFloat(dataMorning.value);
-                                const isOutOfRange = (activity.min !== null && activity.min !== undefined && value < activity.min) || 
-                                                    (activity.max !== null && activity.max !== undefined && value > activity.max);
-                                const alertSymbol = isOutOfRange ? '⚠️ ' : '';
-                                const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                
-                                sectionHTML += '<p style="' + textColor + '"><strong>' + activity.name + ' (Mañana):</strong> ';
-                                sectionHTML += alertSymbol + dataMorning.value + ' ' + (activity.unit || '');
-                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                                sectionHTML += '</p>';
-                            }
-                            
-                            if (dataAfternoon && dataAfternoon.value !== null && !isNaN(dataAfternoon.value)) {
-                                const userInfo = dataAfternoon.user || 'Usuario';
-                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const value = parseFloat(dataAfternoon.value);
-                                const isOutOfRange = (activity.min !== null && activity.min !== undefined && value < activity.min) || 
-                                                    (activity.max !== null && activity.max !== undefined && value > activity.max);
-                                const alertSymbol = isOutOfRange ? '⚠️ ' : '';
-                                const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                
-                                sectionHTML += '<p style="' + textColor + '"><strong>' + activity.name + ' (Tarde):</strong> ';
-                                sectionHTML += alertSymbol + dataAfternoon.value + ' ' + (activity.unit || '');
-                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                                sectionHTML += '</p>';
-                            }
-                        } else if (activity.type === 'nivel_aceite') {
-                            if (dataMorning && dataMorning.oilLevel) {
-                                const userInfo = dataMorning.user || 'Usuario';
-                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const oilLevelText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataMorning.oilLevel] || dataMorning.oilLevel;
-                                
-                                sectionHTML += '<p><strong>' + activity.name + ' (Mañana):</strong> ' + oilLevelText;
-                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                                sectionHTML += '</p>';
-                            }
-                            
-                            if (dataAfternoon && dataAfternoon.oilLevel) {
-                                const userInfo = dataAfternoon.user || 'Usuario';
-                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const oilLevelText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataAfternoon.oilLevel] || dataAfternoon.oilLevel;
-                                
-                                sectionHTML += '<p><strong>' + activity.name + ' (Tarde):</strong> ' + oilLevelText;
-                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                                sectionHTML += '</p>';
-                            }
-                        } else {
-                            if (dataMorning && dataMorning.status === 'ok') {
-                                const userInfo = dataMorning.user || 'Usuario';
-                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                
-                                sectionHTML += '<p><strong>' + activity.name + ' (Mañana):</strong> ✓ OK';
-                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                                sectionHTML += '</p>';
-                            }
-                            
-                            if (dataAfternoon && dataAfternoon.status === 'ok') {
-                                const userInfo = dataAfternoon.user || 'Usuario';
-                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                
-                                sectionHTML += '<p><strong>' + activity.name + ' (Tarde):</strong> ✓ OK';
-                                if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                                sectionHTML += '</p>';
-                            }
-                        }
-                    } else if (activity.frequency === 'Diario') {
-                        const activityData = dailyLogs[dateStr].sections[section.id].activities[activity.id];
-                        
-                        if (activity.type === 'parametros' && activityData && activityData.value !== null && !isNaN(activityData.value)) {
-                            const userInfo = activityData.user || 'Usuario';
-                            const timeInfo = activityData.timestamp ? new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                            const value = parseFloat(activityData.value);
-                            const isOutOfRange = (activity.min !== null && activity.min !== undefined && value < activity.min) || 
-                                                (activity.max !== null && activity.max !== undefined && value > activity.max);
-                            const alertSymbol = isOutOfRange ? '⚠️ ' : '';
-                            const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                            
-                            sectionHTML += '<p style="' + textColor + '"><strong>' + activity.name + ':</strong> ';
-                            sectionHTML += alertSymbol + activityData.value + ' ' + (activity.unit || '');
-                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                            sectionHTML += '</p>';
-                        } else if (activity.type === 'nivel_aceite' && activityData && activityData.oilLevel) {
-                            const userInfo = activityData.user || 'Usuario';
-                            const timeInfo = activityData.timestamp ? new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                            const oilLevelText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[activityData.oilLevel] || activityData.oilLevel;
-                            
-                            sectionHTML += '<p><strong>' + activity.name + ':</strong> ' + oilLevelText;
-                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                            sectionHTML += '</p>';
-                        } else if (activity.type === 'chequeo' && activityData && activityData.status === 'ok') {
-                            const userInfo = activityData.user || 'Usuario';
-                            const timeInfo = activityData.timestamp ? new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                            
-                            sectionHTML += '<p><strong>' + activity.name + ':</strong> ✓ OK';
-                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + userInfo + ' - ' + timeInfo + ')</small>';
-                            sectionHTML += '</p>';
-                        }
-                    }
-                });
-                
-                // Agregar actividades programadas ejecutadas este día
-                if (window.planExecutions && window.planExecutions[dateStr]) {
-                    const executions = Object.values(window.planExecutions[dateStr]);
-                    const sectionExecutions = executions.filter(exec => exec.sectionId == section.id);
-                    
-                    if (sectionExecutions.length > 0) {
-                        console.log('✅ Mostrando', sectionExecutions.length, 'actividades ejecutadas');
-                        sectionHTML += '<div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e3f2fd;"><h4 style="color: #2196f3; font-size: 14px; margin-bottom: 10px;">📋 Actividades Programadas Ejecutadas</h4>';
-                        
-                        sectionExecutions.forEach(exec => {
-                            console.log('   - ' + exec.activityName + ' por ' + exec.user);
-                            const timeInfo = exec.timestamp ? new Date(exec.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                            
-                            sectionHTML += '<div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #2196f3;">';
-                            sectionHTML += '<p style="margin: 0;"><strong>🔵 ' + exec.activityName + '</strong>';
-                            if (timeInfo) sectionHTML += ' <small style="color: #999;">(' + exec.user + ' - ' + timeInfo + ')</small>';
-                            sectionHTML += '</p>';
-                            
-                            if (exec.description) {
-                                sectionHTML += '<p style="margin: 5px 0 0 0; font-size: 13px; color: #666; font-style: italic;">' + exec.description + '</p>';
-                            }
-                            
-                            if (exec.photos && exec.photos.length > 0) {
-                                const regId = window.registerPhotos(exec.photos);
-                                sectionHTML += '<div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">';
-                                exec.photos.forEach((photoUrl, idx) => {
-                                    sectionHTML += `<img src="${photoUrl}" 
-                                        style="width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid #2196f3;transition:transform .2s;"
-                                        onmouseover="this.style.transform='scale(1.08)'" 
-                                        onmouseout="this.style.transform='scale(1)'"
-                                        onclick="window.openCarouselById('${regId}', ${idx})">`;
-                                });
-                                if (exec.photos.length > 1) {
-                                    sectionHTML += `<span style="font-size:12px;color:#666;margin-left:4px;">📷 ${exec.photos.length} fotos</span>`;
-                                }
-                                sectionHTML += '</div>';
-                            }
-                            
-                            sectionHTML += '</div>';
-                        });
-                        
-                        sectionHTML += '</div>';
-                    }
-                }
-                
-                // Mostrar sección si tiene actividades (diarias o programadas)
-                if (sectionHTML || sectionTotal > 0) {
-                    reportHTML += '<div class="report-summary">';
-                    reportHTML += '<h3>' + section.icon + ' ' + section.name + '</h3>';
-                    reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold; margin-bottom: 10px;">';
-                    reportHTML += sectionCompleted + '/' + sectionTotal + ' (' + sectionPercentage + '%)';
-                    reportHTML += '</p>';
-                    reportHTML += sectionHTML;
-                    reportHTML += '</div>';
-                }
+                reportHTML += '<div style="background:white; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow:hidden;">';
+                reportHTML += '<div onclick="var el=document.getElementById(\'' + toggleId + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▶\':\'▼\';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">';
+                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
+                reportHTML += '<span style="font-size:18px;">' + s.icon + '</span>';
+                reportHTML += '<div><strong style="font-size:13px; color:#1e3c72;">' + s.name + '</strong><div style="font-size:11px; color:#999;">' + s.completed + '/' + s.total + ' actividades</div></div>';
+                reportHTML += '</div>';
+                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
+                reportHTML += '<span style="background:' + cardColor + '; color:' + textColor + '; padding:3px 10px; border-radius:10px; font-size:13px; font-weight:bold;">' + s.pct + '%</span>';
+                reportHTML += '<span class="chv" style="color:#999; font-size:12px;">▶</span>';
+                reportHTML += '</div></div>';
+                reportHTML += '<div id="' + toggleId + '" style="display:none; padding:8px 12px 12px; border-top:1px solid #f0f0f0; font-size:13px; line-height:1.8;">';
+                reportHTML += (s.detailHTML || '<p style="color:#999;">Sin datos aún</p>');
+                reportHTML += '</div></div>';
             });
-
-
-            // Mostrar novedades
-            const novedadesRaw = dailyLogs[dateStr].novedades;
-            const novedadesList = novedadesRaw
-                ? (Array.isArray(novedadesRaw) ? novedadesRaw : Object.values(novedadesRaw))
-                : [];
-
-            if (novedadesList.length > 0) {
-                reportHTML += `<div class="report-summary"><h3>📝 Novedades del Día</h3>`;
-                
-                novedadesList.forEach((novedad, index) => {
-                    const sectionBadge = novedad.sectionName && novedad.sectionName !== 'General' 
-                        ? `<span style="background: #667eea; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; margin-right: 8px;">📦 ${novedad.sectionName}</span>` 
-                        : `<span style="background: #6c757d; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; margin-right: 8px;">📋 General</span>`;
-                    
-                    const fullText = novedad.text || '';
-                    const shortText = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
-                    const timestamp = novedad.timestamp ? new Date(novedad.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                    
-                    // Todas las fotos como thumbnails con carrusel
-                    const photos = novedad.photos && novedad.photos.length > 0 ? novedad.photos : [];
-                    let photosHtml = '';
-                    if (photos.length > 0) {
-                        const regId = window.registerPhotos(photos);
-                        photosHtml = `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">`;
-                        photos.forEach((url, idx) => {
-                            photosHtml += `<img src="${url}" 
-                                style="width:58px;height:58px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid #667eea;transition:transform .15s;"
-                                onmouseover="this.style.transform='scale(1.08)'"
-                                onmouseout="this.style.transform='scale(1)'"
-                                onclick="event.stopPropagation(); window.openCarouselById('${regId}', ${idx})">`;
-                        });
-                        if (photos.length > 1) {
-                            photosHtml += `<span style="font-size:11px;color:#888;align-self:center;margin-left:2px;">📷 ${photos.length}</span>`;
-                        }
-                        photosHtml += `</div>`;
-                    }
-                    
-                    reportHTML += `
-                        <div style="padding: 12px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea; cursor: pointer; transition: all 0.2s;"
-                             onclick="openNovedadDetailModal('${dateStr}', ${index})"
-                             onmouseover="this.style.background='#e9ecef'" 
-                             onmouseout="this.style.background='#f8f9fa'">
-                            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                                <div style="flex:1;">
-                                    <div style="margin-bottom: 5px;">
-                                        ${sectionBadge}
-                                        <small style="color: #6c757d;">🕐 ${timestamp}</small>
-                                    </div>
-                                    <div style="color: #495057; font-size: 14px;">${shortText}</div>
-                                    <small style="color: #6c757d; font-size: 12px;">👤 ${novedad.user}</small>
-                                    ${photosHtml}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                reportHTML += `</div>`;
-            }
-
             // ========== SECCIÓN DE PRODUCCIÓN EN REPORTE DIARIO ==========
             const prodRec = window.productionRecords ? window.productionRecords[dateStr] : null;
             if (prodRec) {
