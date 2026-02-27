@@ -6755,16 +6755,20 @@
                     confirmedBy: currentUser.fullName
                 });
                 
-                // ✅ INTEGRACIÓN VENTAS: Sumar moldes al inventario de ventas
+                // ✅ INTEGRACIÓN VENTAS: Solo sumar moldes restantes (parciales ya fueron sumados)
                 const currentAvailable = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-                const newAvailable = currentAvailable + kpis.moldsProduced;
-                await salesInventoryRef.update({
-                    available: newAvailable,
-                    lastUpdated: new Date().toISOString(),
-                    lastSource: 'production_' + currentDate,
-                    lastAdded: kpis.moldsProduced
-                });
-                console.log(`📦 Inventario ventas: ${currentAvailable} + ${kpis.moldsProduced} = ${newAvailable}`);
+                if (remainingMolds > 0) {
+                    const newAvailable = currentAvailable + remainingMolds;
+                    await salesInventoryRef.update({
+                        available: newAvailable,
+                        lastUpdated: new Date().toISOString(),
+                        lastSource: 'production_close_' + currentDate,
+                        lastAdded: remainingMolds
+                    });
+                    console.log(`📦 Inventario ventas (cierre): ${currentAvailable} + ${remainingMolds} restantes = ${newAvailable}`);
+                } else {
+                    console.log(`📦 Inventario ventas: sin moldes restantes (todo cargado en parciales)`);
+                }
                 
                 showSyncIndicator('✅ Producción confirmada', 'synced');
             } catch (err) {
@@ -6885,6 +6889,18 @@
                 await productionRecordsRef.child(currentDate).update({
                     partialLoads: partials
                 });
+                
+                // ✅ INTEGRACIÓN VENTAS: Sumar moldes parciales al inventario
+                const currentAvailable = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+                const newAvailable = currentAvailable + molds;
+                await salesInventoryRef.update({
+                    available: newAvailable,
+                    lastUpdated: new Date().toISOString(),
+                    lastSource: 'partial_' + currentDate + '_' + partials.length,
+                    lastAdded: molds
+                });
+                console.log(`📦 Inventario ventas (parcial): ${currentAvailable} + ${molds} = ${newAvailable}`);
+                
                 document.getElementById('prodPartialModal').style.display = 'none';
                 showSyncIndicator(`✅ ${molds} moldes cargados a almacén`, 'synced');
             } catch (err) {
