@@ -9,8 +9,6 @@ const UPDATE_TYPE = 'major';
 // Archivos que se guardarán en cache (para funcionar offline)
 const CACHE_FILES = [
     './index.html',
-    './produccion.html',
-    './js/produccion.js',
     './manifest.json'
 ];
 
@@ -76,7 +74,8 @@ self.addEventListener('fetch', (event) => {
     // NO cachear Firebase (debe ser siempre en tiempo real)
     if (url.hostname.includes('firebase') || 
         url.hostname.includes('firebaseio') ||
-        url.hostname.includes('googleapis')) {
+        url.hostname.includes('googleapis') ||
+        url.protocol === 'chrome-extension:') {
         return; // Dejar pasar sin cachear
     }
     
