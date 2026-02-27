@@ -91,22 +91,26 @@
         .header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
-            padding: 8px 15px;
+            padding: 7px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         #stickyTop {
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 100;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .clock-bar {
-            background: linear-gradient(135deg, #2a5298 0%, #3b6dc6 100%);
+            background: linear-gradient(135deg, #2a5298 0%, #4a7bd4 100%);
             color: white;
-            padding: 5px 15px;
+            padding: 4px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -115,44 +119,46 @@
         .header-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+        }
+
+        .header-logo {
+            height: 28px;
+            border-radius: 4px;
         }
 
         .header-text h1 {
-            font-size: 16px;
+            font-size: 15px;
             margin-bottom: 0;
-        }
-
-        .header-text p {
-            display: none;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .user-info {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
+        .user-name-label {
+            font-size: 10px;
+            opacity: 0.85;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .btn-logout {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.15);
             color: white;
-            border: 1px solid rgba(255,255,255,0.4);
-            padding: 4px 10px;
-            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 3px 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-size: 11px;
-            transition: all 0.3s;
         }
 
         .btn-logout:hover {
-            background: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.35);
         }
 
         .tabs {
@@ -165,7 +171,7 @@
         .tab {
             flex: 0 0 auto;
             min-width: 0;
-            padding: 8px 12px;
+            padding: 7px 11px;
             text-align: center;
             cursor: pointer;
             background: #f8f9fa;
@@ -173,7 +179,7 @@
             font-size: 11px;
             font-weight: 600;
             color: #495057;
-            transition: all 0.3s;
+            transition: all 0.2s;
             white-space: nowrap;
         }
 
@@ -189,7 +195,7 @@
 
         .tab-content {
             display: none;
-            padding: 15px;
+            padding: 12px;
         }
 
         .tab-content.active {
@@ -583,17 +589,21 @@
             .container {
                 max-width: 900px;
                 margin: 0 auto;
-                border-radius: 0;
                 box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            }
+            #stickyTop {
+                max-width: 900px;
+                left: 50%;
+                transform: translateX(-50%);
             }
         }
 
         @media (max-width: 768px) {
             .header {
-                padding: 6px 10px;
+                padding: 5px 10px;
             }
             .clock-bar {
-                padding: 4px 10px;
+                padding: 3px 10px;
             }
             .tab-content {
                 padding: 10px;
@@ -642,35 +652,39 @@
         <div id="stickyTop">
             <div class="header">
                 <div class="header-left">
-                    <img src="Logo_HSB_APP.png" alt="HSB" style="height: 32px; border-radius: 4px;" onerror="this.style.display='none'">
+                    <img src="Logo_HSB_APP.png" alt="" class="header-logo" id="headerLogo" 
+                         onerror="this.onerror=null; this.src='./Logo_HSB_APP.png'; this.onerror=function(){this.onerror=null; this.src='./icons/icon-72.png'; this.onerror=function(){this.style.display='none'; document.getElementById('logoFallback').style.display='inline';};};">
+                    <span id="logoFallback" style="font-size:22px; display:none;">🧊</span>
                     <div class="header-text">
                         <h1>HSB App</h1>
                     </div>
                 </div>
                 <div class="header-right">
-                    <span style="font-size:11px; opacity:0.8;" id="currentUserName"></span>
+                    <span class="user-name-label" id="currentUserName"></span>
                     <button class="btn-logout" onclick="logout()">🚪</button>
                 </div>
             </div>
 
-            <div id="systemClock" class="clock-bar">
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span style="font-size:13px;">📅</span>
-                    <span id="clockDate" style="font-size:12px; font-weight:600;">Cargando...</span>
+            <div class="clock-bar">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:12px;">📅</span>
+                    <span id="clockDate" style="font-size:11px; font-weight:600;">Cargando...</span>
                 </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span id="clockDay" style="font-size:11px; opacity:0.85;">--</span>
-                    <span style="font-size:15px; font-weight:bold; font-family:monospace;" id="clockTime">--:--</span>
+                <div>
+                    <span id="clockTime" style="font-size:14px; font-weight:bold; font-family:monospace;">--:--</span>
                 </div>
             </div>
 
             <div class="tabs" id="mainTabs"></div>
         </div>
 
+        <!-- Spacer: JS sets height to match stickyTop -->
+        <div id="contentBelow"></div>
+
         <!-- TAB: REPORTE DIARIO -->
         <div id="tab-reporte-diario" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="color:#1e3c72; font-size:16px;">📊 Reporte Diario</h3>
+                <h3 style="color:#1e3c72; font-size:16px;">🔧 Mantenimiento</h3>
                 <button onclick="shareReport()" class="btn btn-secondary" style="padding:6px 12px; font-size:11px;">📱 WhatsApp</button>
             </div>
             <div id="reportContent"></div>
@@ -2557,10 +2571,22 @@
             renderTabs();
             initializeDailyLog();
             
-            // Iniciar reloj del sistema con pequeño delay para asegurar DOM
+            // Ajustar padding para compensar header fijo
             setTimeout(() => {
+                adjustTopPadding();
                 startSystemClock();
-            }, 100);
+            }, 150);
+            
+            // Re-ajustar cuando cambie tamaño de ventana
+            window.addEventListener('resize', adjustTopPadding);
+        }
+        
+        function adjustTopPadding() {
+            const stickyTop = document.getElementById('stickyTop');
+            const contentBelow = document.getElementById('contentBelow');
+            if (stickyTop && contentBelow) {
+                contentBelow.style.height = stickyTop.offsetHeight + 'px';
+            }
         }
 
         // ==================== TABS ====================
@@ -2589,6 +2615,9 @@
             if (userTabs.length > 0) {
                 showTab(userTabs[0].id);
             }
+            
+            // Re-ajustar padding tras renderizar tabs (pueden hacer wrap)
+            setTimeout(adjustTopPadding, 50);
         }
 
         function showTab(tabId, targetButton) {
@@ -3803,54 +3832,56 @@
                 const prodPartialMolds = prodPartials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
                 const prodStatus = prodRec.confirmed ? '✅ Confirmada' : (prodRec.endTime ? '⏳ Pendiente' : '🔄 En proceso');
                 const prodColor = prodRec.confirmed ? '#28a745' : (prodRec.endTime ? '#667eea' : '#ffc107');
+                const prodToggleId = 'rpt_prod_' + dateStr.replace(/-/g,'');
+                const prodMoldsLabel = prodKpis ? prodKpis.moldsProduced + ' moldes' : (prodPartialMolds > 0 ? prodPartialMolds + ' moldes' : 'En curso');
                 
-                reportHTML += `<div class="report-summary" style="border-left: 4px solid ${prodColor}; margin-top: 15px;">`;
-                reportHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">`;
-                reportHTML += `<h3 style="color:#1e3c72;">🧊 Producción</h3>`;
-                reportHTML += `<span style="background:${prodColor}; color:white; padding:4px 12px; border-radius:15px; font-size:12px; font-weight:bold;">${prodStatus}</span>`;
-                reportHTML += `</div>`;
+                // Card expandible de producción
+                reportHTML += '<div style="background:white; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow:hidden;">';
+                reportHTML += `<div onclick="var el=document.getElementById('${prodToggleId}'); el.style.display=el.style.display==='none'?'block':'none'; this.querySelector('.chv').textContent=el.style.display==='none'?'▶':'▼';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">`;
+                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
+                reportHTML += '<span style="font-size:18px;">🧊</span>';
+                reportHTML += `<div><strong style="font-size:13px; color:#1e3c72;">Producción</strong><div style="font-size:11px; color:#999;">${prodMoldsLabel}</div></div>`;
+                reportHTML += '</div>';
+                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
+                reportHTML += `<span style="background:${prodColor}20; color:${prodColor}; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:bold;">${prodStatus}</span>`;
+                reportHTML += '<span class="chv" style="color:#999; font-size:12px;">▶</span>';
+                reportHTML += '</div></div>';
+                reportHTML += `<div id="${prodToggleId}" style="display:none; padding:8px 12px 12px; border-top:1px solid #f0f0f0; font-size:13px;">`;
                 
                 if (prodKpis) {
-                    // Producción finalizada o confirmada
                     reportHTML += `<div class="stats-grid">`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.moldsProduced}</div><div class="stat-label">Moldes Total</div></div>`;
+                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.moldsProduced}</div><div class="stat-label">Moldes</div></div>`;
                     reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.rowsProduced}</div><div class="stat-label">Filas</div></div>`;
                     reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.totalHours}h</div><div class="stat-label">Tiempo</div></div>`;
                     reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.rowsPerHour}</div><div class="stat-label">Filas/h</div></div>`;
                     reportHTML += `</div>`;
                     if (prodPartials.length > 0) {
-                        reportHTML += `<div style="background:#e8f5e9; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:8px;">`;
-                        reportHTML += `<strong>📦 Cargas a almacén:</strong> ${prodPartials.length} cargas — ${prodPartialMolds} moldes cargados`;
+                        reportHTML += `<div style="background:#e8f5e9; padding:8px; border-radius:6px; font-size:12px; margin-bottom:6px;">`;
+                        reportHTML += `<strong>📦 Cargas:</strong> ${prodPartials.length} — ${prodPartialMolds} moldes`;
                         const remaining = prodKpis.moldsProduced - prodPartialMolds;
-                        if (remaining > 0) reportHTML += ` | Restante al cierre: ${remaining} moldes`;
+                        if (remaining > 0) reportHTML += ` | Restante: ${remaining}`;
                         reportHTML += `</div>`;
                     }
-                    reportHTML += `<div style="background:#f8f9fa; padding:12px; border-radius:8px; font-size:13px;">`;
+                    reportHTML += `<div style="background:#f8f9fa; padding:8px; border-radius:6px; font-size:12px;">`;
                     reportHTML += `<p><strong>Rango:</strong> ${prodRec.startRow}${prodRec.startCol} → ${prodRec.endRow}${prodRec.endCol}</p>`;
-                    reportHTML += `<p><strong>Horario:</strong> ${prodRec.startTime} — ${prodRec.endTime} (${prodKpis.totalHours} horas)</p>`;
-                    reportHTML += `<p><strong>Temperatura:</strong> ${prodRec.startTemp || '-'}°C → ${prodRec.endTemp || '-'}°C</p>`;
+                    reportHTML += `<p><strong>Horario:</strong> ${prodRec.startTime} — ${prodRec.endTime}</p>`;
+                    reportHTML += `<p><strong>Temp:</strong> ${prodRec.startTemp || '-'}°C → ${prodRec.endTemp || '-'}°C</p>`;
                     reportHTML += `<p><strong>Operadores:</strong> ${Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames}</p>`;
                     reportHTML += `</div>`;
                 } else {
-                    // Producción en curso
-                    reportHTML += `<div class="stats-grid">`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodPartialMolds > 0 ? prodPartialMolds : '—'}</div><div class="stat-label">Moldes Producidos</div></div>`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodPartials.length}</div><div class="stat-label">Cargas a Almacén</div></div>`;
-                    reportHTML += `</div>`;
                     if (prodPartials.length > 0) {
-                        reportHTML += `<div style="background:#e8f5e9; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:8px;">`;
+                        reportHTML += `<div style="background:#e8f5e9; padding:8px; border-radius:6px; font-size:12px; margin-bottom:6px;">`;
                         prodPartials.forEach((p, i) => {
-                            reportHTML += `<div style="${i > 0 ? 'border-top:1px solid #c8e6c9; margin-top:4px; padding-top:4px;' : ''}">📦 Carga ${i + 1}: ${p.fromRow}${p.fromCol} → ${p.toRow}${p.toCol} = <strong>${p.moldsLoaded} moldes</strong></div>`;
+                            reportHTML += `<div style="${i > 0 ? 'border-top:1px solid #c8e6c9; margin-top:3px; padding-top:3px;' : ''}">📦 Carga ${i + 1}: ${p.fromRow}${p.fromCol} → ${p.toRow}${p.toCol} = <strong>${p.moldsLoaded} moldes</strong></div>`;
                         });
                         reportHTML += `</div>`;
                     }
-                    reportHTML += `<div style="background:#fff3e0; padding:12px; border-radius:8px; font-size:13px;">`;
-                    reportHTML += `<p><strong>Inicio:</strong> ${prodRec.startTime} | Posición: ${prodRec.startRow}${prodRec.startCol} | Temp: ${prodRec.startTemp || '-'}°C</p>`;
+                    reportHTML += `<div style="background:#fff3e0; padding:8px; border-radius:6px; font-size:12px;">`;
+                    reportHTML += `<p><strong>Inicio:</strong> ${prodRec.startTime} | ${prodRec.startRow}${prodRec.startCol} | ${prodRec.startTemp || '-'}°C</p>`;
                     reportHTML += `<p><strong>Operadores:</strong> ${Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames}</p>`;
-                    reportHTML += `<p style="color:#ffc107; font-weight:bold; margin-top:8px;">⏳ Producción en curso</p>`;
                     reportHTML += `</div>`;
                 }
-                reportHTML += `</div>`;
+                reportHTML += `</div></div>`;
             }
 
             // ========== SECCIÓN DE VENTAS EN REPORTE DIARIO ==========
@@ -6045,8 +6076,6 @@
             
             if (clockDay) {
                 clockDay.textContent = `Día operacional: ${operationalDateFormatted}`;
-            } else {
-                console.error('❌ clockDay element not found!');
             }
         }
         
@@ -7396,16 +7425,28 @@
             const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0);
             const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
             
-            let html = `<div class="report-summary" style="border-left:4px solid #28a745; margin-top:15px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h3 style="color:#1e3c72;">💰 Ventas</h3>
-                    <span style="background:#28a745; color:white; padding:4px 12px; border-radius:15px; font-size:12px; font-weight:bold;">${sales.length} despachos</span>
-                </div>
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number">${totalMolds}</div><div class="stat-label">Moldes Vendidos</div></div>
-                    <div class="stat-card"><div class="stat-number">$${totalAmount.toFixed(0)}</div><div class="stat-label">Total USD</div></div>
-                    <div class="stat-card"><div class="stat-number">${totalMerma}</div><div class="stat-label">Merma</div></div>
-                </div>`;
+            const ventasToggleId = 'rpt_ventas_' + dateStr.replace(/-/g,'');
+            
+            // Card expandible
+            let html = '<div style="background:white; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow:hidden;">';
+            html += `<div onclick="var el=document.getElementById('${ventasToggleId}'); el.style.display=el.style.display==='none'?'block':'none'; this.querySelector('.chv').textContent=el.style.display==='none'?'▶':'▼';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">`;
+            html += '<div style="display:flex; align-items:center; gap:8px;">';
+            html += '<span style="font-size:18px;">💰</span>';
+            html += `<div><strong style="font-size:13px; color:#1e3c72;">Ventas</strong><div style="font-size:11px; color:#999;">${totalMolds} moldes · $${totalAmount.toFixed(0)}</div></div>`;
+            html += '</div>';
+            html += '<div style="display:flex; align-items:center; gap:8px;">';
+            html += `<span style="background:#e8f5e9; color:#2e7d32; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:bold;">${sales.length} despachos</span>`;
+            html += '<span class="chv" style="color:#999; font-size:12px;">▶</span>';
+            html += '</div></div>';
+            html += `<div id="${ventasToggleId}" style="display:none; padding:8px 12px 12px; border-top:1px solid #f0f0f0; font-size:13px;">`;
+            
+            // Stats grid
+            html += '<div class="stats-grid">';
+            html += `<div class="stat-card"><div class="stat-number">${totalMolds}</div><div class="stat-label">Moldes</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">$${totalAmount.toFixed(0)}</div><div class="stat-label">USD</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">${totalMerma}</div><div class="stat-label">Merma</div></div>`;
+            html += `<div class="stat-card"><div class="stat-number">${sales.length}</div><div class="stat-label">Despachos</div></div>`;
+            html += '</div>';
             
             // Desglose por cliente
             const byClient = {};
@@ -7416,14 +7457,14 @@
             });
             
             if (Object.keys(byClient).length > 0) {
-                html += `<div style="background:#f8f9fa; padding:12px; border-radius:8px; font-size:13px;">`;
+                html += '<div style="background:#f8f9fa; padding:8px; border-radius:6px; font-size:12px;">';
                 Object.values(byClient).forEach(c => {
                     html += `<p><strong>${c.name}:</strong> ${c.total} moldes (${c.count} despacho${c.count > 1 ? 's' : ''})</p>`;
                 });
-                html += `</div>`;
+                html += '</div>';
             }
             
-            html += `</div>`;
+            html += '</div></div>';
             return html;
         }
     </script>
