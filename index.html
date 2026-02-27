@@ -1031,24 +1031,24 @@
         </div>
     </div>
 
-    <!-- Modal: Registrar Merma -->
+    <!-- Modal: Registrar Donación -->
     <div id="mermaModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📦 Registrar Merma</h2>
+                <h2>🎁 Registrar Donación</h2>
                 <span class="close" onclick="document.getElementById('mermaModal').style.display='none'">&times;</span>
             </div>
             <div id="mermaInventoryBadge" style="text-align:center; margin-bottom:15px;"></div>
             <div class="form-group">
-                <label>🧊 Moldes de Merma:</label>
+                <label>🧊 Moldes a Donar:</label>
                 <input type="number" id="mermaMoldsQty" min="1" placeholder="Cantidad">
             </div>
             <div class="form-group">
-                <label>📝 Motivo / Observación:</label>
-                <textarea id="mermaObs" rows="2" placeholder="Describe la merma..."></textarea>
+                <label>📝 Destinatario / Observación:</label>
+                <textarea id="mermaObs" rows="2" placeholder="Ej: Policía, Bomberos, Evento..."></textarea>
             </div>
             <div style="text-align:center; margin-top:15px;">
-                <button onclick="saveMerma()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); padding:12px 35px;">💾 Registrar Merma</button>
+                <button onclick="saveMerma()" class="btn" style="background:linear-gradient(135deg,#17a2b8,#138496); padding:12px 35px;">💾 Registrar Donación</button>
             </div>
         </div>
     </div>
@@ -7009,7 +7009,8 @@
             // Despachos de hoy
             const todayDispatches = getDispatchesByDate(currentDate);
             const todayMolds = todayDispatches.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
-            const todayMerma = todayDispatches.reduce((s, d) => s + (d.merma || 0), 0);
+            const todayMerma = todayDispatches.filter(d => d.status === 'dispatched').reduce((s, d) => s + (d.merma || 0), 0);
+            const todayDonaciones = todayDispatches.filter(d => d.status === 'donacion').reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
             const todayPending = todayDispatches.filter(d => d.status === 'pending_approval');
             
             let html = `
@@ -7020,15 +7021,15 @@
                     </div>
                     <div class="stat-card" style="border-top:3px solid #28a745;">
                         <div class="stat-number" style="color:#28a745;">${todayMolds}</div>
-                        <div class="stat-label">Despachados Hoy</div>
+                        <div class="stat-label">Vendidos Hoy</div>
                     </div>
                     <div class="stat-card" style="border-top:3px solid #ffc107;">
                         <div class="stat-number" style="color:#ffc107;">${todayMerma}</div>
                         <div class="stat-label">Merma Hoy</div>
                     </div>
-                    <div class="stat-card" style="border-top:3px solid #dc3545;">
-                        <div class="stat-number" style="color:#dc3545;">${todayPending.length}</div>
-                        <div class="stat-label">Pendientes Aprobación</div>
+                    <div class="stat-card" style="border-top:3px solid #17a2b8;">
+                        <div class="stat-number" style="color:#17a2b8;">${todayDonaciones}</div>
+                        <div class="stat-label">Donaciones Hoy</div>
                     </div>
                 </div>
                 
@@ -7036,8 +7037,8 @@
                     <button onclick="openDispatchModal()" class="btn btn-secondary" style="flex:1; min-width:140px; font-size:15px; padding:14px;">
                         🚚 Nuevo Despacho
                     </button>
-                    <button onclick="openMermaModal()" class="btn" style="flex:1; min-width:140px; background:linear-gradient(135deg,#dc3545,#c82333); font-size:15px; padding:14px;">
-                        📦 Registrar Merma
+                    <button onclick="openMermaModal()" class="btn" style="flex:1; min-width:140px; background:linear-gradient(135deg,#17a2b8,#138496); font-size:15px; padding:14px;">
+                        🎁 Registrar Donación
                     </button>
                 </div>`;
             
@@ -7064,7 +7065,7 @@
             // Despachos completados de hoy
             const todayCompleted = todayDispatches.filter(d => d.status === 'dispatched');
             if (todayCompleted.length > 0) {
-                html += `<div class="report-summary" style="border-left:4px solid #28a745;">
+                html += `<div class="report-summary" style="border-left:4px solid #28a745; margin-bottom:15px;">
                     <h4 style="color:#1e3c72; margin-bottom:10px;">✅ Despachos de Hoy (${todayCompleted.length})</h4>`;
                 todayCompleted.forEach(d => {
                     const cli = salesClients[d.clientId] || {};
@@ -7074,6 +7075,21 @@
                         ${d.merma > 0 ? ` | Merma: ${d.merma}` : ''}
                         | ${pt.name || ''}
                         ${d.dispatchObs ? `<br><small style="color:#666;">${d.dispatchObs}</small>` : ''}
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            
+            // Donaciones de hoy
+            const todayDonacionesList = todayDispatches.filter(d => d.status === 'donacion' || d.status === 'merma');
+            if (todayDonacionesList.length > 0) {
+                html += `<div class="report-summary" style="border-left:4px solid #17a2b8; margin-bottom:15px;">
+                    <h4 style="color:#17a2b8; margin-bottom:10px;">🎁 Donaciones de Hoy (${todayDonacionesList.length})</h4>`;
+                todayDonacionesList.forEach(d => {
+                    const qty = d.donacion || d.merma || 0;
+                    html += `<div style="background:#e0f7fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px;">
+                        🎁 <strong>${qty} moldes</strong> — ${d.observations || 'Sin detalle'}
+                        <br><small style="color:#666;">${d.createdBy || ''}</small>
                     </div>`;
                 });
                 html += `</div>`;
@@ -7373,22 +7389,22 @@
             
             if (!molds || molds <= 0) return alert('Ingresa una cantidad válida');
             if (molds > avail) return alert(`Inventario insuficiente. Disponible: ${avail}`);
-            if (!obs) return alert('Describe el motivo de la merma');
+            if (!obs) return alert('Indica el destinatario de la donación');
             
             try {
-                showSyncIndicator('⚙️ Registrando merma...', 'syncing');
+                showSyncIndicator('⚙️ Registrando donación...', 'syncing');
                 await salesDispatchesRef.push({
                     date: currentDate,
-                    clientId: '', clientName: 'MERMA',
+                    clientId: '', clientName: 'DONACIÓN',
                     moldsRequested: 0, moldsDispatched: 0,
-                    merma: molds, observations: obs,
-                    status: 'merma',
+                    donacion: molds, observations: obs,
+                    status: 'donacion',
                     createdBy: currentUser.fullName,
                     createdAt: new Date().toISOString()
                 });
                 await salesInventoryRef.update({ available: avail - molds, lastUpdated: new Date().toISOString() });
                 document.getElementById('mermaModal').style.display = 'none';
-                showSyncIndicator(`✅ Merma registrada: ${molds} moldes`, 'synced');
+                showSyncIndicator(`✅ Donación registrada: ${molds} moldes`, 'synced');
             } catch (err) {
                 console.error(err);
                 showSyncIndicator('✗ Error', 'error');
@@ -7567,7 +7583,7 @@
         // ========== HISTORIAL DE VENTAS ==========
         function renderHistorialVentas() {
             const container = document.getElementById('historialContent');
-            const allDispatches = Object.entries(salesDispatches).filter(([, d]) => d.status === 'dispatched' || d.status === 'merma');
+            const allDispatches = Object.entries(salesDispatches).filter(([, d]) => d.status === 'dispatched' || d.status === 'merma' || d.status === 'donacion');
             
             // Agrupar por fecha
             const byDate = {};
@@ -7586,9 +7602,9 @@
             dates.forEach(date => {
                 const dispatches = byDate[date];
                 const sales = dispatches.filter(d => d.status === 'dispatched');
-                const mermas = dispatches.filter(d => d.status === 'merma');
+                const donacionesList = dispatches.filter(d => d.status === 'merma' || d.status === 'donacion');
                 const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
-                const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0);
+                const totalDonacion = donacionesList.reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
                 const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
                 
                 // Agrupar ventas por cliente
@@ -7607,7 +7623,7 @@
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:12px;">
                         <div style="background:#e8f5e9; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">${totalMolds}</strong><br><small>Moldes</small></div>
                         <div style="background:#e3f2fd; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">${sales.length}</strong><br><small>Despachos</small></div>
-                        <div style="background:#fff8e1; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#f57f17; font-size:18px;">${totalMerma}</strong><br><small>Merma</small></div>
+                        <div style="background:#e0f7fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#00838f; font-size:18px;">${totalDonacion}</strong><br><small>Donaciones</small></div>
                         <div style="background:#f3e5f5; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$${totalAmount.toFixed(0)}</strong><br><small>Total</small></div>
                     </div>`;
                 
@@ -7653,35 +7669,38 @@
         // (Se llama desde renderDayReport, inyecta HTML de ventas)
         function renderVentasReportSection(dateStr) {
             const dispatches = Object.entries(salesDispatches)
-                .filter(([, d]) => d.date === dateStr && (d.status === 'dispatched' || d.status === 'merma'))
+                .filter(([, d]) => d.date === dateStr && (d.status === 'dispatched' || d.status === 'merma' || d.status === 'donacion'))
                 .map(([k, d]) => ({ ...d, _key: k }));
             
             if (dispatches.length === 0) return '';
             
             const sales = dispatches.filter(d => d.status === 'dispatched');
-            const mermas = dispatches.filter(d => d.status === 'merma');
-            const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
-            const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0) + sales.reduce((s, d) => s + (d.merma || 0), 0);
+            const donaciones = dispatches.filter(d => d.status === 'donacion' || d.status === 'merma');
+            const totalMoldsSold = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+            const totalMerma = sales.reduce((s, d) => s + (d.merma || 0), 0);
+            const totalDonaciones = donaciones.reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
             const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const vToggle = 'rpt_ventas_' + dateStr.replace(/-/g,'');
             
-            let html = '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
+            // ========== CARD VENTAS ==========
+            var html = '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
             html += '<div onclick="var el=document.getElementById(\'' + vToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
             html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
             html += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">💰 Ventas</span>';
             html += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:#28a745; color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;">' + sales.length + ' despachos</span><span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span></div>';
             html += '</div>';
             html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
-            html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMolds + '</strong><br><small style="color:#555;">Moldes</small></div>';
-            html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + sales.length + '</strong><br><small style="color:#555;">Despachos</small></div>';
+            html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMoldsSold + '</strong><br><small style="color:#555;">Moldes Vendidos</small></div>';
             html += '<div style="background:#ffebee; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#c62828; font-size:20px;">' + totalMerma + '</strong><br><small style="color:#555;">Merma</small></div>';
-            html += '<div style="background:#f3e5f5; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#7b1fa2; font-size:20px;">$' + totalAmount.toFixed(0) + '</strong><br><small style="color:#555;">Total</small></div>';
+            html += '<div style="background:#e0f7fa; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#00838f; font-size:20px;">' + totalDonaciones + '</strong><br><small style="color:#555;">Donaciones</small></div>';
+            html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + avail + '</strong><br><small style="color:#555;">Disponibles</small></div>';
             html += '</div></div>';
             
             // Detalle expandible
             html += '<div id="' + vToggle + '" style="display:none; border-top:1px solid #eee; font-size:12px;">';
             
-            // Agrupar ventas por cliente con detalle completo
+            // Agrupar ventas por cliente
             var byClient = {};
             sales.forEach(function(d) {
                 var cId = d.clientId || 'unknown';
@@ -7692,7 +7711,6 @@
                 byClient[cId].dispatches.push(d);
             });
             
-            // Renderizar cada cliente con sus despachos
             Object.values(byClient).forEach(function(client) {
                 var cToggle = vToggle + '_' + client.name.replace(/[^a-zA-Z0-9]/g, '');
                 html += '<div style="border-bottom:1px solid #f0f0f0;">';
@@ -7714,16 +7732,67 @@
                 html += '</div></div>';
             });
             
-            // Mermas independientes (no asociadas a cliente)
-            if (mermas.length > 0) {
-                html += '<div style="background:#ffebee; padding:8px 12px; border-top:1px solid #eee;">';
-                mermas.forEach(function(m) {
-                    html += '<div style="padding:2px 0;">📦 Merma: ' + (m.merma || 0) + ' moldes — ' + (m.observations || 'Sin detalle') + '</div>';
+            // Donaciones
+            if (donaciones.length > 0) {
+                html += '<div style="background:#e0f7fa; padding:8px 12px; border-top:1px solid #eee;">';
+                donaciones.forEach(function(d) {
+                    html += '<div style="padding:2px 0;">🎁 Donación: ' + (d.donacion || d.merma || 0) + ' moldes — ' + (d.observations || 'Sin detalle') + '</div>';
                 });
                 html += '</div>';
             }
             
             html += '</div></div>';
+            
+            // ========== CARD FINANZAS ==========
+            // Ventas del día
+            var ventasDia = totalAmount;
+            
+            // Ventas de la semana (sábado como inicio)
+            var today = new Date(dateStr + 'T12:00:00');
+            var dayOfWeek = today.getDay(); // 0=dom, 1=lun... 6=sab
+            var daysSinceSat = dayOfWeek >= 6 ? dayOfWeek - 6 : dayOfWeek + 1;
+            var satDate = new Date(today);
+            satDate.setDate(today.getDate() - daysSinceSat);
+            var ventasSemana = 0;
+            
+            // Ventas del mes
+            var monthStr = dateStr.substring(0, 7); // YYYY-MM
+            var ventasMes = 0;
+            
+            Object.entries(salesDispatches).forEach(function(entry) {
+                var d = entry[1];
+                if (d.status !== 'dispatched') return;
+                var amt = d.totalAmount || 0;
+                
+                // Semana (desde sábado)
+                var dDate = new Date(d.date + 'T12:00:00');
+                if (dDate >= satDate && dDate <= today) ventasSemana += amt;
+                
+                // Mes
+                if (d.date && d.date.substring(0, 7) === monthStr) ventasMes += amt;
+            });
+            
+            var fToggle = 'rpt_finanzas_' + dateStr.replace(/-/g, '');
+            html += '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
+            html += '<div onclick="var el=document.getElementById(\'' + fToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+            html += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">💵 Finanzas</span>';
+            html += '<span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span>';
+            html += '</div>';
+            html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">';
+            html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">$' + ventasDia.toFixed(0) + '</strong><br><small style="color:#555;">Hoy</small></div>';
+            html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">$' + ventasSemana.toFixed(0) + '</strong><br><small style="color:#555;">Semana</small></div>';
+            html += '<div style="background:#f3e5f5; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$' + ventasMes.toFixed(0) + '</strong><br><small style="color:#555;">Mes</small></div>';
+            html += '</div></div>';
+            
+            // Detalle finanzas expandible
+            html += '<div id="' + fToggle + '" style="display:none; padding:10px 12px; border-top:1px solid #eee; font-size:12px;">';
+            var satLabel = satDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+            html += '<p><strong>Ventas del día:</strong> $' + ventasDia.toFixed(2) + '</p>';
+            html += '<p><strong>Ventas de la semana</strong> (desde ' + satLabel + '): $' + ventasSemana.toFixed(2) + '</p>';
+            html += '<p><strong>Ventas del mes:</strong> $' + ventasMes.toFixed(2) + '</p>';
+            html += '</div></div>';
+            
             return html;
         }
     </script>
