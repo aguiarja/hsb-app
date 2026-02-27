@@ -64,7 +64,7 @@
             background: white;
             border-radius: 0;
             box-shadow: none;
-            overflow: hidden;
+            overflow: visible;
             min-height: 100vh;
         }
 
@@ -95,9 +95,21 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        #stickyTop {
             position: sticky;
             top: 0;
             z-index: 100;
+        }
+
+        .clock-bar {
+            background: linear-gradient(135deg, #2a5298 0%, #3b6dc6 100%);
+            color: white;
+            padding: 5px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .header-left {
@@ -148,9 +160,6 @@
             flex-wrap: wrap;
             background: #f8f9fa;
             border-bottom: 2px solid #dee2e6;
-            position: sticky;
-            top: 44px;
-            z-index: 99;
         }
 
         .tab {
@@ -583,6 +592,9 @@
             .header {
                 padding: 6px 10px;
             }
+            .clock-bar {
+                padding: 4px 10px;
+            }
             .tab-content {
                 padding: 10px;
             }
@@ -626,32 +638,37 @@
 
     <!-- PANTALLA PRINCIPAL -->
     <div id="mainScreen" class="container hidden">
-        <div class="header">
-            <div class="header-left">
-                <img src="Logo_HSB_APP.png" alt="HSB" style="height: 30px; border-radius: 4px;">
-                <div class="header-text">
-                    <h1>HSB App</h1>
+        <!-- BARRA FIJA: Header + Reloj + Tabs -->
+        <div id="stickyTop">
+            <div class="header">
+                <div class="header-left">
+                    <img src="Logo_HSB_APP.png" alt="HSB" style="height: 32px; border-radius: 4px;" onerror="this.style.display='none'">
+                    <div class="header-text">
+                        <h1>HSB App</h1>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <span style="font-size:11px; opacity:0.8;" id="currentUserName"></span>
+                    <button class="btn-logout" onclick="logout()">🚪</button>
                 </div>
             </div>
-            <div class="header-right">
-                <div class="user-info">
-                    👤 <strong id="currentUserName"></strong>
-                </div>
-                <button class="btn-logout" onclick="logout()">🚪</button>
-            </div>
-        </div>
 
-        <div class="tabs" id="mainTabs"></div>
+            <div id="systemClock" class="clock-bar">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:13px;">📅</span>
+                    <span id="clockDate" style="font-size:12px; font-weight:600;">Cargando...</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span id="clockDay" style="font-size:11px; opacity:0.85;">--</span>
+                    <span style="font-size:15px; font-weight:bold; font-family:monospace;" id="clockTime">--:--</span>
+                </div>
+            </div>
+
+            <div class="tabs" id="mainTabs"></div>
+        </div>
 
         <!-- TAB: REPORTE DIARIO -->
         <div id="tab-reporte-diario" class="tab-content">
-            <div id="systemClock" style="background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:10px 15px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <div style="font-weight:bold; font-size:14px;" id="clockDate">Cargando...</div>
-                    <div style="font-size:11px; opacity:0.9;" id="clockDay">Día actual: --</div>
-                </div>
-                <div style="font-size:20px; font-weight:bold; font-family:monospace;" id="clockTime">--:--</div>
-            </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="color:#1e3c72; font-size:16px;">📊 Reporte Diario</h3>
                 <button onclick="shareReport()" class="btn btn-secondary" style="padding:6px 12px; font-size:11px;">📱 WhatsApp</button>
