@@ -3669,222 +3669,211 @@
         
         function renderReporteDiario() {
             const container = document.getElementById('reportContent');
-            
             if (!dailyLogs[currentDate]) {
-                container.innerHTML = '<div class="report-summary"><p>No hay datos para el día actual.</p></div>';
+                container.innerHTML = '<div style="text-align:center; color:#999; padding:30px;">No hay datos para el día actual.</div>';
                 return;
             }
-            
             container.innerHTML = renderDayReport(currentDate, true);
         }
         
         function renderDayReport(dateStr, isCurrentDay) {
             if (!dailyLogs[dateStr]) return '';
             
-            const statusLabel = isCurrentDay ? '🟢 En proceso' : '🔴 Cerrado';
-            const statusColor = isCurrentDay ? '#28a745' : '#dc3545';
-            
-            let totalActivities = 0;
-            let completedActivities = 0;
-            let sectionData = [];
+            let reportHTML = '';
 
-            sections.forEach(section => {
+            // ========== 1. CARD MANTENIMIENTO ==========
+            var totalAct = 0, completedAct = 0;
+            var mSectionDetails = [];
+            
+            sections.forEach(function(section) {
                 if (!dailyLogs[dateStr].sections || !dailyLogs[dateStr].sections[section.id]) return;
-                
-                const showInSummary = section.showInSummary || 'resumido';
+                var showInSummary = section.showInSummary || 'resumido';
                 if (showInSummary === 'no') return;
                 
-                const sectionActivities = activities.filter(a => a.sectionId === section.id);
-                let sTotal = 0, sCompleted = 0;
-                let detailHTML = '';
+                var sectionActs = activities.filter(function(a) { return a.sectionId === section.id; });
+                var sT = 0, sC = 0;
+                var dHTML = '';
                 
-                sectionActivities.forEach(activity => {
-                    if (activity.frequency === '2 veces al dia') {
-                        sTotal += 2;
-                        const dm = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_manana'];
-                        const da = dailyLogs[dateStr].sections[section.id].activities[activity.id + '_tarde'];
+                sectionActs.forEach(function(act) {
+                    if (act.frequency === '2 veces al dia') {
+                        sT += 2;
+                        var dm = dailyLogs[dateStr].sections[section.id].activities[act.id + '_manana'];
+                        var da = dailyLogs[dateStr].sections[section.id].activities[act.id + '_tarde'];
                         
-                        if (activity.type === 'parametros') {
-                            if (dm && dm.value !== null && dm.value !== undefined && dm.value !== '' && !isNaN(dm.value)) sCompleted++;
-                            if (da && da.value !== null && da.value !== undefined && da.value !== '' && !isNaN(da.value)) sCompleted++;
+                        if (act.type === 'parametros') {
+                            if (dm && dm.value !== null && dm.value !== undefined && dm.value !== '' && !isNaN(dm.value)) sC++;
+                            if (da && da.value !== null && da.value !== undefined && da.value !== '' && !isNaN(da.value)) sC++;
                             if (dm && dm.value !== null && !isNaN(dm.value)) {
-                                const v = parseFloat(dm.value);
-                                const oor = (activity.min != null && v < activity.min) || (activity.max != null && v > activity.max);
-                                detailHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + activity.name + ' (AM):</strong> ' + (oor ? '⚠️ ' : '') + dm.value + ' ' + (activity.unit || '') + ' <small style="color:#999;">' + (dm.user || '') + '</small></p>';
+                                var v = parseFloat(dm.value);
+                                var oor = (act.min != null && v < act.min) || (act.max != null && v > act.max);
+                                dHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (AM):</strong> ' + (oor ? '⚠️ ' : '') + dm.value + ' ' + (act.unit || '') + ' <small style="color:#999;">' + (dm.user || '') + '</small></p>';
                             }
                             if (da && da.value !== null && !isNaN(da.value)) {
-                                const v = parseFloat(da.value);
-                                const oor = (activity.min != null && v < activity.min) || (activity.max != null && v > activity.max);
-                                detailHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + activity.name + ' (PM):</strong> ' + (oor ? '⚠️ ' : '') + da.value + ' ' + (activity.unit || '') + ' <small style="color:#999;">' + (da.user || '') + '</small></p>';
+                                var v2 = parseFloat(da.value);
+                                var oor2 = (act.min != null && v2 < act.min) || (act.max != null && v2 > act.max);
+                                dHTML += '<p style="' + (oor2 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (PM):</strong> ' + (oor2 ? '⚠️ ' : '') + da.value + ' ' + (act.unit || '') + ' <small style="color:#999;">' + (da.user || '') + '</small></p>';
                             }
-                        } else if (activity.type === 'nivel_aceite') {
-                            if (dm && dm.oilLevel) sCompleted++;
-                            if (da && da.oilLevel) sCompleted++;
-                            const oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
-                            if (dm && dm.oilLevel) detailHTML += '<p><strong>' + activity.name + ' (AM):</strong> ' + (oilMap[dm.oilLevel] || dm.oilLevel) + '</p>';
-                            if (da && da.oilLevel) detailHTML += '<p><strong>' + activity.name + ' (PM):</strong> ' + (oilMap[da.oilLevel] || da.oilLevel) + '</p>';
+                        } else if (act.type === 'nivel_aceite') {
+                            if (dm && dm.oilLevel) sC++;
+                            if (da && da.oilLevel) sC++;
+                            var oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
+                            if (dm && dm.oilLevel) dHTML += '<p><strong>' + act.name + ' (AM):</strong> ' + (oilMap[dm.oilLevel] || dm.oilLevel) + '</p>';
+                            if (da && da.oilLevel) dHTML += '<p><strong>' + act.name + ' (PM):</strong> ' + (oilMap[da.oilLevel] || da.oilLevel) + '</p>';
                         } else {
-                            if (dm && (dm.status === 'ok' || dm.oilLevel)) sCompleted++;
-                            if (da && (da.status === 'ok' || da.oilLevel)) sCompleted++;
-                            if (dm && dm.status === 'ok') detailHTML += '<p><strong>' + activity.name + ' (AM):</strong> ✓ OK</p>';
-                            if (da && da.status === 'ok') detailHTML += '<p><strong>' + activity.name + ' (PM):</strong> ✓ OK</p>';
+                            if (dm && (dm.status === 'ok' || dm.oilLevel)) sC++;
+                            if (da && (da.status === 'ok' || da.oilLevel)) sC++;
+                            if (dm && dm.status === 'ok') dHTML += '<p><strong>' + act.name + ' (AM):</strong> ✓ OK</p>';
+                            if (da && da.status === 'ok') dHTML += '<p><strong>' + act.name + ' (PM):</strong> ✓ OK</p>';
                         }
-                    } else if (activity.frequency === 'Diario') {
-                        sTotal += 1;
-                        const ad = dailyLogs[dateStr].sections[section.id].activities[activity.id];
-                        if (activity.type === 'parametros') {
-                            if (ad && ad.value !== null && !isNaN(ad.value)) { sCompleted++;
-                                const v = parseFloat(ad.value);
-                                const oor = (activity.min != null && v < activity.min) || (activity.max != null && v > activity.max);
-                                detailHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + activity.name + ':</strong> ' + (oor ? '⚠️ ' : '') + ad.value + ' ' + (activity.unit || '') + '</p>';
+                    } else if (act.frequency === 'Diario') {
+                        sT += 1;
+                        var ad = dailyLogs[dateStr].sections[section.id].activities[act.id];
+                        if (act.type === 'parametros') {
+                            if (ad && ad.value !== null && !isNaN(ad.value)) { sC++;
+                                var v3 = parseFloat(ad.value);
+                                var oor3 = (act.min != null && v3 < act.min) || (act.max != null && v3 > act.max);
+                                dHTML += '<p style="' + (oor3 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ':</strong> ' + (oor3 ? '⚠️ ' : '') + ad.value + ' ' + (act.unit || '') + '</p>';
                             }
-                        } else if (activity.type === 'nivel_aceite') {
-                            if (ad && ad.oilLevel) { sCompleted++;
-                                const oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
-                                detailHTML += '<p><strong>' + activity.name + ':</strong> ' + (oilMap[ad.oilLevel] || ad.oilLevel) + '</p>';
+                        } else if (act.type === 'nivel_aceite') {
+                            if (ad && ad.oilLevel) { sC++;
+                                var oM = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
+                                dHTML += '<p><strong>' + act.name + ':</strong> ' + (oM[ad.oilLevel] || ad.oilLevel) + '</p>';
                             }
                         } else {
-                            if (ad && ad.status === 'ok') { sCompleted++;
-                                detailHTML += '<p><strong>' + activity.name + ':</strong> ✓ OK</p>';
+                            if (ad && ad.status === 'ok') { sC++;
+                                dHTML += '<p><strong>' + act.name + ':</strong> ✓ OK</p>';
                             }
                         }
                     }
                 });
                 
-                const periodicForSection = Object.entries(window.planActivities || {}).filter(function(entry) {
-                    const a = entry[1];
+                // Plan activities
+                var periodicFS = Object.entries(window.planActivities || {}).filter(function(e) {
+                    var a = e[1];
                     if (a.sectionId != section.id || a.status !== 'approved') return false;
                     if (a.lastExecution === dateStr) return true;
-                    const td = a.lastExecution ? a.nextExecution : a.firstExecution;
+                    var td = a.lastExecution ? a.nextExecution : a.firstExecution;
                     return td <= dateStr;
                 });
-                sTotal += periodicForSection.length;
-                periodicForSection.forEach(function(entry) { if (entry[1].lastExecution === dateStr) sCompleted++; });
+                sT += periodicFS.length;
+                periodicFS.forEach(function(e) { if (e[1].lastExecution === dateStr) sC++; });
                 
                 if (window.planExecutions && window.planExecutions[dateStr]) {
-                    const sectionExecs = Object.values(window.planExecutions[dateStr]).filter(function(e) { return e.sectionId == section.id; });
-                    sectionExecs.forEach(function(exec) {
-                        detailHTML += '<div style="background:#e3f2fd; padding:6px 8px; border-radius:6px; margin:4px 0; border-left:3px solid #2196f3;">';
-                        detailHTML += '<strong>🔵 ' + exec.activityName + '</strong> <small style="color:#666;">' + (exec.user || '') + '</small>';
-                        if (exec.description) detailHTML += '<br><small style="color:#555;">' + exec.description + '</small>';
+                    var sExecs = Object.values(window.planExecutions[dateStr]).filter(function(e) { return e.sectionId == section.id; });
+                    sExecs.forEach(function(exec) {
+                        dHTML += '<div style="background:#e3f2fd; padding:6px 8px; border-radius:6px; margin:4px 0; border-left:3px solid #2196f3;">';
+                        dHTML += '<strong>🔵 ' + exec.activityName + '</strong> <small style="color:#666;">' + (exec.user || '') + '</small>';
+                        if (exec.description) dHTML += '<br><small style="color:#555;">' + exec.description + '</small>';
                         if (exec.photos && exec.photos.length > 0) {
-                            const regId = window.registerPhotos(exec.photos);
-                            detailHTML += '<div style="display:flex; gap:4px; margin-top:4px;">';
+                            var regId = window.registerPhotos(exec.photos);
+                            dHTML += '<div style="display:flex; gap:4px; margin-top:4px;">';
                             exec.photos.forEach(function(url, idx) {
-                                detailHTML += '<img src="' + url + '" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="window.openCarouselById(\'' + regId + '\',' + idx + ')">';
+                                dHTML += '<img src="' + url + '" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="window.openCarouselById(\'' + regId + '\',' + idx + ')">';
                             });
-                            detailHTML += '</div>';
+                            dHTML += '</div>';
                         }
-                        detailHTML += '</div>';
+                        dHTML += '</div>';
                     });
                 }
                 
-                if (sTotal === 0) return;
+                if (sT === 0) return;
+                totalAct += sT;
+                completedAct += sC;
                 
-                totalActivities += sTotal;
-                completedActivities += sCompleted;
-                
-                sectionData.push({
+                mSectionDetails.push({
                     name: section.name, icon: section.icon,
-                    total: sTotal, completed: sCompleted,
-                    pct: Math.round((sCompleted / sTotal) * 100),
-                    detailHTML: detailHTML
+                    total: sT, completed: sC,
+                    pct: Math.round((sC / sT) * 100),
+                    detailHTML: dHTML
                 });
             });
-
-            const percentage = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
-
-            let reportHTML = '';
-            reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
-            reportHTML += '<span style="font-size:13px; color:#666;">' + new Date(dateStr + 'T00:00:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long'}) + '</span>';
-            reportHTML += '<span style="background:' + statusColor + '; color:white; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:bold;">' + statusLabel + '</span>';
-            reportHTML += '</div>';
-            reportHTML += '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px;">';
-            reportHTML += '<div style="background:#e8f5e9; padding:8px; border-radius:8px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">' + completedActivities + '/' + totalActivities + '</strong><br><small>Actividades</small></div>';
-            reportHTML += '<div style="background:' + (percentage === 100 ? '#e8f5e9' : '#fff8e1') + '; padding:8px; border-radius:8px; text-align:center;"><strong style="color:' + (percentage === 100 ? '#2e7d32' : '#f57f17') + '; font-size:18px;">' + percentage + '%</strong><br><small>Completado</small></div>';
-            reportHTML += '</div>';
             
-            sectionData.forEach(function(s, idx) {
-                var cardColor = s.pct === 100 ? '#e8f5e9' : (s.pct >= 50 ? '#fff8e1' : '#ffebee');
-                var textColor = s.pct === 100 ? '#2e7d32' : (s.pct >= 50 ? '#f57f17' : '#c62828');
-                var toggleId = 'rpt_section_' + dateStr.replace(/-/g,'') + '_' + idx;
-                
-                reportHTML += '<div style="background:white; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow:hidden;">';
-                reportHTML += '<div onclick="var el=document.getElementById(\'' + toggleId + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▶\':\'▼\';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">';
-                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
-                reportHTML += '<span style="font-size:18px;">' + s.icon + '</span>';
-                reportHTML += '<div><strong style="font-size:13px; color:#1e3c72;">' + s.name + '</strong><div style="font-size:11px; color:#999;">' + s.completed + '/' + s.total + ' actividades</div></div>';
+            var mPct = totalAct > 0 ? Math.round((completedAct / totalAct) * 100) : 0;
+            var mPending = totalAct - completedAct;
+            var mToggle = 'rpt_mant_' + dateStr.replace(/-/g, '');
+            
+            // --- Card Mantenimiento ---
+            var mPctColor = mPct === 100 ? '#2e7d32' : (mPct >= 50 ? '#f57f17' : '#c62828');
+            var mPctBg = mPct === 100 ? '#e8f5e9' : (mPct >= 50 ? '#fff8e1' : '#ffebee');
+            
+            reportHTML += '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
+            reportHTML += '<div onclick="var el=document.getElementById(\'' + mToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
+            reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+            reportHTML += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">🔧 Mantenimiento</span>';
+            reportHTML += '<span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span>';
+            reportHTML += '</div>';
+            reportHTML += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
+            reportHTML += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + completedAct + '</strong><br><small style="color:#555;">Completadas</small></div>';
+            reportHTML += '<div style="background:#fff3e0; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#e65100; font-size:20px;">' + mPending + '</strong><br><small style="color:#555;">Pendientes</small></div>';
+            reportHTML += '<div style="background:#f3e5f5; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#7b1fa2; font-size:20px;">' + totalAct + '</strong><br><small style="color:#555;">Total</small></div>';
+            reportHTML += '<div style="background:' + mPctBg + '; border-radius:8px; padding:8px; text-align:center;"><strong style="color:' + mPctColor + '; font-size:20px;">' + mPct + '%</strong><br><small style="color:#555;">Avance</small></div>';
+            reportHTML += '</div></div>';
+            
+            // Detalle expandible (oculto)
+            reportHTML += '<div id="' + mToggle + '" style="display:none; border-top:1px solid #eee;">';
+            mSectionDetails.forEach(function(s, idx) {
+                var subToggle = mToggle + '_sub' + idx;
+                var sPctBg = s.pct === 100 ? '#e8f5e9' : (s.pct >= 50 ? '#fff8e1' : '#ffebee');
+                var sPctColor = s.pct === 100 ? '#2e7d32' : (s.pct >= 50 ? '#f57f17' : '#c62828');
+                reportHTML += '<div style="border-bottom:1px solid #f5f5f5;">';
+                reportHTML += '<div onclick="var el=document.getElementById(\'' + subToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.sch\').textContent=el.style.display===\'none\'?\'▶\':\'▼\';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">';
+                reportHTML += '<div style="display:flex; align-items:center; gap:6px;"><span>' + s.icon + '</span><strong style="font-size:13px; color:#333;">' + s.name + '</strong><small style="color:#999;"> ' + s.completed + '/' + s.total + '</small></div>';
+                reportHTML += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:' + sPctBg + '; color:' + sPctColor + '; padding:2px 8px; border-radius:8px; font-size:12px; font-weight:bold;">' + s.pct + '%</span><span class="sch" style="color:#999; font-size:11px;">▶</span></div>';
                 reportHTML += '</div>';
-                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
-                reportHTML += '<span style="background:' + cardColor + '; color:' + textColor + '; padding:3px 10px; border-radius:10px; font-size:13px; font-weight:bold;">' + s.pct + '%</span>';
-                reportHTML += '<span class="chv" style="color:#999; font-size:12px;">▶</span>';
-                reportHTML += '</div></div>';
-                reportHTML += '<div id="' + toggleId + '" style="display:none; padding:8px 12px 12px; border-top:1px solid #f0f0f0; font-size:13px; line-height:1.8;">';
-                reportHTML += (s.detailHTML || '<p style="color:#999;">Sin datos aún</p>');
-                reportHTML += '</div></div>';
+                reportHTML += '<div id="' + subToggle + '" style="display:none; padding:6px 12px 10px; font-size:12px; line-height:1.7; background:#fafafa;">' + (s.detailHTML || '<p style="color:#bbb;">Sin datos</p>') + '</div>';
+                reportHTML += '</div>';
             });
-            // ========== SECCIÓN DE PRODUCCIÓN EN REPORTE DIARIO ==========
-            const prodRec = window.productionRecords ? window.productionRecords[dateStr] : null;
+            reportHTML += '</div></div>';
+
+            // ========== 2. CARD PRODUCCIÓN ==========
+            var prodRec = window.productionRecords ? window.productionRecords[dateStr] : null;
             if (prodRec) {
-                const prodKpis = (prodRec.endTime && prodRec.startTime) ? calculateProductionKPIs(prodRec.startRow, prodRec.startCol, prodRec.endRow, prodRec.endCol, prodRec.startTime, prodRec.endTime) : null;
-                const prodOpNames = prodRec.operatorNamesSnapshot || getProductionOperatorNames(prodRec.operatorIds || []);
-                const prodPartials = prodRec.partialLoads || [];
-                const prodPartialMolds = prodPartials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
-                const prodStatus = prodRec.confirmed ? '✅ Confirmada' : (prodRec.endTime ? '⏳ Pendiente' : '🔄 En proceso');
-                const prodColor = prodRec.confirmed ? '#28a745' : (prodRec.endTime ? '#667eea' : '#ffc107');
-                const prodToggleId = 'rpt_prod_' + dateStr.replace(/-/g,'');
-                const prodMoldsLabel = prodKpis ? prodKpis.moldsProduced + ' moldes' : (prodPartialMolds > 0 ? prodPartialMolds + ' moldes' : 'En curso');
+                var prodKpis = (prodRec.endTime && prodRec.startTime) ? calculateProductionKPIs(prodRec.startRow, prodRec.startCol, prodRec.endRow, prodRec.endCol, prodRec.startTime, prodRec.endTime) : null;
+                var prodOpNames = prodRec.operatorNamesSnapshot || getProductionOperatorNames(prodRec.operatorIds || []);
+                var prodPartials = prodRec.partialLoads || [];
+                var prodPartialMolds = prodPartials.reduce(function(s, p) { return s + (p.moldsLoaded || 0); }, 0);
+                var prodColor = prodRec.confirmed ? '#28a745' : (prodRec.endTime ? '#667eea' : '#ffc107');
+                var prodStatusTxt = prodRec.confirmed ? 'Confirmada' : (prodRec.endTime ? 'Pendiente' : 'En proceso');
+                var pToggle = 'rpt_prod_' + dateStr.replace(/-/g, '');
                 
-                // Card expandible de producción
-                reportHTML += '<div style="background:white; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow:hidden;">';
-                reportHTML += `<div onclick="var el=document.getElementById('${prodToggleId}'); el.style.display=el.style.display==='none'?'block':'none'; this.querySelector('.chv').textContent=el.style.display==='none'?'▶':'▼';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">`;
-                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
-                reportHTML += '<span style="font-size:18px;">🧊</span>';
-                reportHTML += `<div><strong style="font-size:13px; color:#1e3c72;">Producción</strong><div style="font-size:11px; color:#999;">${prodMoldsLabel}</div></div>`;
+                var pMoldes = prodKpis ? prodKpis.moldsProduced : (prodPartialMolds > 0 ? prodPartialMolds : '—');
+                var pFilas = prodKpis ? prodKpis.rowsProduced : '—';
+                var pTiempo = prodKpis ? prodKpis.totalHours + 'h' : '—';
+                var pRendimiento = prodKpis ? prodKpis.rowsPerHour : '—';
+                
+                reportHTML += '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
+                reportHTML += '<div onclick="var el=document.getElementById(\'' + pToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
+                reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+                reportHTML += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">🧊 Producción</span>';
+                reportHTML += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:' + prodColor + '; color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;">' + prodStatusTxt + '</span><span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span></div>';
                 reportHTML += '</div>';
-                reportHTML += '<div style="display:flex; align-items:center; gap:8px;">';
-                reportHTML += `<span style="background:${prodColor}20; color:${prodColor}; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:bold;">${prodStatus}</span>`;
-                reportHTML += '<span class="chv" style="color:#999; font-size:12px;">▶</span>';
+                reportHTML += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
+                reportHTML += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + pMoldes + '</strong><br><small style="color:#555;">Moldes</small></div>';
+                reportHTML += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + pFilas + '</strong><br><small style="color:#555;">Filas</small></div>';
+                reportHTML += '<div style="background:#fff3e0; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#e65100; font-size:20px;">' + pTiempo + '</strong><br><small style="color:#555;">Tiempo</small></div>';
+                reportHTML += '<div style="background:#f3e5f5; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#7b1fa2; font-size:20px;">' + pRendimiento + '</strong><br><small style="color:#555;">Filas/h</small></div>';
                 reportHTML += '</div></div>';
-                reportHTML += `<div id="${prodToggleId}" style="display:none; padding:8px 12px 12px; border-top:1px solid #f0f0f0; font-size:13px;">`;
                 
-                if (prodKpis) {
-                    reportHTML += `<div class="stats-grid">`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.moldsProduced}</div><div class="stat-label">Moldes</div></div>`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.rowsProduced}</div><div class="stat-label">Filas</div></div>`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.totalHours}h</div><div class="stat-label">Tiempo</div></div>`;
-                    reportHTML += `<div class="stat-card"><div class="stat-number">${prodKpis.rowsPerHour}</div><div class="stat-label">Filas/h</div></div>`;
-                    reportHTML += `</div>`;
-                    if (prodPartials.length > 0) {
-                        reportHTML += `<div style="background:#e8f5e9; padding:8px; border-radius:6px; font-size:12px; margin-bottom:6px;">`;
-                        reportHTML += `<strong>📦 Cargas:</strong> ${prodPartials.length} — ${prodPartialMolds} moldes`;
-                        const remaining = prodKpis.moldsProduced - prodPartialMolds;
-                        if (remaining > 0) reportHTML += ` | Restante: ${remaining}`;
-                        reportHTML += `</div>`;
-                    }
-                    reportHTML += `<div style="background:#f8f9fa; padding:8px; border-radius:6px; font-size:12px;">`;
-                    reportHTML += `<p><strong>Rango:</strong> ${prodRec.startRow}${prodRec.startCol} → ${prodRec.endRow}${prodRec.endCol}</p>`;
-                    reportHTML += `<p><strong>Horario:</strong> ${prodRec.startTime} — ${prodRec.endTime}</p>`;
-                    reportHTML += `<p><strong>Temp:</strong> ${prodRec.startTemp || '-'}°C → ${prodRec.endTemp || '-'}°C</p>`;
-                    reportHTML += `<p><strong>Operadores:</strong> ${Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames}</p>`;
-                    reportHTML += `</div>`;
-                } else {
-                    if (prodPartials.length > 0) {
-                        reportHTML += `<div style="background:#e8f5e9; padding:8px; border-radius:6px; font-size:12px; margin-bottom:6px;">`;
-                        prodPartials.forEach((p, i) => {
-                            reportHTML += `<div style="${i > 0 ? 'border-top:1px solid #c8e6c9; margin-top:3px; padding-top:3px;' : ''}">📦 Carga ${i + 1}: ${p.fromRow}${p.fromCol} → ${p.toRow}${p.toCol} = <strong>${p.moldsLoaded} moldes</strong></div>`;
-                        });
-                        reportHTML += `</div>`;
-                    }
-                    reportHTML += `<div style="background:#fff3e0; padding:8px; border-radius:6px; font-size:12px;">`;
-                    reportHTML += `<p><strong>Inicio:</strong> ${prodRec.startTime} | ${prodRec.startRow}${prodRec.startCol} | ${prodRec.startTemp || '-'}°C</p>`;
-                    reportHTML += `<p><strong>Operadores:</strong> ${Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames}</p>`;
-                    reportHTML += `</div>`;
+                // Detalle expandible
+                reportHTML += '<div id="' + pToggle + '" style="display:none; padding:10px 12px; border-top:1px solid #eee; font-size:12px;">';
+                if (prodPartials.length > 0) {
+                    reportHTML += '<div style="background:#e8f5e9; padding:8px; border-radius:6px; margin-bottom:6px;">';
+                    reportHTML += '<strong>📦 Cargas a almacén:</strong> ' + prodPartials.length + ' — ' + prodPartialMolds + ' moldes';
+                    if (prodKpis) { var rem = prodKpis.moldsProduced - prodPartialMolds; if (rem > 0) reportHTML += ' | Restante: ' + rem; }
+                    reportHTML += '</div>';
+                    prodPartials.forEach(function(p, i) {
+                        reportHTML += '<div style="' + (i > 0 ? 'border-top:1px solid #e8e8e8; margin-top:3px; padding-top:3px;' : '') + 'font-size:12px;">📦 Carga ' + (i+1) + ': ' + p.fromRow + p.fromCol + ' → ' + p.toRow + p.toCol + ' = <strong>' + p.moldsLoaded + ' moldes</strong></div>';
+                    });
                 }
-                reportHTML += `</div></div>`;
+                reportHTML += '<div style="background:#f8f9fa; padding:8px; border-radius:6px; margin-top:6px;">';
+                reportHTML += '<p><strong>Rango:</strong> ' + prodRec.startRow + prodRec.startCol + ' → ' + (prodRec.endRow || '—') + (prodRec.endCol || '') + '</p>';
+                reportHTML += '<p><strong>Horario:</strong> ' + prodRec.startTime + (prodRec.endTime ? ' — ' + prodRec.endTime : ' (en curso)') + '</p>';
+                reportHTML += '<p><strong>Temp:</strong> ' + (prodRec.startTemp || '-') + '°C' + (prodRec.endTemp ? ' → ' + prodRec.endTemp + '°C' : '') + '</p>';
+                reportHTML += '<p><strong>Operadores:</strong> ' + (Array.isArray(prodOpNames) ? prodOpNames.join(', ') : prodOpNames) + '</p>';
+                reportHTML += '</div></div></div>';
             }
 
-            // ========== SECCIÓN DE VENTAS EN REPORTE DIARIO ==========
+            // ========== 3. CARD VENTAS ==========
             reportHTML += renderVentasReportSection(dateStr);
 
             return reportHTML;
@@ -7424,31 +7413,24 @@
             const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
             const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0);
             const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
+            const vToggle = 'rpt_ventas_' + dateStr.replace(/-/g,'');
             
-            const ventasToggleId = 'rpt_ventas_' + dateStr.replace(/-/g,'');
-            
-            // Card expandible
-            let html = '<div style="background:white; border-radius:10px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1); overflow:hidden;">';
-            html += `<div onclick="var el=document.getElementById('${ventasToggleId}'); el.style.display=el.style.display==='none'?'block':'none'; this.querySelector('.chv').textContent=el.style.display==='none'?'▶':'▼';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">`;
-            html += '<div style="display:flex; align-items:center; gap:8px;">';
-            html += '<span style="font-size:18px;">💰</span>';
-            html += `<div><strong style="font-size:13px; color:#1e3c72;">Ventas</strong><div style="font-size:11px; color:#999;">${totalMolds} moldes · $${totalAmount.toFixed(0)}</div></div>`;
+            let html = '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
+            html += '<div onclick="var el=document.getElementById(\'' + vToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
+            html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">';
+            html += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">💰 Ventas</span>';
+            html += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:#28a745; color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;">' + sales.length + ' despachos</span><span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span></div>';
             html += '</div>';
-            html += '<div style="display:flex; align-items:center; gap:8px;">';
-            html += `<span style="background:#e8f5e9; color:#2e7d32; padding:3px 10px; border-radius:10px; font-size:11px; font-weight:bold;">${sales.length} despachos</span>`;
-            html += '<span class="chv" style="color:#999; font-size:12px;">▶</span>';
+            html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
+            html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMolds + '</strong><br><small style="color:#555;">Moldes</small></div>';
+            html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">$' + totalAmount.toFixed(0) + '</strong><br><small style="color:#555;">Total</small></div>';
+            html += '<div style="background:#ffebee; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#c62828; font-size:20px;">' + totalMerma + '</strong><br><small style="color:#555;">Merma</small></div>';
+            html += '<div style="background:#fff3e0; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#e65100; font-size:20px;">' + sales.length + '</strong><br><small style="color:#555;">Despachos</small></div>';
             html += '</div></div>';
-            html += `<div id="${ventasToggleId}" style="display:none; padding:8px 12px 12px; border-top:1px solid #f0f0f0; font-size:13px;">`;
             
-            // Stats grid
-            html += '<div class="stats-grid">';
-            html += `<div class="stat-card"><div class="stat-number">${totalMolds}</div><div class="stat-label">Moldes</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">$${totalAmount.toFixed(0)}</div><div class="stat-label">USD</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">${totalMerma}</div><div class="stat-label">Merma</div></div>`;
-            html += `<div class="stat-card"><div class="stat-number">${sales.length}</div><div class="stat-label">Despachos</div></div>`;
-            html += '</div>';
+            // Detalle expandible
+            html += '<div id="' + vToggle + '" style="display:none; padding:10px 12px; border-top:1px solid #eee; font-size:12px;">';
             
-            // Desglose por cliente
             const byClient = {};
             sales.forEach(d => {
                 if (!byClient[d.clientId]) byClient[d.clientId] = { name: d.clientName, total: 0, count: 0 };
@@ -7457,9 +7439,18 @@
             });
             
             if (Object.keys(byClient).length > 0) {
-                html += '<div style="background:#f8f9fa; padding:8px; border-radius:6px; font-size:12px;">';
+                html += '<div style="background:#f8f9fa; padding:8px; border-radius:6px;">';
                 Object.values(byClient).forEach(c => {
-                    html += `<p><strong>${c.name}:</strong> ${c.total} moldes (${c.count} despacho${c.count > 1 ? 's' : ''})</p>`;
+                    html += '<p><strong>' + c.name + ':</strong> ' + c.total + ' moldes (' + c.count + ' despacho' + (c.count > 1 ? 's' : '') + ')</p>';
+                });
+                html += '</div>';
+            }
+            
+            if (mermas.length > 0) {
+                html += '<div style="background:#ffebee; padding:8px; border-radius:6px; margin-top:6px;">';
+                html += '<strong>Merma:</strong> ';
+                mermas.forEach(function(m) {
+                    html += (m.merma || 0) + ' moldes — ' + (m.observations || 'Sin detalle') + '. ';
                 });
                 html += '</div>';
             }
