@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1617,11 +1618,30 @@
             // Listener para Plan de Mantenimiento
             planActivitiesRef.on('value', (snapshot) => {
                 planActivities = snapshot.val() || {};
+                window.planActivities = planActivities;
                 console.log('📅 Plan activities updated');
                 
                 // Actualizar vista de Plan si está activa
                 if (document.getElementById('tab-plan').classList.contains('active')) {
                     renderPlan();
+                }
+                
+                // Actualizar reporte diario si está activo (las actividades del plan afectan el reporte)
+                if (document.getElementById('tab-reporte-diario').classList.contains('active')) {
+                    renderReporteDiario();
+                }
+            });
+            
+            // Listener para Ejecuciones del Plan (para que el reporte se actualice en tiempo real)
+            planExecutionsRef.on('value', (snapshot) => {
+                planExecutions = snapshot.val() || {};
+                window.planExecutions = planExecutions;
+                console.log('📋 Plan executions updated');
+                
+                // Actualizar reporte diario si está activo
+                if (document.getElementById('tab-reporte-diario').classList.contains('active')) {
+                    renderReporteDiario();
+                    console.log('📊 Reporte actualizado con ejecuciones del plan');
                 }
             });
 
@@ -2621,6 +2641,12 @@
                     showSectionDetail(currentSectionId);
                 }
                 renderSections(); // Actualizar barras de progreso
+                
+                // Actualizar reporte diario para reflejar la actividad ejecutada
+                if (document.getElementById('tab-reporte-diario')) {
+                    renderReporteDiario();
+                    console.log('📊 Reporte diario actualizado tras ejecución de actividad del plan');
+                }
             } catch (error) {
                 console.error('Error al ejecutar actividad:', error);
                 showSyncIndicator('✗ Error al ejecutar', 'error');
@@ -3310,13 +3336,59 @@
                 
                 const sectionPercentage = Math.round((sectionCompleted / sectionTotal) * 100);
                 
-                // MODO RESUMIDO: Solo mostrar porcentaje
+                // MODO RESUMIDO: Mostrar porcentaje + actividades programadas ejecutadas
                 if (showInSummary === 'resumido') {
                     reportHTML += '<div class="report-summary">';
                     reportHTML += '<h3>' + section.icon + ' ' + section.name + '</h3>';
-                    reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold;">';
+                    reportHTML += '<p style="font-size: 16px; color: ' + (sectionPercentage === 100 ? '#28a745' : '#667eea') + '; font-weight: bold; margin-bottom: 10px;">';
                     reportHTML += sectionCompleted + '/' + sectionTotal + ' (' + sectionPercentage + '%)';
-                    reportHTML += '</p></div>';
+                    reportHTML += '</p>';
+                    
+                    // Mostrar actividades programadas ejecutadas este día (también en modo resumido)
+                    if (window.planExecutions && window.planExecutions[dateStr]) {
+                        const executions = Object.values(window.planExecutions[dateStr]);
+                        const sectionExecs = executions.filter(exec => exec.sectionId == section.id);
+                        
+                        if (sectionExecs.length > 0) {
+                            reportHTML += '<div style="margin-top: 10px; padding-top: 10px; border-top: 2px solid #e3f2fd;">';
+                            reportHTML += '<h4 style="color: #2196f3; font-size: 14px; margin-bottom: 10px;">📋 Actividades Programadas Ejecutadas</h4>';
+                            
+                            sectionExecs.forEach(exec => {
+                                const timeInfo = exec.timestamp ? new Date(exec.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                
+                                reportHTML += '<div style="background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #2196f3;">';
+                                reportHTML += '<p style="margin: 0;"><strong>🔵 ' + exec.activityName + '</strong>';
+                                if (timeInfo) reportHTML += ' <small style="color: #999;">(' + exec.user + ' - ' + timeInfo + ')</small>';
+                                reportHTML += '</p>';
+                                
+                                if (exec.description) {
+                                    reportHTML += '<p style="margin: 5px 0 0 0; font-size: 13px; color: #666; font-style: italic;">' + exec.description + '</p>';
+                                }
+                                
+                                if (exec.photos && exec.photos.length > 0) {
+                                    const regId = window.registerPhotos(exec.photos);
+                                    reportHTML += '<div style="margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">';
+                                    exec.photos.forEach((photoUrl, idx) => {
+                                        reportHTML += `<img src="${photoUrl}" 
+                                            style="width:70px;height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid #2196f3;transition:transform .2s;"
+                                            onmouseover="this.style.transform='scale(1.08)'" 
+                                            onmouseout="this.style.transform='scale(1)'"
+                                            onclick="window.openCarouselById('${regId}', ${idx})">`;
+                                    });
+                                    if (exec.photos.length > 1) {
+                                        reportHTML += `<span style="font-size:12px;color:#666;margin-left:4px;">📷 ${exec.photos.length} fotos</span>`;
+                                    }
+                                    reportHTML += '</div>';
+                                }
+                                
+                                reportHTML += '</div>';
+                            });
+                            
+                            reportHTML += '</div>';
+                        }
+                    }
+                    
+                    reportHTML += '</div>';
                     return;
                 }
                 
