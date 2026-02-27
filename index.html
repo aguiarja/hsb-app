@@ -692,11 +692,11 @@
 
         <!-- TAB: PRODUCCIÓN -->
         <div id="tab-produccion" class="tab-content">
-            <div class="section-header">
+            <div class="section-header" style="margin-bottom:15px;">
                 <h2>🧊 Producción — Planta de Hielo</h2>
             </div>
             <div id="produccionContent">
-                <p style="text-align:center; padding:40px; color:#999;">Cargando...</p>
+                <p style="text-align: center; color: #999; padding: 40px;">Cargando producción...</p>
             </div>
         </div>
 
@@ -733,6 +733,133 @@
     </div>
 
     <!-- Modal para Novedades -->
+
+    <!-- ==================== MODALES DE PRODUCCIÓN ==================== -->
+    
+    <!-- Modal: Iniciar Producción -->
+    <div id="prodStartModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>▶️ Iniciar Producción</h2>
+                <span class="close" onclick="document.getElementById('prodStartModal').style.display='none'">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>🕐 Hora de Inicio:</label>
+                <input type="time" id="prodStartTime">
+            </div>
+            <div class="form-group">
+                <label>🌡️ Temperatura de la Cuba (°C):</label>
+                <input type="number" step="0.1" id="prodStartTemp" placeholder="Ej: -14.5">
+            </div>
+            <div class="form-group">
+                <label>📍 Fila de Inicio:</label>
+                <div style="display:flex; gap:10px;">
+                    <select id="prodStartRow" style="flex:1;"></select>
+                    <select id="prodStartCol" style="flex:1;"></select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>👷 Operadores:</label>
+                <div id="prodStartOperators" style="max-height:200px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:10px;"></div>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="saveProductionStart()" class="btn btn-secondary" style="font-size:16px; padding:14px 40px;">💾 Guardar Inicio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Finalizar Producción -->
+    <div id="prodEndModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⏹️ Finalizar Producción</h2>
+                <span class="close" onclick="document.getElementById('prodEndModal').style.display='none'">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>🕐 Hora de Fin:</label>
+                <input type="time" id="prodEndTime">
+            </div>
+            <div class="form-group">
+                <label>🌡️ Temperatura de la Cuba (°C):</label>
+                <input type="number" step="0.1" id="prodEndTemp" placeholder="Ej: -12.0">
+            </div>
+            <div class="form-group">
+                <label>📍 Fila de Fin:</label>
+                <div style="display:flex; gap:10px;">
+                    <select id="prodEndRow" style="flex:1;"></select>
+                    <select id="prodEndCol" style="flex:1;"></select>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="saveProductionEnd()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:16px; padding:14px 40px;">💾 Guardar Fin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Producción -->
+    <div id="prodEditModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Editar Producción</h2>
+                <span class="close" onclick="document.getElementById('prodEditModal').style.display='none'">&times;</span>
+            </div>
+            <h4 style="color:#667eea; margin-bottom:10px;">Datos de Inicio</h4>
+            <div class="form-group">
+                <label>🕐 Hora Inicio:</label><input type="time" id="prodEditStartTime">
+            </div>
+            <div class="form-group">
+                <label>🌡️ Temp. Inicio (°C):</label><input type="number" step="0.1" id="prodEditStartTemp">
+            </div>
+            <div class="form-group">
+                <label>📍 Fila Inicio:</label>
+                <div style="display:flex; gap:10px;"><select id="prodEditStartRow" style="flex:1;"></select><select id="prodEditStartCol" style="flex:1;"></select></div>
+            </div>
+            <hr style="margin:20px 0;">
+            <h4 style="color:#667eea; margin-bottom:10px;">Datos de Fin</h4>
+            <div class="form-group">
+                <label>🕐 Hora Fin:</label><input type="time" id="prodEditEndTime">
+            </div>
+            <div class="form-group">
+                <label>🌡️ Temp. Fin (°C):</label><input type="number" step="0.1" id="prodEditEndTemp">
+            </div>
+            <div class="form-group">
+                <label>📍 Fila Fin:</label>
+                <div style="display:flex; gap:10px;"><select id="prodEditEndRow" style="flex:1;"></select><select id="prodEditEndCol" style="flex:1;"></select></div>
+            </div>
+            <hr style="margin:20px 0;">
+            <div class="form-group">
+                <label>👷 Operadores:</label>
+                <div id="prodEditOperators" style="max-height:200px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:10px;"></div>
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="saveProductionEdit()" class="btn" style="font-size:16px; padding:14px 40px;">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar/Editar Operador -->
+    <div id="operatorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="operatorModalTitle">Agregar Operador</h2>
+                <span class="close" onclick="document.getElementById('operatorModal').style.display='none'">&times;</span>
+            </div>
+            <input type="hidden" id="operatorEditKey">
+            <div class="form-group">
+                <label>👤 Nombre del Operador:</label>
+                <input type="text" id="operatorNameInput" placeholder="Nombre completo">
+            </div>
+            <div class="form-group">
+                <label>🆔 Identificador (opcional):</label>
+                <input type="text" id="operatorIdInput" placeholder="Cédula, código, etc.">
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="saveOperator()" class="btn btn-secondary" style="padding:14px 40px;">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Novedades (existente) -->
     <div id="novedadesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1197,131 +1324,6 @@
         </div>
     </div>
 
-    <!-- ===== MODALES DE PRODUCCIÓN ===== -->
-    
-    <!-- Modal: Iniciar Producción -->
-    <div id="startProductionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>▶️ Iniciar Producción</h2>
-                <span class="close" onclick="document.getElementById('startProductionModal').style.display='none'">&times;</span>
-            </div>
-            <div class="form-group">
-                <label>🕐 Hora de Inicio:</label>
-                <input type="time" id="prodStartTime">
-            </div>
-            <div class="form-group">
-                <label>🌡️ Temperatura de la Cuba (°C):</label>
-                <input type="number" step="0.1" id="prodStartTemp" placeholder="Ej: -14.5">
-            </div>
-            <div class="form-group">
-                <label>📍 Fila de Inicio:</label>
-                <div style="display:flex; gap:10px;">
-                    <select id="prodStartRow" style="flex:1;"></select>
-                    <select id="prodStartCol" style="flex:1;"></select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>👷 Operadores:</label>
-                <div id="prodStartOperators" style="max-height:200px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:10px;"></div>
-            </div>
-            <div style="text-align:center; margin-top:20px;">
-                <button onclick="saveProductionStart()" class="btn btn-secondary" style="font-size:16px; padding:14px 40px;">💾 Guardar Inicio</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Finalizar Producción -->
-    <div id="endProductionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>⏹️ Finalizar Producción</h2>
-                <span class="close" onclick="document.getElementById('endProductionModal').style.display='none'">&times;</span>
-            </div>
-            <div class="form-group">
-                <label>🕐 Hora de Fin:</label>
-                <input type="time" id="prodEndTime">
-            </div>
-            <div class="form-group">
-                <label>🌡️ Temperatura de la Cuba (°C):</label>
-                <input type="number" step="0.1" id="prodEndTemp" placeholder="Ej: -12.0">
-            </div>
-            <div class="form-group">
-                <label>📍 Fila de Fin:</label>
-                <div style="display:flex; gap:10px;">
-                    <select id="prodEndRow" style="flex:1;"></select>
-                    <select id="prodEndCol" style="flex:1;"></select>
-                </div>
-            </div>
-            <div style="text-align:center; margin-top:20px;">
-                <button onclick="saveProductionEnd()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:16px; padding:14px 40px;">💾 Guardar Fin</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Editar Producción -->
-    <div id="editProductionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>✏️ Editar Producción</h2>
-                <span class="close" onclick="document.getElementById('editProductionModal').style.display='none'">&times;</span>
-            </div>
-            <h4 style="color:#667eea; margin-bottom:10px;">Datos de Inicio</h4>
-            <div class="form-group">
-                <label>🕐 Hora Inicio:</label><input type="time" id="prodEditStartTime">
-            </div>
-            <div class="form-group">
-                <label>🌡️ Temp. Inicio (°C):</label><input type="number" step="0.1" id="prodEditStartTemp">
-            </div>
-            <div class="form-group">
-                <label>📍 Fila Inicio:</label>
-                <div style="display:flex; gap:10px;"><select id="prodEditStartRow" style="flex:1;"></select><select id="prodEditStartCol" style="flex:1;"></select></div>
-            </div>
-            <hr style="margin:20px 0;">
-            <h4 style="color:#667eea; margin-bottom:10px;">Datos de Fin</h4>
-            <div class="form-group">
-                <label>🕐 Hora Fin:</label><input type="time" id="prodEditEndTime">
-            </div>
-            <div class="form-group">
-                <label>🌡️ Temp. Fin (°C):</label><input type="number" step="0.1" id="prodEditEndTemp">
-            </div>
-            <div class="form-group">
-                <label>📍 Fila Fin:</label>
-                <div style="display:flex; gap:10px;"><select id="prodEditEndRow" style="flex:1;"></select><select id="prodEditEndCol" style="flex:1;"></select></div>
-            </div>
-            <hr style="margin:20px 0;">
-            <div class="form-group">
-                <label>👷 Operadores:</label>
-                <div id="prodEditOperators" style="max-height:200px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:10px;"></div>
-            </div>
-            <div style="text-align:center; margin-top:20px;">
-                <button onclick="saveProductionEdit()" class="btn" style="font-size:16px; padding:14px 40px;">💾 Guardar Cambios</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Agregar/Editar Operador -->
-    <div id="operatorModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="operatorModalTitle">Agregar Operador</h2>
-                <span class="close" onclick="document.getElementById('operatorModal').style.display='none'">&times;</span>
-            </div>
-            <input type="hidden" id="operatorEditKey">
-            <div class="form-group">
-                <label>👤 Nombre del Operador:</label>
-                <input type="text" id="operatorNameInput" placeholder="Nombre completo">
-            </div>
-            <div class="form-group">
-                <label>🆔 Identificador (opcional):</label>
-                <input type="text" id="operatorIdInput" placeholder="Cédula, código, etc.">
-            </div>
-            <div style="text-align:center; margin-top:20px;">
-                <button onclick="saveOperator()" class="btn btn-secondary" style="padding:14px 40px;">💾 Guardar</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // ==================== FIREBASE CONFIGURATION ====================
         
@@ -1518,7 +1520,7 @@
                 password: 'admin123', 
                 fullName: 'Administrador',
                 role: 'admin',
-                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion'],
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial', 'configuracion'],
                 planPermissions: {
                     canView: true,
                     canApprove: true
@@ -1530,7 +1532,7 @@
                 password: 'super123', 
                 fullName: 'Supervisor',
                 role: 'supervisor',
-                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial'],
+                permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial'],
                 planPermissions: {
                     canView: true,
                     canApprove: true
@@ -1542,7 +1544,7 @@
                 password: 'operador123', 
                 fullName: 'Operador General',
                 role: 'operador',
-                permissions: ['mantenimiento-preventivo', 'reporte-diario'],
+                permissions: ['mantenimiento-preventivo', 'reporte-diario', 'produccion'],
                 planPermissions: {
                     canView: false,
                     canApprove: false
@@ -1552,7 +1554,7 @@
 
         const defaultTabs = [
             { id: 'reporte-diario', name: '📊 Reporte Diario', order: 1 },
-            { id: 'mantenimiento-preventivo', name: '🔧 Mantenimiento', order: 2 },
+            { id: 'mantenimiento-preventivo', name: '🔧 Mantenimiento Preventivo', order: 2 },
             { id: 'produccion', name: '🧊 Producción', order: 3 },
             { id: 'plan', name: '📅 Plan', order: 4 },
             { id: 'historial', name: '📋 Historial', order: 5 },
@@ -1804,22 +1806,21 @@
                     console.log('📊 Reporte actualizado con ejecuciones del plan');
                 }
             });
-            
-            // Listener para Producción
+
+            // Listener de producción
             productionRecordsRef.on('value', (snapshot) => {
                 productionRecords = snapshot.val() || {};
                 window.productionRecords = productionRecords;
                 console.log('🧊 Production records updated');
-                
                 if (document.getElementById('tab-produccion') && document.getElementById('tab-produccion').classList.contains('active')) {
                     renderProduccion();
                 }
-                if (document.getElementById('tab-reporte-diario').classList.contains('active')) {
+                if (document.getElementById('tab-reporte-diario') && document.getElementById('tab-reporte-diario').classList.contains('active')) {
                     renderReporteDiario();
                 }
             });
-            
-            // Listener para Operadores
+
+            // Listener de operadores
             operatorsRef.on('value', (snapshot) => {
                 operators = snapshot.val() || {};
                 window.operators = operators;
@@ -2210,6 +2211,10 @@
             console.log('User found:', user ? user.username : 'NOT FOUND');
             
             if (user) {
+                // Parche: asegurar que 'produccion' exista en permisos de todos los usuarios
+                if (user.permissions && !user.permissions.includes('produccion')) {
+                    user.permissions.push('produccion');
+                }
                 currentUser = user;
                 localStorage.setItem('currentUser', JSON.stringify(user));
                 showMainScreen();
@@ -2300,10 +2305,10 @@
                     }
                 } else if (tabId === 'reporte-diario') {
                     renderReporteDiario();
-                } else if (tabId === 'produccion') {
-                    renderProduccion();
                 } else if (tabId === 'historial') {
                     renderHistorial();
+                } else if (tabId === 'produccion') {
+                    renderProduccion();
                 } else if (tabId === 'configuracion') {
                     renderConfiguracion();
                 }
@@ -3796,16 +3801,16 @@
                 reportHTML += `</div>`;
             }
 
-            // ========== SECCIÓN DE PRODUCCIÓN ==========
+            // ========== SECCIÓN DE PRODUCCIÓN EN REPORTE DIARIO ==========
             const prodRec = window.productionRecords ? window.productionRecords[dateStr] : null;
             if (prodRec) {
                 const prodKpis = (prodRec.endTime && prodRec.startTime) ? calculateProductionKPIs(prodRec.startRow, prodRec.startCol, prodRec.endRow, prodRec.endCol, prodRec.startTime, prodRec.endTime) : null;
                 const prodOpNames = prodRec.operatorNamesSnapshot || getProductionOperatorNames(prodRec.operatorIds || []);
-                const prodStatus = prodRec.confirmed ? '✅ Confirmada' : (prodRec.endTime ? '⏳ Pendiente confirmar' : '🔄 En proceso');
+                const prodStatus = prodRec.confirmed ? '✅ Confirmada' : (prodRec.endTime ? '⏳ Pendiente' : '🔄 En proceso');
                 const prodColor = prodRec.confirmed ? '#28a745' : (prodRec.endTime ? '#667eea' : '#ffc107');
                 
                 reportHTML += `<div class="report-summary" style="border-left: 4px solid ${prodColor}; margin-top: 15px;">`;
-                reportHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">`;
+                reportHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">`;
                 reportHTML += `<h3 style="color:#1e3c72;">🧊 Producción</h3>`;
                 reportHTML += `<span style="background:${prodColor}; color:white; padding:4px 12px; border-radius:15px; font-size:12px; font-weight:bold;">${prodStatus}</span>`;
                 reportHTML += `</div>`;
@@ -4721,490 +4726,6 @@
             }
         }
 
-        // ==================== MÓDULO DE PRODUCCIÓN ====================
-        
-        // Constantes de la cuba
-        const CUBA_ROWS = 24;
-        const CUBA_COLS = ['A', 'B', 'C', 'D'];
-        const MOLDS_PER_MODULE = 6;
-        const COL_INDEX_MAP = { A: 1, B: 2, C: 3, D: 4 };
-        
-        /** Convierte coordenada a índice lineal */
-        function prodCoordToIndex(row, col) {
-            return (row - 1) * 4 + COL_INDEX_MAP[col];
-        }
-        
-        /** Calcula KPIs de producción */
-        function calculateProductionKPIs(startRow, startCol, endRow, endCol, startTime, endTime) {
-            const startIdx = prodCoordToIndex(startRow, startCol);
-            const endIdx = prodCoordToIndex(endRow, endCol);
-            if (endIdx < startIdx) return null;
-            
-            const modulesProduced = endIdx - startIdx + 1;
-            const moldsProduced = modulesProduced * MOLDS_PER_MODULE;
-            const rowsProduced = endRow - startRow + 1;
-            
-            const [sh, sm] = startTime.split(':').map(Number);
-            const [eh, em] = endTime.split(':').map(Number);
-            const totalMinutes = (eh * 60 + em) - (sh * 60 + sm);
-            if (totalMinutes <= 0) return null;
-            
-            const totalHours = parseFloat((totalMinutes / 60).toFixed(2));
-            const rowsPerHour = parseFloat((rowsProduced / totalHours).toFixed(2));
-            
-            return { modulesProduced, moldsProduced, rowsProduced, totalMinutes, totalHours, rowsPerHour };
-        }
-        
-        function getProductionOperatorNames(ids) {
-            if (!ids || ids.length === 0) return [];
-            return ids.map(id => {
-                const op = operators[id];
-                return op ? op.name : 'Desconocido';
-            });
-        }
-        
-        function buildProdRowOptions(selected) {
-            let html = '<option value="">-- Fila --</option>';
-            for (let i = 1; i <= CUBA_ROWS; i++) html += `<option value="${i}" ${i == selected ? 'selected' : ''}>${i}</option>`;
-            return html;
-        }
-        
-        function buildProdColOptions(selected) {
-            return '<option value="">-- Col --</option>' + CUBA_COLS.map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
-        }
-        
-        function buildOperatorCheckboxes(containerId, selectedIds) {
-            const sel = selectedIds || [];
-            const activeOps = Object.entries(operators).filter(([, op]) => op.isActive !== false);
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            if (activeOps.length === 0) {
-                container.innerHTML = '<p style="color:#999;">No hay operadores. Agrégalos en Configuración → Operadores.</p>';
-                return;
-            }
-            container.innerHTML = activeOps.map(([id, op]) =>
-                `<label style="display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer;">
-                    <input type="checkbox" class="prod-operator-check" value="${id}" ${sel.includes(id) ? 'checked' : ''} style="width:20px; height:20px;">
-                    <span>${op.name}</span>
-                </label>`
-            ).join('');
-        }
-        
-        function getSelectedProdOperators() {
-            const modal = document.querySelector('.modal[style*="display: block"] .prod-operator-check, .modal[style*="display:block"] .prod-operator-check');
-            if (!modal) {
-                // Fallback: buscar en todos los modales visibles
-                return Array.from(document.querySelectorAll('.modal:not([style*="display: none"]):not([style*="display:none"]) .prod-operator-check:checked')).map(cb => cb.value);
-            }
-            return Array.from(document.querySelectorAll('.prod-operator-check:checked')).map(cb => cb.value);
-        }
-        
-        function getCurrentTimeStr() {
-            const now = new Date();
-            return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-        }
-        
-        // ========== RENDERIZAR PRODUCCIÓN (4 estados) ==========
-        
-        function renderProduccion() {
-            const container = document.getElementById('produccionContent');
-            if (!container) return;
-            
-            const rec = productionRecords[currentDate] || null;
-            
-            if (!rec) {
-                // ESTADO A: No iniciada
-                container.innerHTML = `
-                    <div class="report-summary" style="text-align:center; padding:40px;">
-                        <div style="font-size:80px; margin-bottom:20px;">🧊</div>
-                        <h2 style="color:#1e3c72; margin-bottom:10px;">Producción del Día</h2>
-                        <p style="color:#666; margin-bottom:5px;">${new Date(currentDate + 'T00:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
-                        <p style="color:#999; margin-bottom:30px;">No se ha iniciado la producción de hoy</p>
-                        <button onclick="openStartProductionModal()" class="btn" style="font-size:18px; padding:15px 40px;">▶️ Iniciar Producción</button>
-                    </div>`;
-                return;
-            }
-            
-            if (rec.confirmed) {
-                // ESTADO D: Confirmada
-                const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
-                const opNames = getProductionOperatorNames(rec.operatorIds || []);
-                container.innerHTML = `
-                    <div class="report-summary" style="border-left:4px solid #28a745;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h3 style="color:#1e3c72;">✅ Producción Confirmada</h3>
-                            <span style="background:#28a745; color:white; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">Confirmada</span>
-                        </div>
-                        <div class="stats-grid">
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.moldsProduced : rec.moldsProduced || 'N/A'}</div><div class="stat-label">Moldes</div></div>
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsProduced : rec.rowsProduced || 'N/A'}</div><div class="stat-label">Filas</div></div>
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.totalHours+'h' : rec.totalHours+'h'}</div><div class="stat-label">Tiempo</div></div>
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsPerHour : rec.rowsPerHour || 'N/A'}</div><div class="stat-label">Filas/Hora</div></div>
-                        </div>
-                        <div style="background:#f1f8f4; padding:15px; border-radius:8px;">
-                            <p><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol}</p>
-                            <p><strong>Horario:</strong> ${rec.startTime} — ${rec.endTime}</p>
-                            <p><strong>Temperatura:</strong> ${rec.startTemp || '-'}°C → ${rec.endTemp || '-'}°C</p>
-                            <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
-                        </div>
-                        <p style="text-align:center; color:#28a745; margin-top:15px; font-size:13px;">🔒 Registro bloqueado</p>
-                    </div>`;
-                return;
-            }
-            
-            if (rec.endTime) {
-                // ESTADO C: Finalizada, pendiente confirmar
-                const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
-                const opNames = getProductionOperatorNames(rec.operatorIds || []);
-                container.innerHTML = `
-                    <div class="report-summary" style="border-left:4px solid #667eea;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                            <h3 style="color:#1e3c72;">📋 Resumen de Producción</h3>
-                            <span style="background:#667eea; color:white; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">Pendiente confirmar</span>
-                        </div>
-                        <div class="stats-grid">
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.moldsProduced : 'N/A'}</div><div class="stat-label">Moldes</div></div>
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsProduced : 'N/A'}</div><div class="stat-label">Filas</div></div>
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.totalHours+'h' : 'N/A'}</div><div class="stat-label">Tiempo</div></div>
-                            <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsPerHour : 'N/A'}</div><div class="stat-label">Filas/Hora</div></div>
-                        </div>
-                        <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px;">
-                            <p><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol}</p>
-                            <p><strong>Horario:</strong> ${rec.startTime} — ${rec.endTime}</p>
-                            <p><strong>Temperatura:</strong> ${rec.startTemp || '-'}°C → ${rec.endTemp || '-'}°C</p>
-                            <p><strong>Módulos:</strong> ${kpis ? kpis.modulesProduced : 'N/A'}</p>
-                            <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
-                        </div>
-                        <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                            <button onclick="openEditProductionModal()" class="btn" style="background:#ffc107; color:#333;">✏️ Editar</button>
-                            <button onclick="confirmProduction()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">✅ Confirmar Producción</button>
-                        </div>
-                    </div>`;
-                return;
-            }
-            
-            // ESTADO B: Iniciada
-            const opNames = getProductionOperatorNames(rec.operatorIds || []);
-            container.innerHTML = `
-                <div class="report-summary" style="border-left:4px solid #ffc107;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <h3 style="color:#1e3c72;">⏳ Producción en Curso</h3>
-                        <span style="background:#ffc107; color:#333; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">En proceso</span>
-                    </div>
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-number">🕐 ${rec.startTime}</div><div class="stat-label">Hora Inicio</div></div>
-                        <div class="stat-card"><div class="stat-number">${rec.startTemp || '-'}°C</div><div class="stat-label">Temp. Inicio</div></div>
-                        <div class="stat-card"><div class="stat-number">${rec.startRow}${rec.startCol}</div><div class="stat-label">Fila Inicio</div></div>
-                    </div>
-                    <p style="color:#666; margin-bottom:20px;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
-                    <div style="text-align:center;">
-                        <button onclick="openEndProductionModal()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:16px; padding:14px 35px;">⏹️ Finalizar Producción</button>
-                    </div>
-                </div>`;
-        }
-        
-        // ========== MODALES DE PRODUCCIÓN ==========
-        
-        function openStartProductionModal() {
-            document.getElementById('prodStartTime').value = getCurrentTimeStr();
-            document.getElementById('prodStartTemp').value = '';
-            document.getElementById('prodStartRow').innerHTML = buildProdRowOptions(1);
-            document.getElementById('prodStartCol').innerHTML = buildProdColOptions('A');
-            buildOperatorCheckboxes('prodStartOperators', []);
-            document.getElementById('startProductionModal').style.display = 'block';
-        }
-        
-        async function saveProductionStart() {
-            const startTime = document.getElementById('prodStartTime').value;
-            const startTemp = parseFloat(document.getElementById('prodStartTemp').value);
-            const startRow = parseInt(document.getElementById('prodStartRow').value);
-            const startCol = document.getElementById('prodStartCol').value;
-            const operatorIds = Array.from(document.querySelectorAll('#prodStartOperators .prod-operator-check:checked')).map(cb => cb.value);
-            
-            if (!startTime) return alert('La hora de inicio es requerida');
-            if (!startRow || !startCol) return alert('La fila de inicio es requerida');
-            if (isNaN(startTemp)) return alert('La temperatura es requerida');
-            if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
-            
-            const record = {
-                date: currentDate, startTime, startTemp, startRow, startCol,
-                operatorIds, operatorNamesSnapshot: getProductionOperatorNames(operatorIds),
-                confirmed: false, createdBy: currentUser.fullName, createdAt: new Date().toISOString()
-            };
-            
-            try {
-                showSyncIndicator('⚙️ Guardando...', 'syncing');
-                await productionRecordsRef.child(currentDate).set(record);
-                document.getElementById('startProductionModal').style.display = 'none';
-                showSyncIndicator('✓ Producción iniciada', 'synced');
-            } catch (err) {
-                console.error('Error:', err);
-                showSyncIndicator('✗ Error', 'error');
-            }
-        }
-        
-        function openEndProductionModal() {
-            document.getElementById('prodEndTime').value = getCurrentTimeStr();
-            document.getElementById('prodEndTemp').value = '';
-            document.getElementById('prodEndRow').innerHTML = buildProdRowOptions('');
-            document.getElementById('prodEndCol').innerHTML = buildProdColOptions('D');
-            document.getElementById('endProductionModal').style.display = 'block';
-        }
-        
-        async function saveProductionEnd() {
-            const rec = productionRecords[currentDate];
-            if (!rec) return;
-            
-            const endTime = document.getElementById('prodEndTime').value;
-            const endTemp = parseFloat(document.getElementById('prodEndTemp').value);
-            const endRow = parseInt(document.getElementById('prodEndRow').value);
-            const endCol = document.getElementById('prodEndCol').value;
-            
-            if (!endTime) return alert('La hora de fin es requerida');
-            if (!endRow || !endCol) return alert('La fila de fin es requerida');
-            if (isNaN(endTemp)) return alert('La temperatura es requerida');
-            
-            if (prodCoordToIndex(endRow, endCol) < prodCoordToIndex(rec.startRow, rec.startCol))
-                return alert('La posición de fin debe ser posterior a la de inicio');
-            
-            const [sh, sm] = rec.startTime.split(':').map(Number);
-            const [eh, em] = endTime.split(':').map(Number);
-            if ((eh*60+em) <= (sh*60+sm)) return alert('La hora de fin debe ser posterior a la de inicio');
-            
-            try {
-                showSyncIndicator('⚙️ Guardando...', 'syncing');
-                await productionRecordsRef.child(currentDate).update({ endTime, endTemp, endRow, endCol });
-                document.getElementById('endProductionModal').style.display = 'none';
-                showSyncIndicator('✓ Producción finalizada', 'synced');
-            } catch (err) {
-                console.error('Error:', err);
-                showSyncIndicator('✗ Error', 'error');
-            }
-        }
-        
-        function openEditProductionModal() {
-            const rec = productionRecords[currentDate];
-            if (!rec) return;
-            document.getElementById('prodEditStartTime').value = rec.startTime;
-            document.getElementById('prodEditStartTemp').value = rec.startTemp || '';
-            document.getElementById('prodEditStartRow').innerHTML = buildProdRowOptions(rec.startRow);
-            document.getElementById('prodEditStartCol').innerHTML = buildProdColOptions(rec.startCol);
-            document.getElementById('prodEditEndTime').value = rec.endTime || '';
-            document.getElementById('prodEditEndTemp').value = rec.endTemp || '';
-            document.getElementById('prodEditEndRow').innerHTML = buildProdRowOptions(rec.endRow);
-            document.getElementById('prodEditEndCol').innerHTML = buildProdColOptions(rec.endCol);
-            buildOperatorCheckboxes('prodEditOperators', rec.operatorIds);
-            document.getElementById('editProductionModal').style.display = 'block';
-        }
-        
-        async function saveProductionEdit() {
-            const startTime = document.getElementById('prodEditStartTime').value;
-            const startTemp = parseFloat(document.getElementById('prodEditStartTemp').value);
-            const startRow = parseInt(document.getElementById('prodEditStartRow').value);
-            const startCol = document.getElementById('prodEditStartCol').value;
-            const endTime = document.getElementById('prodEditEndTime').value;
-            const endTemp = parseFloat(document.getElementById('prodEditEndTemp').value);
-            const endRow = parseInt(document.getElementById('prodEditEndRow').value);
-            const endCol = document.getElementById('prodEditEndCol').value;
-            const operatorIds = Array.from(document.querySelectorAll('#prodEditOperators .prod-operator-check:checked')).map(cb => cb.value);
-            
-            if (!startTime || !startRow || !startCol || !endTime || !endRow || !endCol) return alert('Todos los campos son requeridos');
-            if (isNaN(startTemp) || isNaN(endTemp)) return alert('Las temperaturas son requeridas');
-            if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
-            if (prodCoordToIndex(endRow, endCol) < prodCoordToIndex(startRow, startCol)) return alert('Posición de fin inválida');
-            
-            const [sh,sm] = startTime.split(':').map(Number);
-            const [eh,em] = endTime.split(':').map(Number);
-            if ((eh*60+em) <= (sh*60+sm)) return alert('Hora de fin inválida');
-            
-            try {
-                showSyncIndicator('⚙️ Guardando...', 'syncing');
-                await productionRecordsRef.child(currentDate).update({
-                    startTime, startTemp, startRow, startCol, endTime, endTemp, endRow, endCol,
-                    operatorIds, operatorNamesSnapshot: getProductionOperatorNames(operatorIds)
-                });
-                document.getElementById('editProductionModal').style.display = 'none';
-                showSyncIndicator('✓ Cambios guardados', 'synced');
-            } catch (err) {
-                console.error('Error:', err);
-                showSyncIndicator('✗ Error', 'error');
-            }
-        }
-        
-        async function confirmProduction() {
-            const rec = productionRecords[currentDate];
-            if (!rec || !rec.endTime) return alert('Debe finalizar primero');
-            if (!confirm('¿Confirmar producción? No se podrá modificar después.')) return;
-            
-            const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
-            if (!kpis) return alert('Error en cálculos. Verifique los datos.');
-            
-            try {
-                showSyncIndicator('⚙️ Confirmando...', 'syncing');
-                await productionRecordsRef.child(currentDate).update({
-                    confirmed: true, ...kpis, confirmedAt: new Date().toISOString(), confirmedBy: currentUser.fullName
-                });
-                showSyncIndicator('✅ Producción confirmada', 'synced');
-            } catch (err) {
-                console.error('Error:', err);
-                showSyncIndicator('✗ Error', 'error');
-            }
-        }
-        
-        // ========== PRODUCCIÓN EN REPORTE DIARIO ==========
-        
-        function renderProductionInReport(dateStr) {
-            const rec = productionRecords[dateStr];
-            if (!rec) return '';
-            
-            const kpis = rec.endTime ? calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime) : null;
-            const opNames = getProductionOperatorNames(rec.operatorIds || []);
-            const statusLabel = rec.confirmed ? '✅ Confirmada' : (rec.endTime ? '⏳ Pendiente' : '🔄 En proceso');
-            const statusColor = rec.confirmed ? '#28a745' : (rec.endTime ? '#667eea' : '#ffc107');
-            
-            let html = `<div class="report-summary" style="border-left:4px solid ${statusColor}; margin-top:15px;">`;
-            html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">`;
-            html += `<h3 style="color:#1e3c72;">🧊 Producción</h3>`;
-            html += `<span style="background:${statusColor}; color:white; padding:4px 12px; border-radius:15px; font-size:12px; font-weight:bold;">${statusLabel}</span>`;
-            html += `</div>`;
-            
-            if (kpis) {
-                html += `<div class="stats-grid">`;
-                html += `<div class="stat-card"><div class="stat-number">${kpis.moldsProduced}</div><div class="stat-label">Moldes</div></div>`;
-                html += `<div class="stat-card"><div class="stat-number">${kpis.rowsProduced}</div><div class="stat-label">Filas</div></div>`;
-                html += `<div class="stat-card"><div class="stat-number">${kpis.totalHours}h</div><div class="stat-label">Duración</div></div>`;
-                html += `<div class="stat-card"><div class="stat-number">${kpis.rowsPerHour}</div><div class="stat-label">Filas/h</div></div>`;
-                html += `</div>`;
-                html += `<p style="color:#666; font-size:13px;"><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol} &nbsp;|&nbsp; <strong>Horario:</strong> ${rec.startTime} — ${rec.endTime} &nbsp;|&nbsp; <strong>Temp:</strong> ${rec.startTemp||'-'}°C → ${rec.endTemp||'-'}°C</p>`;
-            } else {
-                html += `<p style="color:#666;"><strong>Inicio:</strong> ${rec.startTime} — Fila ${rec.startRow}${rec.startCol} — Temp: ${rec.startTemp||'-'}°C</p>`;
-                html += `<p style="color:#ffc107; font-weight:bold;">⏳ En curso</p>`;
-            }
-            html += `<p style="color:#666; font-size:13px; margin-top:5px;">👷 ${opNames.join(', ') || 'N/A'}</p>`;
-            html += `</div>`;
-            return html;
-        }
-        
-        // ========== HISTORIAL DE PRODUCCIÓN ==========
-        
-        function renderHistorialProduccion() {
-            const container = document.getElementById('historialContent');
-            const dates = Object.keys(productionRecords).sort().reverse();
-            
-            if (dates.length === 0) {
-                container.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">No hay registros de producción.</p>';
-                return;
-            }
-            
-            let html = '';
-            dates.forEach(date => {
-                const rec = productionRecords[date];
-                const kpis = (rec.endTime && rec.startTime) ? calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime) : null;
-                const opNames = rec.operatorNamesSnapshot || getProductionOperatorNames(rec.operatorIds || []);
-                const statusIcon = rec.confirmed ? '✅' : (rec.endTime ? '⏳' : '🔄');
-                const borderColor = rec.confirmed ? '#28a745' : (rec.endTime ? '#667eea' : '#ffc107');
-                
-                html += `<div class="report-summary" style="margin-bottom:15px; border-left:4px solid ${borderColor};">`;
-                html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">`;
-                html += `<h3 style="color:#1e3c72; font-size:16px;">📅 ${new Date(date+'T00:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</h3>`;
-                html += `<span>${statusIcon}</span></div>`;
-                
-                if (kpis) {
-                    html += `<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:10px;">`;
-                    html += `<div style="background:#f8f9fa; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72;">${kpis.moldsProduced}</strong><br><small style="color:#666;">Moldes</small></div>`;
-                    html += `<div style="background:#f8f9fa; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72;">${kpis.rowsProduced}</strong><br><small style="color:#666;">Filas</small></div>`;
-                    html += `<div style="background:#f8f9fa; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72;">${kpis.totalHours}h</strong><br><small style="color:#666;">Tiempo</small></div>`;
-                    html += `<div style="background:#f8f9fa; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72;">${kpis.rowsPerHour}</strong><br><small style="color:#666;">Filas/h</small></div>`;
-                    html += `</div>`;
-                    html += `<p style="color:#666; font-size:13px;"><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol} | ${rec.startTime} — ${rec.endTime} | Temp: ${rec.startTemp||'-'}°C → ${rec.endTemp||'-'}°C</p>`;
-                } else {
-                    html += `<p style="color:#ffc107;">⏳ Producción en curso</p>`;
-                }
-                html += `<p style="color:#666; font-size:13px; margin-top:5px;">👷 ${Array.isArray(opNames) ? opNames.join(', ') : opNames}</p>`;
-                html += `</div>`;
-            });
-            
-            container.innerHTML = html;
-        }
-        
-        // ========== OPERADORES (CRUD) ==========
-        
-        function renderOperadoresConfig() {
-            const opList = Object.entries(operators);
-            let html = '<div style="margin-bottom:20px;"><h3 style="color:#1e3c72; margin-bottom:15px;">👷 Operadores de Producción</h3>';
-            html += `<button onclick="openAddOperatorModal()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:15px;">➕ Agregar Operador</button>`;
-            
-            if (opList.length === 0) {
-                html += '<p style="color:#999; padding:20px;">No hay operadores registrados.</p>';
-            } else {
-                opList.forEach(([id, op]) => {
-                    const badge = op.isActive !== false
-                        ? '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Activo</span>'
-                        : '<span style="background:#dc3545; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Inactivo</span>';
-                    html += `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; background:white;">`;
-                    html += `<div><strong>${op.name}</strong> ${badge}${op.identifier ? ' <small style="color:#666;">ID: '+op.identifier+'</small>' : ''}</div>`;
-                    html += `<div style="display:flex; gap:5px;">`;
-                    html += `<button onclick="toggleOperatorStatus('${id}')" style="background:${op.isActive !== false ? '#ffc107' : '#28a745'}; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;">${op.isActive !== false ? '⏸ Desactivar' : '▶ Activar'}</button>`;
-                    html += `<button onclick="openEditOperatorModal('${id}')" style="background:#667eea; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;">✏️</button>`;
-                    html += `</div></div>`;
-                });
-            }
-            html += '</div>';
-            return html;
-        }
-        
-        function openAddOperatorModal() {
-            document.getElementById('operatorModalTitle').textContent = 'Agregar Operador';
-            document.getElementById('operatorNameInput').value = '';
-            document.getElementById('operatorIdInput').value = '';
-            document.getElementById('operatorEditKey').value = '';
-            document.getElementById('operatorModal').style.display = 'block';
-        }
-        
-        function openEditOperatorModal(key) {
-            const op = operators[key];
-            if (!op) return;
-            document.getElementById('operatorModalTitle').textContent = 'Editar Operador';
-            document.getElementById('operatorNameInput').value = op.name;
-            document.getElementById('operatorIdInput').value = op.identifier || '';
-            document.getElementById('operatorEditKey').value = key;
-            document.getElementById('operatorModal').style.display = 'block';
-        }
-        
-        async function saveOperator() {
-            const name = document.getElementById('operatorNameInput').value.trim();
-            const identifier = document.getElementById('operatorIdInput').value.trim();
-            const editKey = document.getElementById('operatorEditKey').value;
-            if (!name) return alert('El nombre es requerido');
-            
-            try {
-                showSyncIndicator('⚙️ Guardando...', 'syncing');
-                if (editKey) {
-                    await operatorsRef.child(editKey).update({ name, identifier, updatedAt: new Date().toISOString() });
-                } else {
-                    await operatorsRef.push({ name, identifier, isActive: true, createdAt: new Date().toISOString() });
-                }
-                document.getElementById('operatorModal').style.display = 'none';
-                showSyncIndicator('✓ Operador guardado', 'synced');
-                renderConfiguracion();
-            } catch (err) {
-                showSyncIndicator('✗ Error', 'error');
-            }
-        }
-        
-        async function toggleOperatorStatus(key) {
-            const op = operators[key];
-            if (!op) return;
-            try {
-                await operatorsRef.child(key).update({ isActive: op.isActive === false ? true : false, updatedAt: new Date().toISOString() });
-                showSyncIndicator(op.isActive === false ? '✓ Activado' : '✓ Desactivado', 'synced');
-                renderConfiguracion();
-            } catch (err) {
-                showSyncIndicator('✗ Error', 'error');
-            }
-        }
-
         // ==================== CONFIGURACIÓN ====================
         
         function renderConfiguracion() {
@@ -5406,7 +4927,7 @@
             
             // Admin y Supervisor tienen todos los permisos automáticamente
             if (role === 'admin' || role === 'supervisor') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion');
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial', 'configuracion');
             } else {
                 // Operadores y otros roles: usar checkboxes
                 if (canViewReporte) permissions.push('reporte-diario');
@@ -5527,7 +5048,7 @@
             
             // Admin y Supervisor tienen todos los permisos automáticamente
             if (role === 'admin' || role === 'supervisor') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'plan', 'historial', 'configuracion');
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'plan', 'historial', 'configuracion');
             } else {
                 // Operadores y otros roles: usar checkboxes
                 if (canViewReporte) permissions.push('reporte-diario');
@@ -6459,6 +5980,483 @@
             updateSystemClock(); // Actualizar inmediatamente
             setInterval(updateSystemClock, 1000); // Actualizar cada segundo
             console.log('✅ Reloj iniciado');
+        }
+
+        // ==================== MÓDULO DE PRODUCCIÓN ====================
+        // Constantes de la cuba
+        const CUBA_ROWS = 24;
+        const CUBA_COLS = ['A', 'B', 'C', 'D'];
+        const MOLDS_PER_MODULE = 6;
+        const COL_INDEX_MAP = { A: 1, B: 2, C: 3, D: 4 };
+
+        /** Convierte coordenada (row, col) a índice lineal */
+        function prodCoordToIndex(row, col) {
+            return (row - 1) * 4 + COL_INDEX_MAP[col];
+        }
+
+        /** Calcula todos los KPIs de producción */
+        function calculateProductionKPIs(startRow, startCol, endRow, endCol, startTime, endTime) {
+            const startIndex = prodCoordToIndex(startRow, startCol);
+            const endIndex = prodCoordToIndex(endRow, endCol);
+            if (endIndex < startIndex) return null;
+
+            const modulesProduced = endIndex - startIndex + 1;
+            const moldsProduced = modulesProduced * MOLDS_PER_MODULE;
+            const rowsProduced = endRow - startRow + 1;
+
+            const [sh, sm] = startTime.split(':').map(Number);
+            const [eh, em] = endTime.split(':').map(Number);
+            const totalMinutes = (eh * 60 + em) - (sh * 60 + sm);
+            if (totalMinutes <= 0) return null;
+
+            const totalHours = parseFloat((totalMinutes / 60).toFixed(2));
+            const rowsPerHour = parseFloat((rowsProduced / totalHours).toFixed(2));
+
+            return { modulesProduced, moldsProduced, rowsProduced, totalMinutes, totalHours, rowsPerHour };
+        }
+
+        /** Obtiene hora actual como string HH:MM */
+        function getCurrentTimeStr() {
+            const now = new Date();
+            return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        /** Nombres de operadores a partir de IDs */
+        function getProductionOperatorNames(ids) {
+            if (!ids || ids.length === 0) return [];
+            return ids.map(id => {
+                const op = operators[id];
+                return op ? op.name : 'Desconocido';
+            });
+        }
+
+        /** Genera <option> para filas 1-24 */
+        function buildProdRowOptions(selected) {
+            let html = '<option value="">-- Fila --</option>';
+            for (let i = 1; i <= CUBA_ROWS; i++) {
+                html += `<option value="${i}" ${i == selected ? 'selected' : ''}>${i}</option>`;
+            }
+            return html;
+        }
+
+        /** Genera <option> para columnas A-D */
+        function buildProdColOptions(selected) {
+            return CUBA_COLS.map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        /** Genera checkboxes de operadores */
+        function buildOperatorCheckboxes(containerId, selectedIds) {
+            const container = document.getElementById(containerId);
+            const sel = selectedIds || [];
+            const activeOps = Object.entries(operators).filter(([, op]) => op.isActive !== false);
+
+            if (activeOps.length === 0) {
+                container.innerHTML = '<p style="color:#999; font-size:13px;">No hay operadores. Agrégalos en Configuración → Operadores.</p>';
+                return;
+            }
+            container.innerHTML = activeOps.map(([id, op]) =>
+                `<label style="display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer;">
+                    <input type="checkbox" name="prodOperatorCheck" value="${id}" ${sel.includes(id) ? 'checked' : ''} style="width:20px; height:20px;">
+                    <span>${op.name}</span>
+                </label>`
+            ).join('');
+        }
+
+        function getSelectedProdOperators() {
+            return Array.from(document.querySelectorAll('input[name="prodOperatorCheck"]:checked')).map(cb => cb.value);
+        }
+
+        // ========== RENDER PRODUCCIÓN (Estados A-D) ==========
+        function renderProduccion() {
+            const container = document.getElementById('produccionContent');
+            const rec = productionRecords[currentDate] || null;
+
+            if (!rec) {
+                // ESTADO A: No iniciada
+                container.innerHTML = `
+                    <div class="report-summary" style="text-align:center; padding:40px;">
+                        <div style="font-size:80px; margin-bottom:20px;">🧊</div>
+                        <h2 style="color:#1e3c72; margin-bottom:10px;">Producción del Día</h2>
+                        <p style="color:#666; margin-bottom:5px;">${new Date(currentDate+'T00:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
+                        <p style="color:#999; margin-bottom:30px;">No se ha iniciado la producción de hoy</p>
+                        <button onclick="openProdStartModal()" class="btn" style="font-size:18px; padding:15px 40px;">
+                            ▶️ Iniciar Producción
+                        </button>
+                    </div>`;
+                return;
+            }
+
+            if (rec.confirmed) {
+                // ESTADO D: Confirmada
+                renderProdConfirmed(container, rec);
+                return;
+            }
+            if (rec.endTime) {
+                // ESTADO C: Finalizada pendiente confirmar
+                renderProdPendingConfirm(container, rec);
+                return;
+            }
+            // ESTADO B: Iniciada
+            renderProdStarted(container, rec);
+        }
+
+        function renderProdStarted(container, rec) {
+            const opNames = getProductionOperatorNames(rec.operatorIds || []);
+            container.innerHTML = `
+                <div class="report-summary" style="border-left:4px solid #ffc107;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color:#1e3c72;">⏳ Producción en Curso</h3>
+                        <span style="background:#ffc107; color:#333; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">En proceso</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-number">🕐 ${rec.startTime}</div><div class="stat-label">Hora Inicio</div></div>
+                        <div class="stat-card"><div class="stat-number">${rec.startTemp || '-'}°C</div><div class="stat-label">Temp. Inicio</div></div>
+                        <div class="stat-card"><div class="stat-number">${rec.startRow}${rec.startCol}</div><div class="stat-label">Fila Inicio</div></div>
+                        <div class="stat-card"><div class="stat-number">${opNames.length}</div><div class="stat-label">Operadores</div></div>
+                    </div>
+                    <p style="color:#666; margin-bottom:20px;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
+                    <div style="text-align:center;">
+                        <button onclick="openProdEndModal()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:16px; padding:14px 35px;">
+                            ⏹️ Finalizar Producción
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        function renderProdPendingConfirm(container, rec) {
+            const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
+            const opNames = getProductionOperatorNames(rec.operatorIds || []);
+            container.innerHTML = `
+                <div class="report-summary" style="border-left:4px solid #667eea;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color:#1e3c72;">📋 Resumen de Producción</h3>
+                        <span style="background:#667eea; color:white; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">Pendiente confirmar</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.moldsProduced : 'N/A'}</div><div class="stat-label">Moldes Producidos</div></div>
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsProduced : 'N/A'}</div><div class="stat-label">Filas Producidas</div></div>
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.totalHours + 'h' : 'N/A'}</div><div class="stat-label">Tiempo Total</div></div>
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsPerHour : 'N/A'}</div><div class="stat-label">Filas/Hora</div></div>
+                    </div>
+                    <div style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px; font-size:14px;">
+                        <p><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol}</p>
+                        <p><strong>Horario:</strong> ${rec.startTime} — ${rec.endTime}</p>
+                        <p><strong>Temperatura:</strong> ${rec.startTemp || '-'}°C → ${rec.endTemp || '-'}°C</p>
+                        <p><strong>Módulos:</strong> ${kpis ? kpis.modulesProduced : 'N/A'}</p>
+                        <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
+                    </div>
+                    <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                        <button onclick="openProdEditModal()" class="btn" style="background:#ffc107; color:#333;">✏️ Editar</button>
+                        <button onclick="confirmProduction()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">✅ Confirmar Producción</button>
+                    </div>
+                </div>`;
+        }
+
+        function renderProdConfirmed(container, rec) {
+            const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
+            const opNames = getProductionOperatorNames(rec.operatorIds || []);
+            container.innerHTML = `
+                <div class="report-summary" style="border-left:4px solid #28a745;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color:#1e3c72;">✅ Producción Confirmada</h3>
+                        <span style="background:#28a745; color:white; padding:6px 15px; border-radius:20px; font-size:13px; font-weight:bold;">Confirmada</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.moldsProduced : rec.moldsProduced || 'N/A'}</div><div class="stat-label">Moldes Producidos</div></div>
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsProduced : rec.rowsProduced || 'N/A'}</div><div class="stat-label">Filas Producidas</div></div>
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.totalHours + 'h' : rec.totalHours + 'h' || 'N/A'}</div><div class="stat-label">Tiempo Total</div></div>
+                        <div class="stat-card"><div class="stat-number">${kpis ? kpis.rowsPerHour : rec.rowsPerHour || 'N/A'}</div><div class="stat-label">Filas/Hora</div></div>
+                    </div>
+                    <div style="background:#f1f8f4; padding:15px; border-radius:8px; font-size:14px;">
+                        <p><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol}</p>
+                        <p><strong>Horario:</strong> ${rec.startTime} — ${rec.endTime}</p>
+                        <p><strong>Temperatura:</strong> ${rec.startTemp || '-'}°C → ${rec.endTemp || '-'}°C</p>
+                        <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
+                    </div>
+                    <p style="text-align:center; color:#28a745; margin-top:15px; font-size:13px;">🔒 Registro bloqueado — no editable</p>
+                </div>`;
+        }
+
+        // ========== MODALES DE PRODUCCIÓN ==========
+        function openProdStartModal() {
+            document.getElementById('prodStartTime').value = getCurrentTimeStr();
+            document.getElementById('prodStartTemp').value = '';
+            document.getElementById('prodStartRow').innerHTML = buildProdRowOptions(1);
+            document.getElementById('prodStartCol').innerHTML = buildProdColOptions('A');
+            buildOperatorCheckboxes('prodStartOperators', []);
+            document.getElementById('prodStartModal').style.display = 'block';
+        }
+
+        async function saveProductionStart() {
+            const startTime = document.getElementById('prodStartTime').value;
+            const startTemp = parseFloat(document.getElementById('prodStartTemp').value);
+            const startRow = parseInt(document.getElementById('prodStartRow').value);
+            const startCol = document.getElementById('prodStartCol').value;
+            const operatorIds = getSelectedProdOperators();
+
+            if (!startTime) return alert('La hora de inicio es requerida');
+            if (!startRow || !startCol) return alert('La fila de inicio es requerida');
+            if (isNaN(startTemp)) return alert('La temperatura es requerida');
+            if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
+
+            const record = {
+                date: currentDate, startTime, startTemp, startRow, startCol,
+                operatorIds,
+                operatorNamesSnapshot: getProductionOperatorNames(operatorIds),
+                confirmed: false,
+                createdBy: currentUser.fullName,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                showSyncIndicator('⚙️ Guardando inicio...', 'syncing');
+                await productionRecordsRef.child(currentDate).set(record);
+                document.getElementById('prodStartModal').style.display = 'none';
+                showSyncIndicator('✓ Producción iniciada', 'synced');
+            } catch (err) {
+                console.error('Error guardando inicio:', err);
+                showSyncIndicator('✗ Error al guardar', 'error');
+            }
+        }
+
+        function openProdEndModal() {
+            document.getElementById('prodEndTime').value = getCurrentTimeStr();
+            document.getElementById('prodEndTemp').value = '';
+            document.getElementById('prodEndRow').innerHTML = buildProdRowOptions('');
+            document.getElementById('prodEndCol').innerHTML = buildProdColOptions('D');
+            document.getElementById('prodEndModal').style.display = 'block';
+        }
+
+        async function saveProductionEnd() {
+            const rec = productionRecords[currentDate];
+            if (!rec) return;
+
+            const endTime = document.getElementById('prodEndTime').value;
+            const endTemp = parseFloat(document.getElementById('prodEndTemp').value);
+            const endRow = parseInt(document.getElementById('prodEndRow').value);
+            const endCol = document.getElementById('prodEndCol').value;
+
+            if (!endTime) return alert('La hora de fin es requerida');
+            if (!endRow || !endCol) return alert('La fila de fin es requerida');
+            if (isNaN(endTemp)) return alert('La temperatura es requerida');
+
+            if (prodCoordToIndex(endRow, endCol) < prodCoordToIndex(rec.startRow, rec.startCol))
+                return alert('La posición de fin debe ser posterior a la de inicio');
+
+            const [sh, sm] = rec.startTime.split(':').map(Number);
+            const [eh, em] = endTime.split(':').map(Number);
+            if ((eh * 60 + em) <= (sh * 60 + sm))
+                return alert('La hora de fin debe ser posterior a la hora de inicio');
+
+            try {
+                showSyncIndicator('⚙️ Guardando fin...', 'syncing');
+                await productionRecordsRef.child(currentDate).update({ endTime, endTemp, endRow, endCol });
+                document.getElementById('prodEndModal').style.display = 'none';
+                showSyncIndicator('✓ Producción finalizada', 'synced');
+            } catch (err) {
+                console.error('Error guardando fin:', err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        function openProdEditModal() {
+            const rec = productionRecords[currentDate];
+            if (!rec) return;
+            document.getElementById('prodEditStartTime').value = rec.startTime;
+            document.getElementById('prodEditStartTemp').value = rec.startTemp || '';
+            document.getElementById('prodEditStartRow').innerHTML = buildProdRowOptions(rec.startRow);
+            document.getElementById('prodEditStartCol').innerHTML = buildProdColOptions(rec.startCol);
+            document.getElementById('prodEditEndTime').value = rec.endTime || '';
+            document.getElementById('prodEditEndTemp').value = rec.endTemp || '';
+            document.getElementById('prodEditEndRow').innerHTML = buildProdRowOptions(rec.endRow);
+            document.getElementById('prodEditEndCol').innerHTML = buildProdColOptions(rec.endCol);
+            buildOperatorCheckboxes('prodEditOperators', rec.operatorIds || []);
+            document.getElementById('prodEditModal').style.display = 'block';
+        }
+
+        async function saveProductionEdit() {
+            const startTime = document.getElementById('prodEditStartTime').value;
+            const startTemp = parseFloat(document.getElementById('prodEditStartTemp').value);
+            const startRow = parseInt(document.getElementById('prodEditStartRow').value);
+            const startCol = document.getElementById('prodEditStartCol').value;
+            const endTime = document.getElementById('prodEditEndTime').value;
+            const endTemp = parseFloat(document.getElementById('prodEditEndTemp').value);
+            const endRow = parseInt(document.getElementById('prodEditEndRow').value);
+            const endCol = document.getElementById('prodEditEndCol').value;
+            const operatorIds = getSelectedProdOperators();
+
+            if (!startTime || !startRow || !startCol) return alert('Datos de inicio incompletos');
+            if (!endTime || !endRow || !endCol) return alert('Datos de fin incompletos');
+            if (isNaN(startTemp)) return alert('Temperatura de inicio requerida');
+            if (isNaN(endTemp)) return alert('Temperatura de fin requerida');
+            if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
+            if (prodCoordToIndex(endRow, endCol) < prodCoordToIndex(startRow, startCol))
+                return alert('La posición de fin debe ser posterior a la de inicio');
+            const [sh, sm] = startTime.split(':').map(Number);
+            const [eh, em] = endTime.split(':').map(Number);
+            if ((eh * 60 + em) <= (sh * 60 + sm))
+                return alert('La hora de fin debe ser posterior a la hora de inicio');
+
+            try {
+                showSyncIndicator('⚙️ Guardando cambios...', 'syncing');
+                await productionRecordsRef.child(currentDate).update({
+                    startTime, startTemp, startRow, startCol,
+                    endTime, endTemp, endRow, endCol,
+                    operatorIds, operatorNamesSnapshot: getProductionOperatorNames(operatorIds)
+                });
+                document.getElementById('prodEditModal').style.display = 'none';
+                showSyncIndicator('✓ Cambios guardados', 'synced');
+            } catch (err) {
+                console.error('Error editando:', err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        async function confirmProduction() {
+            const rec = productionRecords[currentDate];
+            if (!rec || !rec.endTime) return alert('Debe finalizar la producción primero');
+            if (!confirm('¿Confirmar producción? Esta acción no se puede deshacer.')) return;
+
+            const kpis = calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime);
+            if (!kpis) return alert('Error en cálculo de KPIs. Verifique los datos.');
+
+            try {
+                showSyncIndicator('⚙️ Confirmando...', 'syncing');
+                await productionRecordsRef.child(currentDate).update({
+                    confirmed: true,
+                    modulesProduced: kpis.modulesProduced,
+                    moldsProduced: kpis.moldsProduced,
+                    rowsProduced: kpis.rowsProduced,
+                    totalMinutes: kpis.totalMinutes,
+                    totalHours: kpis.totalHours,
+                    rowsPerHour: kpis.rowsPerHour,
+                    confirmedAt: new Date().toISOString(),
+                    confirmedBy: currentUser.fullName
+                });
+                showSyncIndicator('✅ Producción confirmada', 'synced');
+            } catch (err) {
+                console.error('Error confirmando:', err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== HISTORIAL DE PRODUCCIÓN ==========
+        function renderHistorialProduccion() {
+            const container = document.getElementById('historialContent');
+            const dates = Object.keys(productionRecords).sort().reverse();
+
+            if (dates.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">No hay registros de producción.</p>';
+                return;
+            }
+
+            let html = '';
+            dates.forEach(date => {
+                const rec = productionRecords[date];
+                const kpis = (rec.endTime && rec.startTime) ? calculateProductionKPIs(rec.startRow, rec.startCol, rec.endRow, rec.endCol, rec.startTime, rec.endTime) : null;
+                const opNames = rec.operatorNamesSnapshot || getProductionOperatorNames(rec.operatorIds || []);
+                const statusIcon = rec.confirmed ? '✅' : (rec.endTime ? '⏳' : '🔄');
+                const borderColor = rec.confirmed ? '#28a745' : (rec.endTime ? '#667eea' : '#ffc107');
+
+                html += `<div class="report-summary" style="margin-bottom:15px; border-left:4px solid ${borderColor};">`;
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">`;
+                html += `<h3 style="color:#1e3c72; font-size:16px;">📅 ${new Date(date+'T00:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</h3>`;
+                html += `<span>${statusIcon}</span></div>`;
+
+                if (kpis) {
+                    html += `<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:10px;">`;
+                    html += `<div style="background:#f8f9fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72; font-size:18px;">${kpis.moldsProduced}</strong><br><small style="color:#666;">Moldes</small></div>`;
+                    html += `<div style="background:#f8f9fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72; font-size:18px;">${kpis.rowsProduced}</strong><br><small style="color:#666;">Filas</small></div>`;
+                    html += `<div style="background:#f8f9fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72; font-size:18px;">${kpis.totalHours}h</strong><br><small style="color:#666;">Tiempo</small></div>`;
+                    html += `<div style="background:#f8f9fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1e3c72; font-size:18px;">${kpis.rowsPerHour}</strong><br><small style="color:#666;">Filas/h</small></div>`;
+                    html += `</div>`;
+                    html += `<p style="color:#666; font-size:13px;"><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol} | ${rec.startTime} — ${rec.endTime} | Temp: ${rec.startTemp||'-'}°C → ${rec.endTemp||'-'}°C</p>`;
+                } else {
+                    html += `<p style="color:#ffc107;">⏳ Producción en curso</p>`;
+                }
+                html += `<p style="color:#666; font-size:13px; margin-top:5px;">👷 ${Array.isArray(opNames) ? opNames.join(', ') : opNames}</p>`;
+                html += `</div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ========== OPERADORES (CRUD) ==========
+        function renderOperadoresConfig() {
+            const opList = Object.entries(operators);
+            let html = '<div style="margin-bottom:20px;"><h3 style="color:#1e3c72; margin-bottom:15px;">👷 Operadores de Producción</h3>';
+            html += `<button onclick="openAddOperatorModal()" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:15px;">➕ Agregar Operador</button>`;
+
+            if (opList.length === 0) {
+                html += '<p style="color:#999; padding:20px;">No hay operadores registrados.</p>';
+            } else {
+                opList.forEach(([id, op]) => {
+                    const badge = op.isActive !== false
+                        ? '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Activo</span>'
+                        : '<span style="background:#dc3545; color:white; padding:2px 8px; border-radius:10px; font-size:11px;">Inactivo</span>';
+                    html += `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; background:white;">`;
+                    html += `<div><strong>${op.name}</strong> ${badge}${op.identifier ? ' <small style="color:#666;">ID: '+op.identifier+'</small>' : ''}</div>`;
+                    html += `<div style="display:flex; gap:5px;">`;
+                    html += `<button onclick="toggleOperatorStatus('${id}')" style="background:${op.isActive !== false ? '#ffc107' : '#28a745'}; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;">${op.isActive !== false ? '⏸ Desactivar' : '▶ Activar'}</button>`;
+                    html += `<button onclick="openEditOperatorModal('${id}')" style="background:#667eea; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-size:11px;">✏️</button>`;
+                    html += `</div></div>`;
+                });
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function openAddOperatorModal() {
+            document.getElementById('operatorModalTitle').textContent = 'Agregar Operador';
+            document.getElementById('operatorNameInput').value = '';
+            document.getElementById('operatorIdInput').value = '';
+            document.getElementById('operatorEditKey').value = '';
+            document.getElementById('operatorModal').style.display = 'block';
+        }
+
+        function openEditOperatorModal(key) {
+            const op = operators[key];
+            if (!op) return;
+            document.getElementById('operatorModalTitle').textContent = 'Editar Operador';
+            document.getElementById('operatorNameInput').value = op.name;
+            document.getElementById('operatorIdInput').value = op.identifier || '';
+            document.getElementById('operatorEditKey').value = key;
+            document.getElementById('operatorModal').style.display = 'block';
+        }
+
+        async function saveOperator() {
+            const name = document.getElementById('operatorNameInput').value.trim();
+            const identifier = document.getElementById('operatorIdInput').value.trim();
+            const editKey = document.getElementById('operatorEditKey').value;
+
+            if (!name) return alert('El nombre es requerido');
+
+            try {
+                showSyncIndicator('⚙️ Guardando operador...', 'syncing');
+                if (editKey) {
+                    await operatorsRef.child(editKey).update({ name, identifier, updatedAt: new Date().toISOString() });
+                } else {
+                    await operatorsRef.push({ name, identifier, isActive: true, createdAt: new Date().toISOString() });
+                }
+                document.getElementById('operatorModal').style.display = 'none';
+                showSyncIndicator('✓ Operador guardado', 'synced');
+                renderConfiguracion();
+            } catch (err) {
+                console.error('Error guardando operador:', err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        async function toggleOperatorStatus(key) {
+            const op = operators[key];
+            if (!op) return;
+            try {
+                await operatorsRef.child(key).update({ isActive: op.isActive === false ? true : false, updatedAt: new Date().toISOString() });
+                showSyncIndicator(op.isActive === false ? '✓ Activado' : '✓ Desactivado', 'synced');
+                renderConfiguracion();
+            } catch (err) {
+                showSyncIndicator('✗ Error', 'error');
+            }
         }
     </script>
     
