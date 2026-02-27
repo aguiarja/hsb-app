@@ -684,7 +684,7 @@
         <!-- TAB: REPORTE DIARIO -->
         <div id="tab-reporte-diario" class="tab-content">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h3 style="color:#1e3c72; font-size:16px;">🔧 Mantenimiento</h3>
+                <h3 style="color:#1e3c72; font-size:16px;">📊 Reporte Diario</h3>
                 <button onclick="shareReport()" class="btn btn-secondary" style="padding:6px 12px; font-size:11px;">📱 WhatsApp</button>
             </div>
             <div id="reportContent"></div>
@@ -735,6 +735,11 @@
             <div id="produccionContent">
                 <p style="text-align: center; color: #999; padding: 40px;">Cargando producción...</p>
             </div>
+            <div style="position:sticky; bottom:0; padding:10px 0; background:linear-gradient(transparent, white 30%); z-index:10;">
+                <button onclick="openNovedadFromTab('produccion')" class="btn" style="width:100%; background:linear-gradient(135deg,#ff9800,#f57c00); font-size:14px; padding:12px;">
+                    📝 Cargar Novedad — Producción
+                </button>
+            </div>
         </div>
 
         <!-- TAB: VENTAS -->
@@ -744,6 +749,11 @@
             </div>
             <div id="ventasContent">
                 <p style="text-align: center; color: #999; padding: 40px;">Cargando ventas...</p>
+            </div>
+            <div style="position:sticky; bottom:0; padding:10px 0; background:linear-gradient(transparent, white 30%); z-index:10;">
+                <button onclick="openNovedadFromTab('ventas')" class="btn" style="width:100%; background:linear-gradient(135deg,#ff9800,#f57c00); font-size:14px; padding:12px;">
+                    📝 Cargar Novedad — Ventas
+                </button>
             </div>
         </div>
 
@@ -3665,6 +3675,99 @@
             }
         }
 
+        // ==================== NOVEDADES DESDE PESTAÑAS ====================
+        
+        function openNovedadFromTab(tabSource) {
+            const modal = document.getElementById('novedadesModal');
+            const content = document.getElementById('novedadesModalContent');
+            accumulatedPhotos = [];
+            
+            var sourceLabel = tabSource === 'produccion' ? '🧊 Producción' : (tabSource === 'ventas' ? '💰 Ventas' : '📋 General');
+            
+            content.innerHTML = `
+                <div style="background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:10px; border-radius:8px; margin-bottom:12px; text-align:center;">
+                    <strong>${sourceLabel}</strong> — Nueva Novedad
+                </div>
+                <input type="hidden" id="novedadTabSource" value="${tabSource}">
+                <div class="form-group">
+                    <label>Novedad:</label>
+                    <textarea id="customNovedad" rows="3" placeholder="Describe la novedad o incidencia..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>📷 Fotos (Opcional - Máximo 3):</label>
+                    <input type="file" id="novedadPhotos" accept="image/*" multiple style="display: none;">
+                    <div class="photo-upload" onclick="document.getElementById('novedadPhotos').click()">
+                        <p>📷 Agregar fotos (<span id="photoCount">0</span>/3)</p>
+                        <small style="color: #999;">Toca para seleccionar fotos</small>
+                    </div>
+                    <div id="novedadPhotosPreview" class="photo-preview"></div>
+                </div>
+                <button onclick="saveNovedadFromTab()" class="btn">💾 Guardar Novedad</button>
+            `;
+            
+            document.getElementById('novedadPhotos').addEventListener('change', function(e) {
+                Array.from(e.target.files).forEach(function(file) {
+                    if (accumulatedPhotos.length < 3) accumulatedPhotos.push(file);
+                });
+                updatePhotosPreview();
+                e.target.value = '';
+            });
+            
+            modal.style.display = 'block';
+        }
+        
+        async function saveNovedadFromTab() {
+            var tabSource = document.getElementById('novedadTabSource').value;
+            var novedadText = document.getElementById('customNovedad').value.trim();
+            if (!novedadText) return alert('⚠️ Escribe la novedad');
+            
+            var sectionName = tabSource === 'produccion' ? 'Producción' : (tabSource === 'ventas' ? 'Ventas' : 'General');
+            
+            showSyncIndicator('💾 Guardando novedad...', 'syncing');
+            
+            var photoURLs = [];
+            if (accumulatedPhotos.length > 0) {
+                showSyncIndicator('📷 Subiendo fotos...', 'syncing');
+                for (var i = 0; i < accumulatedPhotos.length; i++) {
+                    var file = accumulatedPhotos[i];
+                    var fileName = 'novedades/' + currentDate + '/' + Date.now() + '_' + i + '.jpg';
+                    var storageRefF = storage.ref(fileName);
+                    try {
+                        await storageRefF.put(file);
+                        var url = await storageRefF.getDownloadURL();
+                        photoURLs.push(url);
+                    } catch (error) { console.error('Error foto:', error); }
+                }
+            }
+            
+            var novedad = {
+                id: Date.now(),
+                sectionId: null,
+                sectionName: sectionName,
+                tabSource: tabSource,
+                text: novedadText,
+                user: currentUser.fullName,
+                timestamp: new Date().toISOString(),
+                photos: photoURLs
+            };
+            
+            try {
+                await novedadesRef.child(currentDate).push(novedad);
+                var currentNovedades = (dailyLogs[currentDate] && dailyLogs[currentDate].novedades) ? dailyLogs[currentDate].novedades : [];
+                if (!Array.isArray(currentNovedades)) currentNovedades = Object.values(currentNovedades);
+                currentNovedades.push(novedad);
+                await database.ref('dailyLogs/' + currentDate + '/novedades').set(currentNovedades);
+                
+                showSyncIndicator('✓ Novedad guardada', 'synced');
+                closeNovedadesModal();
+                accumulatedPhotos = [];
+                if (typeof renderReporteDiario === 'function') renderReporteDiario();
+            } catch (error) {
+                console.error('Error:', error);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
         // ==================== REPORTE DIARIO ====================
         
         function renderReporteDiario() {
@@ -3858,11 +3961,12 @@
                 reportHTML += '<div id="' + pToggle + '" style="display:none; padding:10px 12px; border-top:1px solid #eee; font-size:12px;">';
                 if (prodPartials.length > 0) {
                     reportHTML += '<div style="background:#e8f5e9; padding:8px; border-radius:6px; margin-bottom:6px;">';
-                    reportHTML += '<strong>📦 Cargas a almacén:</strong> ' + prodPartials.length + ' — ' + prodPartialMolds + ' moldes';
-                    if (prodKpis) { var rem = prodKpis.moldsProduced - prodPartialMolds; if (rem > 0) reportHTML += ' | Restante: ' + rem; }
+                    reportHTML += '<strong>📦 Cargas a almacén:</strong> ' + prodPartials.length + ' cargas — ' + prodPartialMolds + ' moldes total';
                     reportHTML += '</div>';
                     prodPartials.forEach(function(p, i) {
-                        reportHTML += '<div style="' + (i > 0 ? 'border-top:1px solid #e8e8e8; margin-top:3px; padding-top:3px;' : '') + 'font-size:12px;">📦 Carga ' + (i+1) + ': ' + p.fromRow + p.fromCol + ' → ' + p.toRow + p.toCol + ' = <strong>' + p.moldsLoaded + ' moldes</strong></div>';
+                        var label = p.isFinal ? '🏁 Carga Final' : '📦 Carga ' + (i+1);
+                        var bgStyle = p.isFinal ? 'background:#fff8e1; border-left:3px solid #ff9800;' : '';
+                        reportHTML += '<div style="padding:4px 8px; font-size:12px; ' + bgStyle + (i > 0 ? 'border-top:1px solid #e8e8e8; margin-top:3px; padding-top:5px;' : '') + '"><strong>' + label + ':</strong> ' + p.fromRow + p.fromCol + ' → ' + p.toRow + p.toCol + ' = <strong>' + p.moldsLoaded + ' moldes</strong></div>';
                     });
                 }
                 reportHTML += '<div style="background:#f8f9fa; padding:8px; border-radius:6px; margin-top:6px;">';
@@ -3875,6 +3979,57 @@
 
             // ========== 3. CARD VENTAS ==========
             reportHTML += renderVentasReportSection(dateStr);
+
+            // ========== 4. CARD NOVEDADES ==========
+            var allNovedades = [];
+            // Desde dailyLogs
+            if (dailyLogs[dateStr] && dailyLogs[dateStr].novedades) {
+                var nv = dailyLogs[dateStr].novedades;
+                if (Array.isArray(nv)) { allNovedades = nv; } 
+                else { allNovedades = Object.values(nv); }
+            }
+            // Desde novedades global
+            if (window.novedades && window.novedades[dateStr]) {
+                var nvG = window.novedades[dateStr];
+                var nvArr = typeof nvG === 'object' ? Object.values(nvG) : [];
+                // Merge sin duplicar por id
+                var existingIds = allNovedades.map(function(n) { return n.id; });
+                nvArr.forEach(function(n) { if (!existingIds.includes(n.id)) allNovedades.push(n); });
+            }
+            
+            if (allNovedades.length > 0) {
+                var nvToggle = 'rpt_novedades_' + dateStr.replace(/-/g, '');
+                reportHTML += '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
+                reportHTML += '<div onclick="var el=document.getElementById(\'' + nvToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
+                reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center;">';
+                reportHTML += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">📝 Novedades</span>';
+                reportHTML += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:#ff9800; color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;">' + allNovedades.length + '</span><span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span></div>';
+                reportHTML += '</div></div>';
+                reportHTML += '<div id="' + nvToggle + '" style="display:none; border-top:1px solid #eee;">';
+                
+                allNovedades.forEach(function(nov) {
+                    var srcIcon = nov.tabSource === 'produccion' ? '🧊' : (nov.tabSource === 'ventas' ? '💰' : '🔧');
+                    var srcLabel = nov.sectionName || 'General';
+                    var srcColor = nov.tabSource === 'produccion' ? '#e3f2fd' : (nov.tabSource === 'ventas' ? '#e8f5e9' : '#f3e5f5');
+                    reportHTML += '<div style="padding:10px 12px; border-bottom:1px solid #f5f5f5;">';
+                    reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
+                    reportHTML += '<span style="background:' + srcColor + '; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600;">' + srcIcon + ' ' + srcLabel + '</span>';
+                    reportHTML += '<small style="color:#999;">' + (nov.user || '') + '</small>';
+                    reportHTML += '</div>';
+                    reportHTML += '<p style="font-size:13px; color:#333; margin:4px 0;">' + (nov.text || '') + '</p>';
+                    if (nov.photos && nov.photos.length > 0) {
+                        var regId = window.registerPhotos(nov.photos);
+                        reportHTML += '<div style="display:flex; gap:4px; margin-top:4px;">';
+                        nov.photos.forEach(function(url, idx) {
+                            reportHTML += '<img src="' + url + '" style="width:50px;height:50px;object-fit:cover;border-radius:4px;cursor:pointer;" onclick="window.openCarouselById(\'' + regId + '\',' + idx + ')">';
+                        });
+                        reportHTML += '</div>';
+                    }
+                    reportHTML += '</div>';
+                });
+                
+                reportHTML += '</div></div>';
+            }
 
             return reportHTML;
         }
@@ -6460,6 +6615,23 @@
             const totalPartialMolds = partials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
             const remainingMolds = kpis.moldsProduced - totalPartialMolds;
 
+            // Agregar "Carga Final" con los moldes restantes
+            const updatedPartials = [...partials];
+            if (remainingMolds > 0) {
+                const fromPos = getPartialFromPosition(rec);
+                updatedPartials.push({
+                    fromRow: fromPos.row,
+                    fromCol: fromPos.col,
+                    toRow: rec.endRow,
+                    toCol: rec.endCol,
+                    moldsLoaded: remainingMolds,
+                    isFinal: true,
+                    label: 'Carga Final',
+                    timestamp: new Date().toISOString(),
+                    user: currentUser.fullName
+                });
+            }
+
             try {
                 showSyncIndicator('⚙️ Confirmando...', 'syncing');
                 await productionRecordsRef.child(currentDate).update({
@@ -6470,8 +6642,9 @@
                     totalMinutes: kpis.totalMinutes,
                     totalHours: kpis.totalHours,
                     rowsPerHour: kpis.rowsPerHour,
-                    totalPartialMolds: totalPartialMolds,
-                    remainingMoldsAtClose: remainingMolds,
+                    partialLoads: updatedPartials,
+                    totalPartialMolds: kpis.moldsProduced,
+                    remainingMoldsAtClose: 0,
                     confirmedAt: new Date().toISOString(),
                     confirmedBy: currentUser.fullName
                 });
@@ -7411,7 +7584,7 @@
             const sales = dispatches.filter(d => d.status === 'dispatched');
             const mermas = dispatches.filter(d => d.status === 'merma');
             const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
-            const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0);
+            const totalMerma = mermas.reduce((s, d) => s + (d.merma || 0), 0) + sales.reduce((s, d) => s + (d.merma || 0), 0);
             const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
             const vToggle = 'rpt_ventas_' + dateStr.replace(/-/g,'');
             
@@ -7421,36 +7594,54 @@
             html += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">💰 Ventas</span>';
             html += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:#28a745; color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;">' + sales.length + ' despachos</span><span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span></div>';
             html += '</div>';
-            html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
-            html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMolds + '</strong><br><small style="color:#555;">Moldes</small></div>';
-            html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">$' + totalAmount.toFixed(0) + '</strong><br><small style="color:#555;">Total</small></div>';
-            html += '<div style="background:#ffebee; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#c62828; font-size:20px;">' + totalMerma + '</strong><br><small style="color:#555;">Merma</small></div>';
-            html += '<div style="background:#fff3e0; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#e65100; font-size:20px;">' + sales.length + '</strong><br><small style="color:#555;">Despachos</small></div>';
+            html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">';
+            html += '<div style="background:#e8f5e9; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">' + totalMolds + '</strong><br><small style="color:#555; font-size:10px;">Moldes</small></div>';
+            html += '<div style="background:#e3f2fd; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">' + sales.length + '</strong><br><small style="color:#555; font-size:10px;">Despachos</small></div>';
+            html += '<div style="background:#ffebee; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#c62828; font-size:18px;">' + totalMerma + '</strong><br><small style="color:#555; font-size:10px;">Merma</small></div>';
+            html += '<div style="background:#f3e5f5; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$' + totalAmount.toFixed(0) + '</strong><br><small style="color:#555; font-size:10px;">Total</small></div>';
             html += '</div></div>';
             
             // Detalle expandible
-            html += '<div id="' + vToggle + '" style="display:none; padding:10px 12px; border-top:1px solid #eee; font-size:12px;">';
+            html += '<div id="' + vToggle + '" style="display:none; border-top:1px solid #eee; font-size:12px;">';
             
-            const byClient = {};
-            sales.forEach(d => {
-                if (!byClient[d.clientId]) byClient[d.clientId] = { name: d.clientName, total: 0, count: 0 };
-                byClient[d.clientId].total += d.moldsDispatched || 0;
-                byClient[d.clientId].count++;
+            // Agrupar ventas por cliente con detalle completo
+            var byClient = {};
+            sales.forEach(function(d) {
+                var cId = d.clientId || 'unknown';
+                if (!byClient[cId]) byClient[cId] = { name: d.clientName || 'Sin nombre', totalMolds: 0, totalMerma: 0, count: 0, dispatches: [] };
+                byClient[cId].totalMolds += (d.moldsDispatched || 0);
+                byClient[cId].totalMerma += (d.merma || 0);
+                byClient[cId].count++;
+                byClient[cId].dispatches.push(d);
             });
             
-            if (Object.keys(byClient).length > 0) {
-                html += '<div style="background:#f8f9fa; padding:8px; border-radius:6px;">';
-                Object.values(byClient).forEach(c => {
-                    html += '<p><strong>' + c.name + ':</strong> ' + c.total + ' moldes (' + c.count + ' despacho' + (c.count > 1 ? 's' : '') + ')</p>';
-                });
+            // Renderizar cada cliente con sus despachos
+            Object.values(byClient).forEach(function(client) {
+                var cToggle = vToggle + '_' + client.name.replace(/[^a-zA-Z0-9]/g, '');
+                html += '<div style="border-bottom:1px solid #f0f0f0;">';
+                html += '<div onclick="var el=document.getElementById(\'' + cToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.sch\').textContent=el.style.display===\'none\'?\'▶\':\'▼\';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<div><strong>' + client.name + '</strong> — ' + client.totalMolds + ' moldes (' + client.count + ' despacho' + (client.count > 1 ? 's' : '') + ')';
+                if (client.totalMerma > 0) html += ' | Merma: ' + client.totalMerma;
                 html += '</div>';
-            }
+                html += '<span class="sch" style="color:#667eea; font-size:12px;">▶</span>';
+                html += '</div>';
+                html += '<div id="' + cToggle + '" style="display:none; padding:4px 12px 10px;">';
+                client.dispatches.forEach(function(d) {
+                    html += '<div style="padding:4px 0; border-top:1px solid #f5f5f5; font-size:12px;">';
+                    html += '📦 ' + (d.moldsDispatched || 0) + ' moldes';
+                    if (d.merma > 0) html += ' + ' + d.merma + ' merma';
+                    html += ' — ' + (d.priceTypeName || 'S/T');
+                    html += ' $' + (d.totalAmount || 0).toFixed(2);
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            });
             
+            // Mermas independientes (no asociadas a cliente)
             if (mermas.length > 0) {
-                html += '<div style="background:#ffebee; padding:8px; border-radius:6px; margin-top:6px;">';
-                html += '<strong>Merma:</strong> ';
+                html += '<div style="background:#ffebee; padding:8px 12px; border-top:1px solid #eee;">';
                 mermas.forEach(function(m) {
-                    html += (m.merma || 0) + ' moldes — ' + (m.observations || 'Sin detalle') + '. ';
+                    html += '<div style="padding:2px 0;">📦 Merma: ' + (m.merma || 0) + ' moldes — ' + (m.observations || 'Sin detalle') + '</div>';
                 });
                 html += '</div>';
             }
