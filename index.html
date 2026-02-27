@@ -698,6 +698,11 @@
                     <div id="currentDateDisplay" style="font-size: 16px; color: #667eea; font-weight: bold; margin-top: 5px;"></div>
                 </div>
                 <div id="sectionsContainer"></div>
+                <div style="padding:10px 0; margin-top:10px;">
+                    <button onclick="openNovedadFromTab('mantenimiento')" class="btn" style="width:100%; background:linear-gradient(135deg,#ff9800,#f57c00); font-size:14px; padding:12px;">
+                        📝 Cargar Novedad — Mantenimiento
+                    </button>
+                </div>
             </div>
 
             <div id="sectionDetail" class="section-view">
@@ -1670,6 +1675,7 @@
         let salesPriceTypesRef;
         let salesInventoryRef;
         let salesDispatchesRef;
+        let novedadesPorSeccionRef;
 
         function initializeRefs() {
             usersRef = database.ref('users');
@@ -1689,6 +1695,7 @@
             salesPriceTypesRef = database.ref('sales_priceTypes');
             salesInventoryRef = database.ref('sales_inventory');
             salesDispatchesRef = database.ref('sales_dispatches');
+            novedadesPorSeccionRef = database.ref('novedadesPorSeccion');
         }
 
         // Local cache - HACER GLOBALES DIRECTAMENTE
@@ -1711,6 +1718,7 @@
         let sections = window.sections;
         let activities = window.activities;
         let novedadesPredefinidas = [];
+        let novedadesPorSeccion = { mantenimiento: [], produccion: [], ventas: [] };
         let dailyLogs = window.dailyLogs;
         let planActivities = window.planActivities;
         let planExecutions = window.planExecutions;
@@ -1891,7 +1899,7 @@
             console.log('📥 Loading data from Firebase...');
 
             try {
-                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap, prodSnap, opSnap, sCliSnap, sPtSnap, sInvSnap, sDispSnap] = await Promise.all([
+                const [usersSnap, tabsSnap, sectionsSnap, activitiesSnap, novedadesSnap, logsSnap, planSnap, planExecSnap, notCompletedSnap, alertsSnap, novedadesFullSnap, prodSnap, opSnap, sCliSnap, sPtSnap, sInvSnap, sDispSnap, novSecSnap] = await Promise.all([
                     usersRef.once('value'),
                     tabsRef.once('value'),
                     sectionsRef.once('value'),
@@ -1908,7 +1916,8 @@
                     salesClientsRef.once('value'),
                     salesPriceTypesRef.once('value'),
                     salesInventoryRef.once('value'),
-                    salesDispatchesRef.once('value')
+                    salesDispatchesRef.once('value'),
+                    novedadesPorSeccionRef.once('value')
                 ]);
 
                 users = usersSnap.val() || [];
@@ -1962,6 +1971,24 @@
                 salesPriceTypes = sPtSnap.val() || {};
                 salesInventory = sInvSnap.val() || { available: 0 };
                 salesDispatches = sDispSnap.val() || {};
+                
+                // Cargar novedades predefinidas por sección
+                var npsData = novSecSnap.val();
+                if (npsData) {
+                    novedadesPorSeccion = {
+                        mantenimiento: npsData.mantenimiento || [],
+                        produccion: npsData.produccion || [],
+                        ventas: npsData.ventas || []
+                    };
+                } else {
+                    // Migrar novedades antiguas a mantenimiento
+                    novedadesPorSeccion = {
+                        mantenimiento: novedadesPredefinidas.length > 0 ? [...novedadesPredefinidas] : [],
+                        produccion: [],
+                        ventas: []
+                    };
+                    novedadesPorSeccionRef.set(novedadesPorSeccion);
+                }
                 
                 // ACTUALIZAR VARIABLES GLOBALES
                 window.sections = sections;
@@ -2843,20 +2870,6 @@
                 container.appendChild(sectionCard);
             });
 
-            // Sección de Novedades
-            const novedadesCount = (dailyLogs[currentDate] && dailyLogs[currentDate].novedades) ? ( Array.isArray(dailyLogs[currentDate].novedades) ? dailyLogs[currentDate].novedades.length : Object.keys(dailyLogs[currentDate].novedades).length) : 0;
-            const novedadesCard = document.createElement('div');
-            novedadesCard.className = 'section-card';
-            novedadesCard.onclick = () => openReportNovedadModal();
-            novedadesCard.innerHTML = `
-                <div class="section-info">
-                    <h3>📝 Novedades</h3>
-                    <p style="font-size: 13px; color: #666; margin-top: 5px;">${novedadesCount} novedad(es) reportada(s)</p>
-                </div>
-                <div class="section-icon">📝</div>
-            `;
-            container.appendChild(novedadesCard);
-            
             console.log('=== SECTIONS RENDERED ===');
         }
 
@@ -3682,28 +3695,58 @@
             const content = document.getElementById('novedadesModalContent');
             accumulatedPhotos = [];
             
-            var sourceLabel = tabSource === 'produccion' ? '🧊 Producción' : (tabSource === 'ventas' ? '💰 Ventas' : '📋 General');
+            var sourceLabel = tabSource === 'produccion' ? '🧊 Producción' : (tabSource === 'ventas' ? '💰 Ventas' : '🔧 Mantenimiento');
+            var sourceColor = tabSource === 'produccion' ? '#1565c0' : (tabSource === 'ventas' ? '#2e7d32' : '#667eea');
             
-            content.innerHTML = `
-                <div style="background:linear-gradient(135deg,#667eea,#764ba2); color:white; padding:10px; border-radius:8px; margin-bottom:12px; text-align:center;">
-                    <strong>${sourceLabel}</strong> — Nueva Novedad
-                </div>
-                <input type="hidden" id="novedadTabSource" value="${tabSource}">
-                <div class="form-group">
-                    <label>Novedad:</label>
-                    <textarea id="customNovedad" rows="3" placeholder="Describe la novedad o incidencia..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>📷 Fotos (Opcional - Máximo 3):</label>
-                    <input type="file" id="novedadPhotos" accept="image/*" multiple style="display: none;">
-                    <div class="photo-upload" onclick="document.getElementById('novedadPhotos').click()">
-                        <p>📷 Agregar fotos (<span id="photoCount">0</span>/3)</p>
-                        <small style="color: #999;">Toca para seleccionar fotos</small>
-                    </div>
-                    <div id="novedadPhotosPreview" class="photo-preview"></div>
-                </div>
-                <button onclick="saveNovedadFromTab()" class="btn">💾 Guardar Novedad</button>
-            `;
+            // Obtener predefinidas de esta sección
+            var predefList = novedadesPorSeccion[tabSource] || [];
+            
+            var predefHTML = '';
+            if (predefList.length > 0) {
+                predefHTML = '<div class="form-group" style="background:#f0f8ff; padding:12px; border-radius:8px;">';
+                predefHTML += '<h4 style="color:#0066cc; margin-bottom:8px; font-size:13px; text-align:center;">Novedades Predefinidas</h4>';
+                predefList.forEach(function(n) {
+                    predefHTML += '<div style="margin:6px 0; padding:8px; background:#fff; border-radius:5px; display:flex; align-items:center; gap:8px;">';
+                    predefHTML += '<input type="checkbox" id="novtab_' + n.id + '" value="' + n.text + '" style="width:18px; height:18px;">';
+                    predefHTML += '<label for="novtab_' + n.id + '" style="cursor:pointer; font-size:13px;">' + n.text + '</label>';
+                    predefHTML += '</div>';
+                });
+                predefHTML += '</div>';
+            }
+            
+            // Subsección solo para mantenimiento
+            var subSecHTML = '';
+            if (tabSource === 'mantenimiento') {
+                subSecHTML = '<div class="form-group"><label>Sección/Equipo:</label>';
+                subSecHTML += '<select id="novedadSubSection" style="width:100%; padding:10px; border:2px solid ' + sourceColor + '; border-radius:5px; font-size:14px;">';
+                subSecHTML += '<option value="">General (sin sección)</option>';
+                sections.forEach(function(s) {
+                    subSecHTML += '<option value="' + s.id + '">' + s.icon + ' ' + s.name + '</option>';
+                });
+                subSecHTML += '</select></div>';
+            }
+            
+            content.innerHTML = 
+                '<div style="background:linear-gradient(135deg,' + sourceColor + ',' + sourceColor + 'dd); color:white; padding:10px; border-radius:8px; margin-bottom:12px; text-align:center;">' +
+                    '<strong>' + sourceLabel + '</strong> — Nueva Novedad' +
+                '</div>' +
+                '<input type="hidden" id="novedadTabSource" value="' + tabSource + '">' +
+                subSecHTML +
+                predefHTML +
+                '<div class="form-group">' +
+                    '<label>Novedad adicional:</label>' +
+                    '<textarea id="customNovedad" rows="3" placeholder="Describe la novedad o incidencia..."></textarea>' +
+                '</div>' +
+                '<div class="form-group">' +
+                    '<label>📷 Fotos (Opcional - Máximo 3):</label>' +
+                    '<input type="file" id="novedadPhotos" accept="image/*" multiple style="display:none;">' +
+                    '<div class="photo-upload" onclick="document.getElementById(\'novedadPhotos\').click()">' +
+                        '<p>📷 Agregar fotos (<span id="photoCount">0</span>/3)</p>' +
+                        '<small style="color:#999;">Toca para seleccionar fotos</small>' +
+                    '</div>' +
+                    '<div id="novedadPhotosPreview" class="photo-preview"></div>' +
+                '</div>' +
+                '<button onclick="saveNovedadFromTab()" class="btn">💾 Guardar Novedad</button>';
             
             document.getElementById('novedadPhotos').addEventListener('change', function(e) {
                 Array.from(e.target.files).forEach(function(file) {
@@ -3718,10 +3761,33 @@
         
         async function saveNovedadFromTab() {
             var tabSource = document.getElementById('novedadTabSource').value;
-            var novedadText = document.getElementById('customNovedad').value.trim();
-            if (!novedadText) return alert('⚠️ Escribe la novedad');
+            var customNovedad = document.getElementById('customNovedad').value.trim();
             
-            var sectionName = tabSource === 'produccion' ? 'Producción' : (tabSource === 'ventas' ? 'Ventas' : 'General');
+            // Recoger predefinidas seleccionadas
+            var predefList = novedadesPorSeccion[tabSource] || [];
+            var selectedTexts = [];
+            predefList.forEach(function(n) {
+                var cb = document.getElementById('novtab_' + n.id);
+                if (cb && cb.checked) selectedTexts.push(n.text);
+            });
+            
+            var novedadText = '';
+            if (selectedTexts.length > 0) novedadText = selectedTexts.join(', ');
+            if (customNovedad) novedadText += (novedadText ? '. ' : '') + customNovedad;
+            
+            if (!novedadText) return alert('⚠️ Selecciona o escribe al menos una novedad');
+            
+            var sectionName = tabSource === 'produccion' ? 'Producción' : (tabSource === 'ventas' ? 'Ventas' : 'Mantenimiento');
+            
+            // Para mantenimiento, capturar subsección
+            var subSectionId = null;
+            var subSectionName = '';
+            var subSecEl = document.getElementById('novedadSubSection');
+            if (subSecEl && subSecEl.value) {
+                subSectionId = subSecEl.value;
+                var sec = sections.find(function(s) { return s.id == subSectionId; });
+                subSectionName = sec ? sec.name : '';
+            }
             
             showSyncIndicator('💾 Guardando novedad...', 'syncing');
             
@@ -3742,8 +3808,9 @@
             
             var novedad = {
                 id: Date.now(),
-                sectionId: null,
+                sectionId: subSectionId,
                 sectionName: sectionName,
+                subSectionName: subSectionName,
                 tabSource: tabSource,
                 text: novedadText,
                 user: currentUser.fullName,
@@ -3934,7 +4001,33 @@
                 var prodKpis = (prodRec.endTime && prodRec.startTime) ? calculateProductionKPIs(prodRec.startRow, prodRec.startCol, prodRec.endRow, prodRec.endCol, prodRec.startTime, prodRec.endTime) : null;
                 var prodOpNames = prodRec.operatorNamesSnapshot || getProductionOperatorNames(prodRec.operatorIds || []);
                 var prodPartials = prodRec.partialLoads || [];
+                // Si es Array, copiar; si es objeto Firebase, convertir
+                if (!Array.isArray(prodPartials)) prodPartials = Object.values(prodPartials);
+                prodPartials = prodPartials.slice(); // copia para no mutar
+                
                 var prodPartialMolds = prodPartials.reduce(function(s, p) { return s + (p.moldsLoaded || 0); }, 0);
+                
+                // Calcular Carga Final virtual si producción confirmada y hay moldes restantes
+                var totalProdMolds = prodKpis ? prodKpis.moldsProduced : 0;
+                var hasFinal = prodPartials.some(function(p) { return p.isFinal; });
+                if (prodRec.confirmed && prodKpis && !hasFinal && totalProdMolds > prodPartialMolds) {
+                    var remainingDisplay = totalProdMolds - prodPartialMolds;
+                    var fromPos = { row: prodRec.endRow, col: prodRec.endCol };
+                    if (prodPartials.length > 0) {
+                        var last = prodPartials[prodPartials.length - 1];
+                        fromPos = getNextPosition(last.toRow, last.toCol);
+                    } else {
+                        fromPos = { row: prodRec.startRow, col: prodRec.startCol };
+                    }
+                    prodPartials.push({
+                        fromRow: fromPos.row, fromCol: fromPos.col,
+                        toRow: prodRec.endRow, toCol: prodRec.endCol,
+                        moldsLoaded: remainingDisplay,
+                        isFinal: true
+                    });
+                    prodPartialMolds = totalProdMolds;
+                }
+                
                 var prodColor = prodRec.confirmed ? '#28a745' : (prodRec.endTime ? '#667eea' : '#ffc107');
                 var prodStatusTxt = prodRec.confirmed ? 'Confirmada' : (prodRec.endTime ? 'Pendiente' : 'En proceso');
                 var pToggle = 'rpt_prod_' + dateStr.replace(/-/g, '');
@@ -4010,6 +4103,7 @@
                 allNovedades.forEach(function(nov) {
                     var srcIcon = nov.tabSource === 'produccion' ? '🧊' : (nov.tabSource === 'ventas' ? '💰' : '🔧');
                     var srcLabel = nov.sectionName || 'General';
+                    if (nov.subSectionName) srcLabel += ' — ' + nov.subSectionName;
                     var srcColor = nov.tabSource === 'produccion' ? '#e3f2fd' : (nov.tabSource === 'ventas' ? '#e8f5e9' : '#f3e5f5');
                     reportHTML += '<div style="padding:10px 12px; border-bottom:1px solid #f5f5f5;">';
                     reportHTML += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">';
@@ -5791,102 +5885,85 @@
         }
         
         function renderNovedadesConfig(container) {
-            let html = '<h4 style="color: #2a5298; margin-bottom: 15px;">Novedades Predefinidas</h4>';
+            var secTabs = [
+                { key: 'mantenimiento', label: '🔧 Mantenimiento', color: '#667eea' },
+                { key: 'produccion', label: '🧊 Producción', color: '#1565c0' },
+                { key: 'ventas', label: '💰 Ventas', color: '#2e7d32' }
+            ];
             
-            novedadesPredefinidas.forEach((novedad, index) => {
-                html += `
-                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; background: white;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="flex: 1;">
-                                <strong>${novedad.text}</strong>
-                            </div>
-                            <div>
-                                <button onclick="moveNovedadUp(${novedad.id})" 
-                                        ${index === 0 ? 'disabled style="opacity: 0.3;"' : ''}
-                                        style="background: #667eea; color: white; border: none; 
-                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
-                                               font-size: 12px; margin-right: 5px;">
-                                    ↑
-                                </button>
-                                <button onclick="moveNovedadDown(${novedad.id})" 
-                                        ${index === novedadesPredefinidas.length - 1 ? 'disabled style="opacity: 0.3;"' : ''}
-                                        style="background: #667eea; color: white; border: none; 
-                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
-                                               font-size: 12px; margin-right: 5px;">
-                                    ↓
-                                </button>
-                                <button onclick="deleteNovedad(${novedad.id})" 
-                                        style="background: #dc3545; color: white; border: none; 
-                                               padding: 6px 12px; border-radius: 5px; cursor: pointer; 
-                                               font-size: 12px;">
-                                    🗑️ Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            let html = '<h4 style="color:#2a5298; margin-bottom:15px;">Novedades Predefinidas por Sección</h4>';
+            
+            // Sub-tabs
+            html += '<div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">';
+            secTabs.forEach(function(st, idx) {
+                html += '<button onclick="showNovedadesSeccion(\'' + st.key + '\')" id="novCfg_' + st.key + '" style="padding:8px 16px; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; background:' + (idx === 0 ? st.color : '#e0e0e0') + '; color:' + (idx === 0 ? 'white' : '#666') + ';">' + st.label + '</button>';
             });
+            html += '</div>';
             
-            html += `
-                <button onclick="promptAddNovedad()" 
-                        style="background: #28a745; color: white; border: none; 
-                               padding: 10px 20px; border-radius: 5px; cursor: pointer; 
-                               font-size: 14px; margin-top: 15px; width: 100%;">
-                    ➕ Agregar Novedad
-                </button>
-            `;
+            html += '<div id="novedadesSeccionContent"></div>';
             
             container.innerHTML = html;
+            showNovedadesSeccion('mantenimiento');
         }
         
-        async function moveNovedadUp(id) {
-            const index = novedadesPredefinidas.findIndex(n => n.id === id);
-            if (index <= 0) return;
+        function showNovedadesSeccion(secKey) {
+            var secColors = { mantenimiento: '#667eea', produccion: '#1565c0', ventas: '#2e7d32' };
+            ['mantenimiento', 'produccion', 'ventas'].forEach(function(k) {
+                var btn = document.getElementById('novCfg_' + k);
+                if (btn) {
+                    btn.style.background = k === secKey ? (secColors[k] || '#667eea') : '#e0e0e0';
+                    btn.style.color = k === secKey ? 'white' : '#666';
+                }
+            });
             
-            // Intercambiar posiciones
-            const temp = novedadesPredefinidas[index];
-            novedadesPredefinidas[index] = novedadesPredefinidas[index - 1];
-            novedadesPredefinidas[index - 1] = temp;
+            var list = novedadesPorSeccion[secKey] || [];
+            var html = '';
             
-            await novedadesPredefinidasRef.set(novedadesPredefinidas);
+            list.forEach(function(nov, idx) {
+                html += '<div style="border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:8px; background:white; display:flex; justify-content:space-between; align-items:center;">';
+                html += '<strong style="font-size:13px;">' + nov.text + '</strong>';
+                html += '<div style="display:flex; gap:4px;">';
+                html += '<button onclick="moveNovedadSeccion(\'' + secKey + '\',' + idx + ',-1)" ' + (idx === 0 ? 'disabled style="opacity:0.3;"' : '') + ' style="background:#667eea; color:white; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:11px;">↑</button>';
+                html += '<button onclick="moveNovedadSeccion(\'' + secKey + '\',' + idx + ',1)" ' + (idx === list.length - 1 ? 'disabled style="opacity:0.3;"' : '') + ' style="background:#667eea; color:white; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:11px;">↓</button>';
+                html += '<button onclick="deleteNovedadSeccion(\'' + secKey + '\',' + idx + ')" style="background:#dc3545; color:white; border:none; padding:4px 10px; border-radius:5px; cursor:pointer; font-size:11px;">🗑️</button>';
+                html += '</div></div>';
+            });
+            
+            html += '<button onclick="addNovedadSeccion(\'' + secKey + '\')" style="background:#28a745; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:14px; margin-top:10px; width:100%;">➕ Agregar Novedad</button>';
+            
+            document.getElementById('novedadesSeccionContent').innerHTML = html;
+        }
+        
+        async function addNovedadSeccion(secKey) {
+            var text = prompt('Escribe la novedad predefinida:');
+            if (!text || !text.trim()) return;
+            var list = novedadesPorSeccion[secKey] || [];
+            var newId = list.length > 0 ? Math.max.apply(null, list.map(function(n) { return n.id || 0; })) + 1 : 1;
+            list.push({ id: newId, text: text.trim() });
+            novedadesPorSeccion[secKey] = list;
+            await novedadesPorSeccionRef.child(secKey).set(list);
+            showSyncIndicator('✓ Novedad agregada', 'synced');
+            showNovedadesSeccion(secKey);
+        }
+        
+        async function deleteNovedadSeccion(secKey, idx) {
+            if (!confirm('¿Eliminar esta novedad?')) return;
+            novedadesPorSeccion[secKey].splice(idx, 1);
+            await novedadesPorSeccionRef.child(secKey).set(novedadesPorSeccion[secKey]);
+            showSyncIndicator('✓ Novedad eliminada', 'synced');
+            showNovedadesSeccion(secKey);
+        }
+        
+        async function moveNovedadSeccion(secKey, idx, direction) {
+            var list = novedadesPorSeccion[secKey];
+            var newIdx = idx + direction;
+            if (newIdx < 0 || newIdx >= list.length) return;
+            var temp = list[idx];
+            list[idx] = list[newIdx];
+            list[newIdx] = temp;
+            await novedadesPorSeccionRef.child(secKey).set(list);
             showSyncIndicator('✓ Orden actualizado', 'synced');
-            renderConfiguracion();
-        }
-        
-        async function moveNovedadDown(id) {
-            const index = novedadesPredefinidas.findIndex(n => n.id === id);
-            if (index < 0 || index >= novedadesPredefinidas.length - 1) return;
-            
-            // Intercambiar posiciones
-            const temp = novedadesPredefinidas[index];
-            novedadesPredefinidas[index] = novedadesPredefinidas[index + 1];
-            novedadesPredefinidas[index + 1] = temp;
-            
-            await novedadesPredefinidasRef.set(novedadesPredefinidas);
-            showSyncIndicator('✓ Orden actualizado', 'synced');
-            renderConfiguracion();
-        }
-        
-        async function promptAddNovedad() {
-            const text = prompt('Escribe el texto de la nueva novedad:');
-            if (text && text.trim()) {
-                const newId = Math.max(...novedadesPredefinidas.map(n => n.id), 0) + 1;
-                const newNovedad = { id: newId, text: text.trim() };
-                novedadesPredefinidas.push(newNovedad);
-                
-                await novedadesPredefinidasRef.set(novedadesPredefinidas);
-                showSyncIndicator('✓ Novedad agregada', 'synced');
-                renderConfiguracion();
-            }
-        }
-        
-        async function deleteNovedad(id) {
-            if (confirm('¿Estás seguro de eliminar esta novedad?')) {
-                novedadesPredefinidas = novedadesPredefinidas.filter(n => n.id !== id);
-                await novedadesPredefinidasRef.set(novedadesPredefinidas);
-                showSyncIndicator('✓ Novedad eliminada', 'synced');
-                renderConfiguracion();
-            }
+            showNovedadesSeccion(secKey);
         }
         
         async function moveActivityUp(activityId) {
@@ -7594,11 +7671,11 @@
             html += '<span style="font-size:15px; font-weight:700; color:#1e3c72;">💰 Ventas</span>';
             html += '<div style="display:flex; align-items:center; gap:6px;"><span style="background:#28a745; color:white; padding:2px 8px; border-radius:8px; font-size:11px; font-weight:bold;">' + sales.length + ' despachos</span><span class="chv" style="color:#667eea; font-size:14px; font-weight:bold;">▼</span></div>';
             html += '</div>';
-            html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">';
-            html += '<div style="background:#e8f5e9; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">' + totalMolds + '</strong><br><small style="color:#555; font-size:10px;">Moldes</small></div>';
-            html += '<div style="background:#e3f2fd; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">' + sales.length + '</strong><br><small style="color:#555; font-size:10px;">Despachos</small></div>';
-            html += '<div style="background:#ffebee; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#c62828; font-size:18px;">' + totalMerma + '</strong><br><small style="color:#555; font-size:10px;">Merma</small></div>';
-            html += '<div style="background:#f3e5f5; border-radius:8px; padding:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$' + totalAmount.toFixed(0) + '</strong><br><small style="color:#555; font-size:10px;">Total</small></div>';
+            html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
+            html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMolds + '</strong><br><small style="color:#555;">Moldes</small></div>';
+            html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + sales.length + '</strong><br><small style="color:#555;">Despachos</small></div>';
+            html += '<div style="background:#ffebee; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#c62828; font-size:20px;">' + totalMerma + '</strong><br><small style="color:#555;">Merma</small></div>';
+            html += '<div style="background:#f3e5f5; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#7b1fa2; font-size:20px;">$' + totalAmount.toFixed(0) + '</strong><br><small style="color:#555;">Total</small></div>';
             html += '</div></div>';
             
             // Detalle expandible
