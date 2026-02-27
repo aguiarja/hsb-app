@@ -71,7 +71,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
-    // NO cachear Firebase (debe ser siempre en tiempo real)
+    // NO cachear Firebase ni extensiones del navegador
     if (url.hostname.includes('firebase') || 
         url.hostname.includes('firebaseio') ||
         url.hostname.includes('googleapis') ||
@@ -87,7 +87,7 @@ self.addEventListener('fetch', (event) => {
                 if (response && response.status === 200) {
                     const responseClone = response.clone();
                     caches.open(CACHE_VERSION).then((cache) => {
-                        cache.put(event.request, responseClone);
+                        try { cache.put(event.request, responseClone); } catch(e) { /* ignore unsupported schemes */ }
                     });
                 }
                 return response;
