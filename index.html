@@ -3252,24 +3252,47 @@
             
             if (activity.type === 'parametros') {
                 const value = activityData.value;
+                const isTempField = activity.unit === '°C';
                 // Verificar que tenga valor válido (no null, no undefined, no NaN, no string vacío)
                 const hasValue = value !== null && value !== undefined && value !== '' && !isNaN(value);
-                const hasAlert = hasValue && activity.min && activity.max && (parseFloat(value) < activity.min || parseFloat(value) > activity.max);
-                
+                // Para temperatura: mostrar valor absoluto en el input, comparar rango con valor real
+                const displayValue = hasValue ? (isTempField ? Math.abs(parseFloat(value)) : value) : '';
+                const realValue = hasValue ? parseFloat(value) : null;
+                const hasAlert = hasValue && activity.min != null && activity.max != null && (realValue < activity.min || realValue > activity.max);
+
                 // Campo VERDE si tiene valor (incluso fuera de rango), NARANJA si está vacío
                 let fieldClass = hasValue ? 'completed' : 'pending';
-                
+
                 fieldDiv.className = `activity-field ${fieldClass}`;
-                
+
+                // Para °C: mostrar signo "-" fijo y input sin negativo
+                const inputHTML = isTempField
+                    ? `<div style="display:flex; align-items:center; gap:5px;">
+                         <span style="font-size:18px; font-weight:bold; color:#1e3c72;">-</span>
+                         <input type="number" step="0.1" min="0" id="activity_${activityKey}"
+                                value="${displayValue}"
+                                class="${hasValue ? 'completed' : 'pending'}"
+                                onchange="updateActivityValue(${activity.id}, '${turno || ''}', this.value)"
+                                onkeypress="handleEnterKey(event, 'activity_${activityKey}')"
+                                style="flex:1;">
+                       </div>`
+                    : `<input type="number" step="0.1" id="activity_${activityKey}"
+                              value="${displayValue}"
+                              class="${hasValue ? 'completed' : 'pending'}"
+                              onchange="updateActivityValue(${activity.id}, '${turno || ''}', this.value)"
+                              onkeypress="handleEnterKey(event, 'activity_${activityKey}')">`;
+
+                // Para rango: mostrar valores absolutos si es temperatura
+                const rangeMin = isTempField && activity.min != null ? Math.abs(activity.min) : activity.min;
+                const rangeMax = isTempField && activity.max != null ? Math.abs(activity.max) : activity.max;
+                const rangeLabel = isTempField ? `Rango normal: -${rangeMax} a -${rangeMin} ${activity.unit}` : `Rango normal: ${activity.min} - ${activity.max} ${activity.unit}`;
+                const alertLabel = isTempField ? `⚠️ Fuera de rango (-${rangeMax} a -${rangeMin} ${activity.unit})` : `⚠️ Fuera de rango (${activity.min} - ${activity.max} ${activity.unit})`;
+
                 fieldDiv.innerHTML = `
                     <label>${activity.name}${turnoLabel} ${activity.unit ? `(${activity.unit})` : ''}:</label>
-                    <input type="number" step="0.1" id="activity_${activityKey}" 
-                           value="${hasValue ? value : ''}" 
-                           class="${hasValue ? 'completed' : 'pending'}"
-                           onchange="updateActivityValue(${activity.id}, '${turno || ''}', this.value)"
-                           onkeypress="handleEnterKey(event, 'activity_${activityKey}')">
-                    ${hasAlert ? `<div class="alert-message">⚠️ Fuera de rango (${activity.min} - ${activity.max} ${activity.unit})</div>` : ''}
-                    ${activity.min && activity.max ? `<small style="color: #666;">Rango normal: ${activity.min} - ${activity.max} ${activity.unit}</small>` : ''}
+                    ${inputHTML}
+                    ${hasAlert ? `<div class="alert-message">${alertLabel}</div>` : ''}
+                    ${activity.min != null && activity.max != null ? `<small style="color: #666;">${rangeLabel}</small>` : ''}
                 `;
             } else if (activity.type === 'nivel_aceite') {
                 // Campo especial para Nivel de Aceite con 4 niveles
@@ -3390,9 +3413,17 @@
         async function updateActivityValue(activityId, turno, value) {
             const activityKey = turno ? `${activityId}_${turno}` : activityId;
             const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
-            
+
             // Si el campo está vacío, guardar null explícitamente
-            const numValue = value === '' || value === null || value === undefined ? null : parseFloat(value);
+            let numValue = value === '' || value === null || value === undefined ? null : parseFloat(value);
+
+            // Si es temperatura (°C), siempre guardar como negativo
+            if (numValue !== null) {
+                const activity = window.activities.find(a => a.id == activityId);
+                if (activity && activity.unit === '°C') {
+                    numValue = -Math.abs(numValue);
+                }
+            }
             
             await database.ref(path).update({
                 value: numValue,
