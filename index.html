@@ -1472,45 +1472,54 @@
                         <option value="admin">Administrador (acceso completo)</option>
                         <option value="supervisor">Supervisor (aprobar actividades)</option>
                         <option value="operador">Operador (solo ejecución)</option>
+                        <option value="reportes">Reportes (solo consulta)</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label><strong>Permisos de Pestañas:</strong></label>
                     <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewReporte" style="margin-right: 8px;">
+                            <input type="checkbox" id="newUserCanViewReporte" style="margin-right: 8px; width:18px; height:18px;">
                             <span>📊 Reporte Diario</span>
                         </label>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewMantenimiento" style="margin-right: 8px;">
-                            <span>🔧 Mantenimiento Preventivo</span>
+                            <input type="checkbox" id="newUserCanViewMantenimiento" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>🔧 Mantenimiento</span>
                         </label>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewPlan" style="margin-right: 8px;">
-                            <span>📅 Plan de Mantenimiento</span>
+                            <input type="checkbox" id="newUserCanViewProduccion" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>🧊 Producción</span>
                         </label>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewHistorial" style="margin-right: 8px;">
+                            <input type="checkbox" id="newUserCanViewVentas" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>💰 Ventas</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewPlan" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>📅 Plan</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewHistorial" style="margin-right: 8px; width:18px; height:18px;">
                             <span>📋 Historial</span>
                         </label>
                         <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewConfig" style="margin-right: 8px;">
+                            <input type="checkbox" id="newUserCanViewConfig" style="margin-right: 8px; width:18px; height:18px;">
                             <span>⚙️ Configuración</span>
                         </label>
                     </div>
                     <small style="color: #666; display: block; margin-top: 8px;">Marca las pestañas que este usuario podrá ver</small>
                 </div>
-                
+
                 <div class="form-group">
                     <label><strong>Permisos Especiales:</strong></label>
                     <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border: 1px solid #ffc107;">
                         <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanApprovePlan" style="margin-right: 8px;">
+                            <input type="checkbox" id="newUserCanApprovePlan" style="margin-right: 8px; width:18px; height:18px;">
                             <span>⭐ Puede aprobar actividades periódicas (Plan)</span>
                         </label>
                     </div>
-                    <small style="color: #666; display: block; margin-top: 5px;">Administradores y Supervisores tienen todos los permisos automáticamente</small>
+                    <small style="color: #666; display: block; margin-top: 5px;">Admin y Supervisor tienen todos los permisos automáticamente</small>
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -1560,40 +1569,49 @@
                         <option value="admin">Administrador</option>
                         <option value="supervisor">Supervisor</option>
                         <option value="operador">Operador</option>
+                        <option value="reportes">Reportes</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label><strong>Permisos de Pestañas:</strong></label>
                     <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #ddd;">
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewReporte" style="margin-right: 8px;">
+                            <input type="checkbox" id="editUserCanViewReporte" style="margin-right: 8px; width:18px; height:18px;">
                             <span>📊 Reporte Diario</span>
                         </label>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewMantenimiento" style="margin-right: 8px;">
-                            <span>🔧 Mantenimiento Preventivo</span>
+                            <input type="checkbox" id="editUserCanViewMantenimiento" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>🔧 Mantenimiento</span>
                         </label>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewPlan" style="margin-right: 8px;">
-                            <span>📅 Plan de Mantenimiento</span>
+                            <input type="checkbox" id="editUserCanViewProduccion" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>🧊 Producción</span>
                         </label>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewHistorial" style="margin-right: 8px;">
+                            <input type="checkbox" id="editUserCanViewVentas" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>💰 Ventas</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewPlan" style="margin-right: 8px; width:18px; height:18px;">
+                            <span>📅 Plan</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewHistorial" style="margin-right: 8px; width:18px; height:18px;">
                             <span>📋 Historial</span>
                         </label>
                         <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewConfig" style="margin-right: 8px;">
+                            <input type="checkbox" id="editUserCanViewConfig" style="margin-right: 8px; width:18px; height:18px;">
                             <span>⚙️ Configuración</span>
                         </label>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label><strong>Permisos Especiales:</strong></label>
                     <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border: 1px solid #ffc107;">
                         <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanApprovePlan" style="margin-right: 8px;">
+                            <input type="checkbox" id="editUserCanApprovePlan" style="margin-right: 8px; width:18px; height:18px;">
                             <span>⭐ Puede aprobar actividades periódicas (Plan)</span>
                         </label>
                     </div>
@@ -5344,6 +5362,8 @@
             // Limpiar checkboxes de pestañas
             document.getElementById('newUserCanViewReporte').checked = false;
             document.getElementById('newUserCanViewMantenimiento').checked = false;
+            document.getElementById('newUserCanViewProduccion').checked = false;
+            document.getElementById('newUserCanViewVentas').checked = false;
             document.getElementById('newUserCanViewPlan').checked = false;
             document.getElementById('newUserCanViewHistorial').checked = false;
             document.getElementById('newUserCanViewConfig').checked = false;
@@ -5364,6 +5384,8 @@
             // Leer permisos de pestañas
             const canViewReporte = document.getElementById('newUserCanViewReporte').checked;
             const canViewMantenimiento = document.getElementById('newUserCanViewMantenimiento').checked;
+            const canViewProduccion = document.getElementById('newUserCanViewProduccion').checked;
+            const canViewVentas = document.getElementById('newUserCanViewVentas').checked;
             const canViewPlan = document.getElementById('newUserCanViewPlan').checked;
             const canViewHistorial = document.getElementById('newUserCanViewHistorial').checked;
             const canViewConfig = document.getElementById('newUserCanViewConfig').checked;
@@ -5399,22 +5421,26 @@
                 alert('⚠️ Selecciona un rol');
                 return;
             }
-            
+
             // Construir array de permisos basado en checkboxes
             const permissions = [];
-            
+
             // Admin y Supervisor tienen todos los permisos automáticamente
             if (role === 'admin' || role === 'supervisor') {
                 permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion');
+            } else if (role === 'reportes') {
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial');
             } else {
                 // Operadores y otros roles: usar checkboxes
                 if (canViewReporte) permissions.push('reporte-diario');
                 if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
+                if (canViewProduccion) permissions.push('produccion');
+                if (canViewVentas) permissions.push('ventas');
                 if (canViewPlan) permissions.push('plan');
                 if (canViewHistorial) permissions.push('historial');
                 if (canViewConfig) permissions.push('configuracion');
             }
-            
+
             // Crear nuevo usuario
             const newId = Math.max(...users.map(u => u.id), 0) + 1;
             
@@ -5455,11 +5481,14 @@
             document.getElementById('editUserRole').value = user.role;
             
             // Cargar permisos de pestañas
-            document.getElementById('editUserCanViewReporte').checked = user.permissions.includes('reporte-diario');
-            document.getElementById('editUserCanViewMantenimiento').checked = user.permissions.includes('mantenimiento-preventivo');
-            document.getElementById('editUserCanViewPlan').checked = user.permissions.includes('plan');
-            document.getElementById('editUserCanViewHistorial').checked = user.permissions.includes('historial');
-            document.getElementById('editUserCanViewConfig').checked = user.permissions.includes('configuracion');
+            const perms = user.permissions || [];
+            document.getElementById('editUserCanViewReporte').checked = perms.includes('reporte-diario');
+            document.getElementById('editUserCanViewMantenimiento').checked = perms.includes('mantenimiento-preventivo');
+            document.getElementById('editUserCanViewProduccion').checked = perms.includes('produccion');
+            document.getElementById('editUserCanViewVentas').checked = perms.includes('ventas');
+            document.getElementById('editUserCanViewPlan').checked = perms.includes('plan');
+            document.getElementById('editUserCanViewHistorial').checked = perms.includes('historial');
+            document.getElementById('editUserCanViewConfig').checked = perms.includes('configuracion');
             
             // Cargar permiso especial
             const canApprove = user.planPermissions?.canApprove || false;
@@ -5482,11 +5511,13 @@
             // Leer permisos de pestañas
             const canViewReporte = document.getElementById('editUserCanViewReporte').checked;
             const canViewMantenimiento = document.getElementById('editUserCanViewMantenimiento').checked;
+            const canViewProduccion = document.getElementById('editUserCanViewProduccion').checked;
+            const canViewVentas = document.getElementById('editUserCanViewVentas').checked;
             const canViewPlan = document.getElementById('editUserCanViewPlan').checked;
             const canViewHistorial = document.getElementById('editUserCanViewHistorial').checked;
             const canViewConfig = document.getElementById('editUserCanViewConfig').checked;
             const canApprovePlan = document.getElementById('editUserCanApprovePlan').checked;
-            
+
             const userIndex = users.findIndex(u => u.id === userId);
             if (userIndex === -1) {
                 alert('Usuario no encontrado');
@@ -5527,10 +5558,14 @@
             // Admin y Supervisor tienen todos los permisos automáticamente
             if (role === 'admin' || role === 'supervisor') {
                 permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion');
+            } else if (role === 'reportes') {
+                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial');
             } else {
                 // Operadores y otros roles: usar checkboxes
                 if (canViewReporte) permissions.push('reporte-diario');
                 if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
+                if (canViewProduccion) permissions.push('produccion');
+                if (canViewVentas) permissions.push('ventas');
                 if (canViewPlan) permissions.push('plan');
                 if (canViewHistorial) permissions.push('historial');
                 if (canViewConfig) permissions.push('configuracion');
