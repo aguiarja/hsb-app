@@ -830,7 +830,10 @@
             </div>
             <div class="form-group">
                 <label>🌡️ Temperatura de la Cuba (°C):</label>
-                <input type="number" step="0.1" id="prodStartTemp" placeholder="Ej: -14.5">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:20px; font-weight:bold; color:#1e3c72;">-</span>
+                    <input type="number" step="0.1" min="0" id="prodStartTemp" placeholder="Ej: 14.5" style="flex:1;">
+                </div>
             </div>
             <div class="form-group">
                 <label>📍 Fila de Inicio:</label>
@@ -869,7 +872,10 @@
             </div>
             <div class="form-group">
                 <label>🌡️ Temperatura de la Cuba (°C):</label>
-                <input type="number" step="0.1" id="prodEndTemp" placeholder="Ej: -12.0">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:20px; font-weight:bold; color:#1e3c72;">-</span>
+                    <input type="number" step="0.1" min="0" id="prodEndTemp" placeholder="Ej: 12.0" style="flex:1;">
+                </div>
             </div>
             <div class="form-group">
                 <label>📍 Fila de Fin:</label>
@@ -896,7 +902,11 @@
                 <label>🕐 Hora Inicio:</label><input type="time" id="prodEditStartTime">
             </div>
             <div class="form-group">
-                <label>🌡️ Temp. Inicio (°C):</label><input type="number" step="0.1" id="prodEditStartTemp">
+                <label>🌡️ Temp. Inicio (°C):</label>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:20px; font-weight:bold; color:#1e3c72;">-</span>
+                    <input type="number" step="0.1" min="0" id="prodEditStartTemp" style="flex:1;">
+                </div>
             </div>
             <div class="form-group">
                 <label>📍 Fila Inicio:</label>
@@ -908,7 +918,11 @@
                 <label>🕐 Hora Fin:</label><input type="time" id="prodEditEndTime">
             </div>
             <div class="form-group">
-                <label>🌡️ Temp. Fin (°C):</label><input type="number" step="0.1" id="prodEditEndTemp">
+                <label>🌡️ Temp. Fin (°C):</label>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:20px; font-weight:bold; color:#1e3c72;">-</span>
+                    <input type="number" step="0.1" min="0" id="prodEditEndTemp" style="flex:1;">
+                </div>
             </div>
             <div class="form-group">
                 <label>📍 Fila Fin:</label>
@@ -6481,6 +6495,19 @@
             return CUBA_COLS.map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
         }
 
+        /** Parsea temperatura: siempre retorna negativo (la cuba siempre está bajo cero) */
+        function parseNegativeTemp(value) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return NaN;
+            return -Math.abs(num);
+        }
+
+        /** Muestra temperatura en input sin signo (valor absoluto) */
+        function displayTempAbsolute(temp) {
+            if (temp === null || temp === undefined || temp === '') return '';
+            return Math.abs(parseFloat(temp));
+        }
+
         /** Recalcula y muestra la fila estimada de fin en el modal de inicio */
         function updateEstimatedEnd() {
             const startRow = parseInt(document.getElementById('prodStartRow').value);
@@ -6713,7 +6740,7 @@
 
         async function saveProductionStart() {
             const startTime = document.getElementById('prodStartTime').value;
-            const startTemp = parseFloat(document.getElementById('prodStartTemp').value);
+            const startTemp = parseNegativeTemp(document.getElementById('prodStartTemp').value);
             const startRow = parseInt(document.getElementById('prodStartRow').value);
             const startCol = document.getElementById('prodStartCol').value;
             const operatorIds = getSelectedProdOperators();
@@ -6763,7 +6790,7 @@
             if (!rec) return;
 
             const endTime = document.getElementById('prodEndTime').value;
-            const endTemp = parseFloat(document.getElementById('prodEndTemp').value);
+            const endTemp = parseNegativeTemp(document.getElementById('prodEndTemp').value);
             const endRow = parseInt(document.getElementById('prodEndRow').value);
             const endCol = document.getElementById('prodEndCol').value;
 
@@ -6796,11 +6823,11 @@
             const rec = productionRecords[currentDate];
             if (!rec) return;
             document.getElementById('prodEditStartTime').value = rec.startTime;
-            document.getElementById('prodEditStartTemp').value = rec.startTemp || '';
+            document.getElementById('prodEditStartTemp').value = displayTempAbsolute(rec.startTemp);
             document.getElementById('prodEditStartRow').innerHTML = buildProdRowOptions(rec.startRow, rec.startRow);
             document.getElementById('prodEditStartCol').innerHTML = buildProdColOptions(rec.startCol);
             document.getElementById('prodEditEndTime').value = rec.endTime || '';
-            document.getElementById('prodEditEndTemp').value = rec.endTemp || '';
+            document.getElementById('prodEditEndTemp').value = displayTempAbsolute(rec.endTemp);
             document.getElementById('prodEditEndRow').innerHTML = buildProdRowOptions(rec.endRow, rec.startRow);
             document.getElementById('prodEditEndCol').innerHTML = buildProdColOptions(rec.endCol);
             buildOperatorCheckboxes('prodEditOperators', rec.operatorIds || []);
@@ -6809,11 +6836,11 @@
 
         async function saveProductionEdit() {
             const startTime = document.getElementById('prodEditStartTime').value;
-            const startTemp = parseFloat(document.getElementById('prodEditStartTemp').value);
+            const startTemp = parseNegativeTemp(document.getElementById('prodEditStartTemp').value);
             const startRow = parseInt(document.getElementById('prodEditStartRow').value);
             const startCol = document.getElementById('prodEditStartCol').value;
             const endTime = document.getElementById('prodEditEndTime').value;
-            const endTemp = parseFloat(document.getElementById('prodEditEndTemp').value);
+            const endTemp = parseNegativeTemp(document.getElementById('prodEditEndTemp').value);
             const endRow = parseInt(document.getElementById('prodEditEndRow').value);
             const endCol = document.getElementById('prodEditEndCol').value;
             const operatorIds = getSelectedProdOperators();
