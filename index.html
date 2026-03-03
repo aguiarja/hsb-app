@@ -1987,15 +1987,6 @@
 
                 users = usersSnap.val() || [];
                 
-                // PARCHE: Asegurar permiso 'produccion' y 'ventas' en todos los usuarios existentes
-                users.forEach(u => {
-                    if (u.permissions && !u.permissions.includes('produccion')) {
-                        u.permissions.push('produccion');
-                    }
-                    if (u.permissions && !u.permissions.includes('ventas')) {
-                        u.permissions.push('ventas');
-                    }
-                });
                 tabs = tabsSnap.val() || [];
                 
                 // PARCHE: Asegurar que tabs 'produccion' y 'ventas' existan y renombrar mantenimiento
@@ -2634,13 +2625,6 @@
             console.log('User found:', user ? user.username : 'NOT FOUND');
             
             if (user) {
-                // Parche: asegurar permisos produccion y ventas
-                if (user.permissions && !user.permissions.includes('produccion')) {
-                    user.permissions.push('produccion');
-                }
-                if (user.permissions && !user.permissions.includes('ventas')) {
-                    user.permissions.push('ventas');
-                }
                 currentUser = user;
                 localStorage.setItem('currentUser', JSON.stringify(user));
                 showMainScreen();
@@ -6244,13 +6228,6 @@
                 const savedUserData = JSON.parse(savedUser);
                 const updatedUser = users.find(u => u.id === savedUserData.id);
                 if (updatedUser) {
-                    // Parche: asegurar permisos produccion y ventas
-                    if (updatedUser.permissions && !updatedUser.permissions.includes('produccion')) {
-                        updatedUser.permissions.push('produccion');
-                    }
-                    if (updatedUser.permissions && !updatedUser.permissions.includes('ventas')) {
-                        updatedUser.permissions.push('ventas');
-                    }
                     currentUser = updatedUser;
                     localStorage.setItem('currentUser', JSON.stringify(updatedUser));
                     showMainScreen();
