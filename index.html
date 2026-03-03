@@ -1,6 +1,5 @@
 
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1060,16 +1059,23 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>🎁 Registrar Donación</h2>
-                <span class="close" onclick="document.getElementById('mermaModal').style.display='none'">&times;</span>
+                <span class="close" onclick="closeDonacionModal()">&times;</span>
             </div>
             <div id="mermaInventoryBadge" style="text-align:center; margin-bottom:15px;"></div>
             <div class="form-group">
-                <label>🧊 Moldes a Donar:</label>
-                <input type="number" id="mermaMoldsQty" min="1" placeholder="Cantidad">
+                <label>🧊 Tiras a Donar:</label>
+                <input type="number" id="mermaTirasQty" min="1" placeholder="Cantidad de tiras" oninput="updateDonacionPreview()">
+                <small style="color:#666;">1 molde = 5 tiras</small>
             </div>
+            <div id="donacionCalcPreview" style="background:#f1f8f4; padding:10px; border-radius:8px; margin-bottom:10px; text-align:center; display:none;"></div>
             <div class="form-group">
                 <label>📝 Destinatario / Observación:</label>
                 <textarea id="mermaObs" rows="2" placeholder="Ej: Policía, Bomberos, Evento..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>📷 Foto (opcional):</label>
+                <input type="file" id="donacionPhoto" accept="image/*" capture="environment" onchange="updateDonacionPhotoPreview()">
+                <div id="donacionPhotoPreview" style="margin-top:8px;"></div>
             </div>
             <div style="text-align:center; margin-top:15px;">
                 <button onclick="saveMerma()" class="btn" style="background:linear-gradient(135deg,#17a2b8,#138496); padding:12px 35px;">💾 Registrar Donación</button>
@@ -7231,6 +7237,7 @@
             const todayDispatches = getDispatchesByDate(currentDate);
             const todayMolds = todayDispatches.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
             const todayMerma = todayDispatches.filter(d => d.status === 'dispatched').reduce((s, d) => s + (d.merma || 0), 0);
+            const todayDonacionesTiras = todayDispatches.filter(d => d.status === 'donacion').reduce((s, d) => s + (d.donacionTiras || 0), 0);
             const todayDonaciones = todayDispatches.filter(d => d.status === 'donacion').reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
             const todayPending = todayDispatches.filter(d => d.status === 'pending_approval');
             
@@ -7239,6 +7246,7 @@
                     <div class="stat-card" style="border-top:3px solid #667eea;">
                         <div class="stat-number" style="color:#667eea; font-size:28px;">${avail}</div>
                         <div class="stat-label">Moldes Disponibles</div>
+                        ${(salesInventory && salesInventory.tirasDisponibles > 0) ? `<div style="color:#17a2b8; font-size:12px; margin-top:4px;">+ ${salesInventory.tirasDisponibles} tiras sueltas</div>` : ''}
                     </div>
                     <div class="stat-card" style="border-top:3px solid #28a745;">
                         <div class="stat-number" style="color:#28a745;">${todayMolds}</div>
@@ -7249,8 +7257,8 @@
                         <div class="stat-label">Merma Hoy</div>
                     </div>
                     <div class="stat-card" style="border-top:3px solid #17a2b8;">
-                        <div class="stat-number" style="color:#17a2b8;">${todayDonaciones}</div>
-                        <div class="stat-label">Donaciones Hoy</div>
+                        <div class="stat-number" style="color:#17a2b8;">${todayDonacionesTiras || todayDonaciones}</div>
+                        <div class="stat-label">${todayDonacionesTiras ? 'Tiras Donadas' : 'Donaciones'} Hoy</div>
                     </div>
                 </div>
                 
@@ -7307,10 +7315,18 @@
                 html += `<div class="report-summary" style="border-left:4px solid #17a2b8; margin-bottom:15px;">
                     <h4 style="color:#17a2b8; margin-bottom:10px;">🎁 Donaciones de Hoy (${todayDonacionesList.length})</h4>`;
                 todayDonacionesList.forEach(d => {
-                    const qty = d.donacion || d.merma || 0;
+                    const tirasQty = d.donacionTiras || 0;
+                    const moldesQty = d.donacion || d.merma || 0;
+                    const displayQty = tirasQty > 0 ? `${tirasQty} tiras` : `${moldesQty} moldes`;
+                    const hora = d.hora || '';
                     html += `<div style="background:#e0f7fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px;">
-                        🎁 <strong>${qty} moldes</strong> — ${d.observations || 'Sin detalle'}
-                        <br><small style="color:#666;">${d.createdBy || ''}</small>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                🎁 <strong>${displayQty}</strong> — ${d.observations || 'Sin detalle'}
+                                <br><small style="color:#666;">${d.createdBy || ''}${hora ? ' | 🕐 ' + hora : ''}</small>
+                            </div>
+                            ${d.photoURL ? `<img src="${d.photoURL}" onclick="window.open('${d.photoURL}','_blank')" style="width:50px; height:50px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid #17a2b8;">` : ''}
+                        </div>
                     </div>`;
                 });
                 html += `</div>`;
@@ -7595,37 +7611,146 @@
         }
 
         // ========== MERMA ==========
+        const TIRAS_PER_MOLD = 5;
+
         function openMermaModal() {
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-            document.getElementById('mermaInventoryBadge').innerHTML = `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
-            document.getElementById('mermaMoldsQty').value = '';
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+            let badgeHTML = `<div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                <span style="background:#667eea; color:white; padding:8px 16px; border-radius:20px; font-size:14px;">📦 <strong>${avail}</strong> moldes</span>`;
+            if (tirasDisp > 0) {
+                badgeHTML += `<span style="background:#17a2b8; color:white; padding:8px 16px; border-radius:20px; font-size:14px;">🧊 <strong>${tirasDisp}</strong> tiras sueltas</span>`;
+            }
+            badgeHTML += `</div>`;
+            document.getElementById('mermaInventoryBadge').innerHTML = badgeHTML;
+            document.getElementById('mermaTirasQty').value = '';
             document.getElementById('mermaObs').value = '';
+            document.getElementById('donacionPhoto').value = '';
+            document.getElementById('donacionPhotoPreview').innerHTML = '';
+            document.getElementById('donacionCalcPreview').style.display = 'none';
             document.getElementById('mermaModal').style.display = 'block';
         }
 
+        function closeDonacionModal() {
+            document.getElementById('mermaModal').style.display = 'none';
+        }
+
+        function updateDonacionPreview() {
+            const tiras = parseInt(document.getElementById('mermaTirasQty').value) || 0;
+            const display = document.getElementById('donacionCalcPreview');
+            if (tiras < 1) { display.style.display = 'none'; return; }
+
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+            const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
+
+            if (tiras > totalTiras) {
+                display.innerHTML = `<span style="color:#dc3545; font-weight:bold;">⚠️ Insuficiente. Total disponible: ${totalTiras} tiras (${avail} moldes + ${tirasDisp} tiras)</span>`;
+            } else {
+                // Calcular cuántos moldes se consumen
+                let tirasNecesarias = tiras;
+                let moldesADescontar = 0;
+                let tirasRestantes = tirasDisp;
+
+                // Primero usar tiras sueltas disponibles
+                if (tirasRestantes >= tirasNecesarias) {
+                    tirasRestantes -= tirasNecesarias;
+                    tirasNecesarias = 0;
+                } else {
+                    tirasNecesarias -= tirasRestantes;
+                    tirasRestantes = 0;
+                    // Necesitamos romper moldes
+                    moldesADescontar = Math.ceil(tirasNecesarias / TIRAS_PER_MOLD);
+                    tirasRestantes = (moldesADescontar * TIRAS_PER_MOLD) - tirasNecesarias;
+                }
+                display.innerHTML = `<span style="color:#1e3c72;">Donación: <strong>${tiras} tiras</strong></span><br>
+                    <small style="color:#666;">${moldesADescontar > 0 ? `Se descontarán ${moldesADescontar} molde(s) del inventario` : 'Se usan tiras sueltas disponibles'}${tirasRestantes > 0 ? ` → Quedan ${tirasRestantes} tiras sueltas` : ''}</small>`;
+            }
+            display.style.display = 'block';
+        }
+
+        function updateDonacionPhotoPreview() {
+            const input = document.getElementById('donacionPhoto');
+            const preview = document.getElementById('donacionPhotoPreview');
+            preview.innerHTML = '';
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<div style="position:relative; display:inline-block;">
+                        <img src="${e.target.result}" style="width:120px; height:120px; object-fit:cover; border-radius:8px; border:2px solid #17a2b8;">
+                        <button onclick="document.getElementById('donacionPhoto').value=''; document.getElementById('donacionPhotoPreview').innerHTML='';"
+                                style="position:absolute; top:-5px; right:-5px; background:red; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer; font-size:14px;">✕</button>
+                    </div>`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         async function saveMerma() {
-            const molds = parseInt(document.getElementById('mermaMoldsQty').value);
+            const tiras = parseInt(document.getElementById('mermaTirasQty').value);
             const obs = document.getElementById('mermaObs').value.trim();
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-            
-            if (!molds || molds <= 0) return alert('Ingresa una cantidad válida');
-            if (molds > avail) return alert(`Inventario insuficiente. Disponible: ${avail}`);
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+            const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
+
+            if (!tiras || tiras <= 0) return alert('Ingresa la cantidad de tiras');
+            if (tiras > totalTiras) return alert(`Inventario insuficiente. Total disponible: ${totalTiras} tiras`);
             if (!obs) return alert('Indica el destinatario de la donación');
-            
+
+            // Calcular descuento de inventario
+            let tirasNecesarias = tiras;
+            let moldesADescontar = 0;
+            let nuevasTirasSueltas = tirasDisp;
+
+            if (nuevasTirasSueltas >= tirasNecesarias) {
+                nuevasTirasSueltas -= tirasNecesarias;
+                tirasNecesarias = 0;
+            } else {
+                tirasNecesarias -= nuevasTirasSueltas;
+                nuevasTirasSueltas = 0;
+                moldesADescontar = Math.ceil(tirasNecesarias / TIRAS_PER_MOLD);
+                nuevasTirasSueltas = (moldesADescontar * TIRAS_PER_MOLD) - tirasNecesarias;
+            }
+
             try {
                 showSyncIndicator('⚙️ Registrando donación...', 'syncing');
+
+                // Subir foto si existe
+                let photoURL = null;
+                const photoInput = document.getElementById('donacionPhoto');
+                if (photoInput.files && photoInput.files[0]) {
+                    const file = photoInput.files[0];
+                    const timestamp = Date.now();
+                    const fileName = `donacion_${currentDate}_${timestamp}_${file.name}`;
+                    const storageRef = storage.ref(`donations/${currentDate}/${fileName}`);
+                    await storageRef.put(file);
+                    photoURL = await storageRef.getDownloadURL();
+                }
+
+                const now = new Date();
                 await salesDispatchesRef.push({
                     date: currentDate,
                     clientId: '', clientName: 'DONACIÓN',
                     moldsRequested: 0, moldsDispatched: 0,
-                    donacion: molds, observations: obs,
+                    donacionTiras: tiras,
+                    donacionMoldesDescontados: moldesADescontar,
+                    donacion: moldesADescontar, // compatibilidad con reportes existentes
+                    observations: obs,
+                    photoURL: photoURL,
                     status: 'donacion',
                     createdBy: currentUser.fullName,
-                    createdAt: new Date().toISOString()
+                    createdAt: now.toISOString(),
+                    hora: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
                 });
-                await salesInventoryRef.update({ available: avail - molds, lastUpdated: new Date().toISOString() });
+
+                await salesInventoryRef.update({
+                    available: avail - moldesADescontar,
+                    tirasDisponibles: nuevasTirasSueltas,
+                    lastUpdated: now.toISOString()
+                });
+
                 document.getElementById('mermaModal').style.display = 'none';
-                showSyncIndicator(`✅ Donación registrada: ${molds} moldes`, 'synced');
+                showSyncIndicator(`✅ Donación: ${tiras} tiras registradas`, 'synced');
             } catch (err) {
                 console.error(err);
                 showSyncIndicator('✗ Error', 'error');
