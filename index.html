@@ -3330,25 +3330,39 @@
                     </div>
                 `;
             } else {
-                // Chequeo normal (✓ OK)
+                // Chequeo OK / No OK
                 const status = activityData.status || '';
-                const isCompleted = status === 'ok';
-                
-                fieldDiv.className = `activity-field ${isCompleted ? 'completed' : 'pending'}`;
-                
+                const isCompleted = status === 'ok' || status === 'no_ok';
+                const isAlert = status === 'no_ok';
+
+                fieldDiv.className = `activity-field ${isCompleted ? (isAlert ? 'completed' : 'completed') : 'pending'}`;
+
                 fieldDiv.innerHTML = `
                     <label>${activity.name}${turnoLabel}:</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="activity_${activityKey}_ok" 
-                               ${status === 'ok' ? 'checked' : ''}
-                               onchange="updateActivityStatus(${activity.id}, '${turno || ''}', 'ok', this.checked)">
-                        <label for="activity_${activityKey}_ok">✓ OK</label>
+                    <div style="display:flex; gap:15px; margin:8px 0;">
+                        <div class="checkbox-group" style="flex:1; background:${status === 'ok' ? '#d4edda' : '#f8f9fa'}; padding:10px; border-radius:8px; border:2px solid ${status === 'ok' ? '#28a745' : '#e0e0e0'}; text-align:center; cursor:pointer;"
+                             onclick="document.getElementById('activity_${activityKey}_ok').click()">
+                            <input type="checkbox" id="activity_${activityKey}_ok"
+                                   ${status === 'ok' ? 'checked' : ''}
+                                   onchange="handleChequeoChange(${activity.id}, '${turno || ''}', 'ok', this.checked, '${activityKey}')"
+                                   style="display:none;">
+                            <span style="font-size:16px; font-weight:bold; color:${status === 'ok' ? '#28a745' : '#999'};">✅ OK</span>
+                        </div>
+                        <div class="checkbox-group" style="flex:1; background:${status === 'no_ok' ? '#f8d7da' : '#f8f9fa'}; padding:10px; border-radius:8px; border:2px solid ${status === 'no_ok' ? '#dc3545' : '#e0e0e0'}; text-align:center; cursor:pointer;"
+                             onclick="document.getElementById('activity_${activityKey}_nook').click()">
+                            <input type="checkbox" id="activity_${activityKey}_nook"
+                                   ${status === 'no_ok' ? 'checked' : ''}
+                                   onchange="handleChequeoChange(${activity.id}, '${turno || ''}', 'no_ok', this.checked, '${activityKey}')"
+                                   style="display:none;">
+                            <span style="font-size:16px; font-weight:bold; color:${status === 'no_ok' ? '#dc3545' : '#999'};">❌ No OK</span>
+                        </div>
                     </div>
+                    ${isAlert ? `<div class="alert-message">⚠️ Chequeo reportado como No OK</div>` : ''}
                     <div class="form-group">
-                        <label>Observaciones:</label>
-                        <input type="text" id="activity_${activityKey}_obs" 
+                        <label>Observaciones${isAlert ? ' (describir falla):' : ':'}</label>
+                        <input type="text" id="activity_${activityKey}_obs"
                                value="${activityData.observations || ''}"
-                               placeholder="Opcional"
+                               placeholder="${isAlert ? 'Obligatorio - Describir problema' : 'Opcional'}"
                                onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
                     </div>
                 `;
@@ -3446,6 +3460,17 @@
                     showSectionDetail(currentSectionId);
                 }
             }, 300);
+        }
+
+        /** Maneja checkboxes OK / No OK mutuamente excluyentes */
+        function handleChequeoChange(activityId, turno, status, checked, activityKey) {
+            if (checked) {
+                // Desmarcar el otro checkbox
+                const otherId = status === 'ok' ? `activity_${activityKey}_nook` : `activity_${activityKey}_ok`;
+                const otherCb = document.getElementById(otherId);
+                if (otherCb) otherCb.checked = false;
+            }
+            updateActivityStatus(activityId, turno, status, checked);
         }
 
         async function updateActivityStatus(activityId, turno, status, checked) {
@@ -4538,12 +4563,12 @@
                                 if (dm) {
                                     if (activity.type === 'parametros' && dm.value !== undefined && dm.value !== null && dm.value !== '' && !isNaN(dm.value)) completed++;
                                     else if (activity.type === 'nivel_aceite' && dm.oilLevel) completed++;
-                                    else if (activity.type === 'chequeo' && dm.status === 'ok') completed++;
+                                    else if (activity.type === 'chequeo' && (dm.status === 'ok' || dm.status === 'no_ok')) completed++;
                                 }
                                 if (da) {
                                     if (activity.type === 'parametros' && da.value !== undefined && da.value !== null && da.value !== '' && !isNaN(da.value)) completed++;
                                     else if (activity.type === 'nivel_aceite' && da.oilLevel) completed++;
-                                    else if (activity.type === 'chequeo' && da.status === 'ok') completed++;
+                                    else if (activity.type === 'chequeo' && (da.status === 'ok' || da.status === 'no_ok')) completed++;
                                 }
                             } else if (activity.frequency === 'Diario') {
                                 total += 1;
@@ -4551,7 +4576,7 @@
                                 if (ad) {
                                     if (activity.type === 'parametros' && ad.value !== undefined && ad.value !== null && ad.value !== '' && !isNaN(ad.value)) completed++;
                                     else if (activity.type === 'nivel_aceite' && ad.oilLevel) completed++;
-                                    else if (activity.type === 'chequeo' && ad.status === 'ok') completed++;
+                                    else if (activity.type === 'chequeo' && (ad.status === 'ok' || ad.status === 'no_ok')) completed++;
                                 }
                             }
                         });
@@ -4757,8 +4782,10 @@
                                 const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataMorning.oilLevel] || dataMorning.oilLevel;
                                 const isLow = dataMorning.oilLevel === '1/2' || dataMorning.oilLevel === 'vacio';
                                 html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Mañana):</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'chequeo' && dataMorning.status === 'ok') {
-                                html += `<p style="margin: 8px 0;"><strong>${activity.name} (Mañana):</strong> ✓ OK${userTag}${timeTag}</p>`;
+                            } else if (activity.type === 'chequeo' && (dataMorning.status === 'ok' || dataMorning.status === 'no_ok')) {
+                                const chkOk = dataMorning.status === 'ok';
+                                html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Mañana):</strong> ${chkOk ? '✅ OK' : '❌ No OK'}${userTag}${timeTag}</p>`;
+                                if (!chkOk) html += `<p style="margin: 0 0 8px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataMorning.observations || 'Sin observación'}</p>`;
                             } else if (dataMorning.incomplete) {
                                 html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
                             } else {
@@ -4780,8 +4807,10 @@
                                 const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataAfternoon.oilLevel] || dataAfternoon.oilLevel;
                                 const isLow = dataAfternoon.oilLevel === '1/2' || dataAfternoon.oilLevel === 'vacio';
                                 html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Tarde):</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'chequeo' && dataAfternoon.status === 'ok') {
-                                html += `<p style="margin: 8px 0;"><strong>${activity.name} (Tarde):</strong> ✓ OK${userTag}${timeTag}</p>`;
+                            } else if (activity.type === 'chequeo' && (dataAfternoon.status === 'ok' || dataAfternoon.status === 'no_ok')) {
+                                const chkOk = dataAfternoon.status === 'ok';
+                                html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Tarde):</strong> ${chkOk ? '✅ OK' : '❌ No OK'}${userTag}${timeTag}</p>`;
+                                if (!chkOk) html += `<p style="margin: 0 0 8px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataAfternoon.observations || 'Sin observación'}</p>`;
                             } else if (dataAfternoon.incomplete) {
                                 html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
                             } else {
@@ -4803,8 +4832,10 @@
                                 const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[activityData.oilLevel] || activityData.oilLevel;
                                 const isLow = activityData.oilLevel === '1/2' || activityData.oilLevel === 'vacio';
                                 html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'chequeo' && activityData.status === 'ok') {
-                                html += `<p style="margin: 8px 0;"><strong>${activity.name}:</strong> ✓ OK${userTag}${timeTag}</p>`;
+                            } else if (activity.type === 'chequeo' && (activityData.status === 'ok' || activityData.status === 'no_ok')) {
+                                const chkOk = activityData.status === 'ok';
+                                html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${chkOk ? '✅ OK' : '❌ No OK'}${userTag}${timeTag}</p>`;
+                                if (!chkOk) html += `<p style="margin: 0 0 8px 15px; color: #dc3545; font-size: 13px;">⚠️ ${activityData.observations || 'Sin observación'}</p>`;
                             } else if (activityData.incomplete) {
                                 html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
                             } else {
@@ -4953,7 +4984,10 @@
                                     }
                                 } else if (activity.type === 'chequeo') {
                                     if (dataMorning.status === 'ok') {
-                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Mañana):</strong> ✓ OK${metaInfo}</p>`;
+                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Mañana):</strong> ✅ OK${metaInfo}</p>`;
+                                    } else if (dataMorning.status === 'no_ok') {
+                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ❌ No OK${metaInfo}</p>`;
+                                        if (dataMorning.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataMorning.observations}</p>`;
                                     } else if (dataMorning.incomplete) {
                                         sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
                                     } else {
@@ -4961,7 +4995,7 @@
                                     }
                                 }
                             }
-                            
+
                             // === TARDE ===
                             if (dataAfternoon) {
                                 const userInfo = dataAfternoon.user || '';
@@ -4993,7 +5027,10 @@
                                     }
                                 } else if (activity.type === 'chequeo') {
                                     if (dataAfternoon.status === 'ok') {
-                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Tarde):</strong> ✓ OK${metaInfo}</p>`;
+                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Tarde):</strong> ✅ OK${metaInfo}</p>`;
+                                    } else if (dataAfternoon.status === 'no_ok') {
+                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ❌ No OK${metaInfo}</p>`;
+                                        if (dataAfternoon.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataAfternoon.observations}</p>`;
                                     } else if (dataAfternoon.incomplete) {
                                         sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
                                     } else {
@@ -5034,7 +5071,10 @@
                                     }
                                 } else if (activity.type === 'chequeo') {
                                     if (actData.status === 'ok') {
-                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name}:</strong> ✓ OK${metaInfo}</p>`;
+                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name}:</strong> ✅ OK${metaInfo}</p>`;
+                                    } else if (actData.status === 'no_ok') {
+                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ❌ No OK${metaInfo}</p>`;
+                                        if (actData.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${actData.observations}</p>`;
                                     } else if (actData.incomplete) {
                                         sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
                                     } else {
@@ -6220,7 +6260,7 @@
                             } else if (activity.type === 'nivel_aceite') {
                                 isComplete = !!dataMorning.oilLevel;
                             } else if (activity.type === 'chequeo') {
-                                isComplete = dataMorning.status === 'ok';
+                                isComplete = dataMorning.status === 'ok' || dataMorning.status === 'no_ok';
                             }
                             
                             if (!isComplete) {
@@ -6252,7 +6292,7 @@
                             } else if (activity.type === 'nivel_aceite') {
                                 isComplete = !!dataAfternoon.oilLevel;
                             } else if (activity.type === 'chequeo') {
-                                isComplete = dataAfternoon.status === 'ok';
+                                isComplete = dataAfternoon.status === 'ok' || dataAfternoon.status === 'no_ok';
                             }
                             
                             if (!isComplete) {
