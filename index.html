@@ -1022,10 +1022,13 @@
                     <label>📦 Número de Moldes:</label>
                     <input type="number" id="dispatchMoldsQty" min="1" placeholder="Cantidad">
                 </div>
+                <!-- COMENTADO: Tipo de precio — se usará más adelante
                 <div class="form-group">
                     <label>💲 Tipo de Precio:</label>
                     <select id="dispatchPriceType"></select>
                 </div>
+                -->
+                <select id="dispatchPriceType" style="display:none;"></select>
                 <div class="form-group">
                     <label>📝 Observaciones:</label>
                     <textarea id="dispatchObs" rows="2" placeholder="Opcional..."></textarea>
@@ -7342,11 +7345,12 @@
                     <h4 style="color:#1e3c72; margin-bottom:10px;">✅ Despachos de Hoy (${todayCompleted.length})</h4>`;
                 todayCompleted.forEach(d => {
                     const cli = salesClients[d.clientId] || {};
+                    /* COMENTADO: Tipo de precio — se usará más adelante
                     const pt = salesPriceTypes[d.priceTypeId] || {};
+                    */
                     html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px;">
                         <strong>${cli.name || 'N/A'}</strong> — ${d.moldsDispatched} moldes
                         ${d.merma > 0 ? ` | Merma: ${d.merma}` : ''}
-                        | ${pt.name || ''}
                         ${d.dispatchObs ? `<br><small style="color:#666;">${d.dispatchObs}</small>` : ''}
                     </div>`;
                 });
@@ -7446,7 +7450,7 @@
             document.getElementById('dispatchObs').value = '';
             document.getElementById('dispatchInventoryWarning').style.display = 'none';
             
-            // Cargar tipos de precio del cliente
+            /* COMENTADO: Tipo de precio — se usará más adelante
             const client = salesClients[clientId];
             const allowedPrices = client.allowedPriceTypes || [];
             const select = document.getElementById('dispatchPriceType');
@@ -7456,6 +7460,7 @@
                     select.innerHTML += `<option value="${id}">${pt.name} — $${parseFloat(pt.price).toFixed(2)}</option>`;
                 }
             });
+            */
             
             document.getElementById('dispatchStep1').style.display = 'none';
             document.getElementById('dispatchStep2').style.display = 'block';
@@ -7469,21 +7474,26 @@
         function dispatchCargar() {
             const clientId = document.getElementById('dispatchSelectedClientId').value;
             const molds = parseInt(document.getElementById('dispatchMoldsQty').value);
+            /* COMENTADO: Tipo de precio — se usará más adelante
             const priceTypeId = document.getElementById('dispatchPriceType').value;
+            */
+            const priceTypeId = ''; // Temporalmente sin tipo de precio
             const obs = document.getElementById('dispatchObs').value.trim();
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const warn = document.getElementById('dispatchInventoryWarning');
-            
+
             if (!molds || molds <= 0) return alert('Ingresa una cantidad válida');
+            /* COMENTADO: Validación de tipo de precio — se usará más adelante
             if (!priceTypeId) return alert('Selecciona un tipo de precio');
-            
+            */
+
             if (molds > avail) {
                 warn.textContent = `⚠️ Inventario insuficiente. Disponible: ${avail} moldes. Solicitado: ${molds}`;
                 warn.style.display = 'block';
                 return;
             }
             warn.style.display = 'none';
-            
+
             const client = salesClients[clientId];
             if (!client.hasCredit) {
                 // Sin crédito → pendiente de aprobación
@@ -7496,14 +7506,16 @@
 
         async function savePendingDispatch(clientId, molds, priceTypeId, obs) {
             const client = salesClients[clientId] || {};
+            /* COMENTADO: Tipo de precio — se usará más adelante
             const pt = salesPriceTypes[priceTypeId] || {};
+            */
             try {
                 showSyncIndicator('⚙️ Guardando...', 'syncing');
                 await salesDispatchesRef.push({
                     date: currentDate,
                     clientId, clientName: client.name,
                     moldsRequested: molds, moldsDispatched: 0,
-                    priceTypeId, priceTypeName: pt.name, priceValue: pt.price || 0,
+                    priceTypeId: priceTypeId || '', priceTypeName: '', priceValue: 0,
                     merma: 0, observations: obs, dispatchObs: '',
                     status: 'pending_approval',
                     createdBy: currentUser.fullName,
@@ -7519,24 +7531,28 @@
 
         function showDispatchStep3(clientId, molds, priceTypeId, obs) {
             const client = salesClients[clientId] || {};
+            /* COMENTADO: Tipo de precio — se usará más adelante
             const pt = salesPriceTypes[priceTypeId] || {};
             const total = molds * (pt.price || 0);
-            
+            */
+
             document.getElementById('dispatchStep3Info').innerHTML = `
                 <p><strong>Cliente:</strong> ${client.name}</p>
                 <p><strong>Moldes:</strong> ${molds}</p>
+                ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ''}`;
+                /* COMENTADO: Líneas de precio — se usará más adelante
                 <p><strong>Precio:</strong> ${pt.name} — $${parseFloat(pt.price || 0).toFixed(2)} c/u</p>
                 <p><strong>Total:</strong> $${total.toFixed(2)}</p>
-                ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ''}`;
+                */
             document.getElementById('dispatchMerma').value = '0';
             document.getElementById('dispatchDespachoObs').value = '';
             document.getElementById('dispatchStep2').style.display = 'none';
             document.getElementById('dispatchStep3').style.display = 'block';
-            
+
             // Guardar datos en hidden para el confirm
             document.getElementById('dispatchStep3').dataset.clientId = clientId;
             document.getElementById('dispatchStep3').dataset.molds = molds;
-            document.getElementById('dispatchStep3').dataset.priceTypeId = priceTypeId;
+            document.getElementById('dispatchStep3').dataset.priceTypeId = priceTypeId || '';
             document.getElementById('dispatchStep3').dataset.obs = obs;
         }
 
@@ -7544,29 +7560,31 @@
             const ds = document.getElementById('dispatchStep3').dataset;
             const clientId = ds.clientId;
             const molds = parseInt(ds.molds);
-            const priceTypeId = ds.priceTypeId;
+            const priceTypeId = ds.priceTypeId || '';
             const obs = ds.obs || '';
             const merma = parseInt(document.getElementById('dispatchMerma').value) || 0;
             const dispatchObs = document.getElementById('dispatchDespachoObs').value.trim();
-            
+
             if (merma < 0) return alert('La merma no puede ser negativa');
-            
+
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const totalDeduct = molds + merma;
             if (totalDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail}. Necesario: ${totalDeduct} (${molds} + ${merma} merma)`);
-            
+
             const client = salesClients[clientId] || {};
+            /* COMENTADO: Tipo de precio — se usará más adelante
             const pt = salesPriceTypes[priceTypeId] || {};
-            
+            */
+
             try {
                 showSyncIndicator('⚙️ Despachando...', 'syncing');
                 await salesDispatchesRef.push({
                     date: currentDate,
                     clientId, clientName: client.name,
                     moldsRequested: molds, moldsDispatched: molds,
-                    priceTypeId, priceTypeName: pt.name, priceValue: pt.price || 0,
+                    priceTypeId: priceTypeId, priceTypeName: '', priceValue: 0,
                     merma, observations: obs, dispatchObs,
-                    totalAmount: molds * (pt.price || 0),
+                    totalAmount: 0,
                     status: 'dispatched',
                     createdBy: currentUser.fullName,
                     createdAt: new Date().toISOString(),
@@ -7622,11 +7640,13 @@
                 
                 try {
                     showSyncIndicator('⚙️ Aprobando...', 'syncing');
+                    /* COMENTADO: Tipo de precio — se usará más adelante
                     const pt = salesPriceTypes[d.priceTypeId] || {};
+                    */
                     await salesDispatchesRef.child(approveKey).update({
                         moldsDispatched: d.moldsRequested,
                         merma, dispatchObs,
-                        totalAmount: d.moldsRequested * (pt.price || 0),
+                        totalAmount: 0,
                         status: 'dispatched',
                         approvedBy: currentUser.fullName,
                         dispatchedAt: new Date().toISOString()
@@ -8014,7 +8034,9 @@
                         <div style="background:#e8f5e9; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">${totalMolds}</strong><br><small>Moldes</small></div>
                         <div style="background:#e3f2fd; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">${sales.length}</strong><br><small>Despachos</small></div>
                         <div style="background:#e0f7fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#00838f; font-size:18px;">${totalDonacion}</strong><br><small>Donaciones</small></div>
+                        <!-- COMENTADO: Total precio — se usará más adelante
                         <div style="background:#f3e5f5; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$${totalAmount.toFixed(0)}</strong><br><small>Total</small></div>
+                        -->
                     </div>`;
                 
                 // Detalle por cliente con expandible
@@ -8031,9 +8053,11 @@
                         </div>
                         <div id="${toggleId}" style="display:none; padding:8px 12px; border-top:1px solid #e0e0e0; font-size:13px;">`;
                     cData.dispatches.forEach((d, i) => {
+                        /* COMENTADO: Tipo de precio — se usará más adelante
                         const pt = salesPriceTypes[d.priceTypeId] || {};
+                        */
                         html += `<div style="${i > 0 ? 'border-top:1px solid #eee; margin-top:4px; padding-top:4px;' : ''}">
-                            📦 ${d.moldsDispatched} moldes${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''} — ${pt.name || d.priceTypeName || 'N/A'} $${(d.totalAmount || 0).toFixed(2)}
+                            📦 ${d.moldsDispatched} moldes${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}
                             ${d.dispatchObs ? '<br><small style="color:#666;">' + d.dispatchObs + '</small>' : ''}
                         </div>`;
                     });
@@ -8115,8 +8139,10 @@
                     html += '<div style="padding:4px 0; border-top:1px solid #f5f5f5; font-size:12px;">';
                     html += '📦 ' + (d.moldsDispatched || 0) + ' moldes';
                     if (d.merma > 0) html += ' + ' + d.merma + ' merma';
+                    /* COMENTADO: Tipo de precio — se usará más adelante
                     html += ' — ' + (d.priceTypeName || 'S/T');
                     html += ' $' + (d.totalAmount || 0).toFixed(2);
+                    */
                     html += '</div>';
                 });
                 html += '</div></div>';
@@ -8132,36 +8158,26 @@
             }
             
             html += '</div></div>';
-            
+
+            /* COMENTADO: Card Finanzas — se usará más adelante cuando se active tipo de precio
             // ========== CARD FINANZAS ==========
-            // Ventas del día
             var ventasDia = totalAmount;
-            
-            // Ventas de la semana (sábado como inicio)
             var today = new Date(dateStr + 'T12:00:00');
-            var dayOfWeek = today.getDay(); // 0=dom, 1=lun... 6=sab
+            var dayOfWeek = today.getDay();
             var daysSinceSat = dayOfWeek >= 6 ? dayOfWeek - 6 : dayOfWeek + 1;
             var satDate = new Date(today);
             satDate.setDate(today.getDate() - daysSinceSat);
             var ventasSemana = 0;
-            
-            // Ventas del mes
-            var monthStr = dateStr.substring(0, 7); // YYYY-MM
+            var monthStr = dateStr.substring(0, 7);
             var ventasMes = 0;
-            
             Object.entries(salesDispatches).forEach(function(entry) {
                 var d = entry[1];
                 if (d.status !== 'dispatched') return;
                 var amt = d.totalAmount || 0;
-                
-                // Semana (desde sábado)
                 var dDate = new Date(d.date + 'T12:00:00');
                 if (dDate >= satDate && dDate <= today) ventasSemana += amt;
-                
-                // Mes
                 if (d.date && d.date.substring(0, 7) === monthStr) ventasMes += amt;
             });
-            
             var fToggle = 'rpt_finanzas_' + dateStr.replace(/-/g, '');
             html += '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
             html += '<div onclick="var el=document.getElementById(\'' + fToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
@@ -8174,15 +8190,14 @@
             html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">$' + ventasSemana.toFixed(0) + '</strong><br><small style="color:#555;">Semana</small></div>';
             html += '<div style="background:#f3e5f5; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$' + ventasMes.toFixed(0) + '</strong><br><small style="color:#555;">Mes</small></div>';
             html += '</div></div>';
-            
-            // Detalle finanzas expandible
             html += '<div id="' + fToggle + '" style="display:none; padding:10px 12px; border-top:1px solid #eee; font-size:12px;">';
             var satLabel = satDate.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
             html += '<p><strong>Ventas del día:</strong> $' + ventasDia.toFixed(2) + '</p>';
             html += '<p><strong>Ventas de la semana</strong> (desde ' + satLabel + '): $' + ventasSemana.toFixed(2) + '</p>';
             html += '<p><strong>Ventas del mes:</strong> $' + ventasMes.toFixed(2) + '</p>';
             html += '</div></div>';
-            
+            */
+
             return html;
         }
     </script>
