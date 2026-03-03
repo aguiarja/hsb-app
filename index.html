@@ -2469,8 +2469,7 @@
                 
                 // Botones de acción
                 let actionButtons = '';
-                const canApprove = currentUser.role === 'admin' || currentUser.role === 'supervisor' || 
-                                 (currentUser.planPermissions && currentUser.planPermissions.canApprove);
+                const canApprove = currentUser.planPermissions && currentUser.planPermissions.canApprove;
                 
                 if (activity.status === 'pending' && canApprove) {
                     actionButtons = `
@@ -2667,8 +2666,9 @@
             document.getElementById('currentUserName').textContent = currentUser.fullName;
             const roleEl = document.getElementById('currentUserRole');
             if (roleEl) roleEl.textContent = 
-                currentUser.role === 'admin' ? 'Administrador' : 
-                currentUser.role === 'supervisor' ? 'Supervisor' : 'Operador';
+                currentUser.role === 'admin' ? 'Administrador' :
+                currentUser.role === 'supervisor' ? 'Supervisor' :
+                currentUser.role === 'reportes' ? 'Reportes' : 'Operador';
             
             renderTabs();
             initializeDailyLog();
@@ -2741,12 +2741,10 @@
                     window.scrollTo(0, 0);
                 } else if (tabId === 'plan') {
                     renderPlan();
-                    // Mostrar botón para Admin y Supervisor siempre
+                    // Mostrar botón solo si tiene permiso canApprove
                     const btnNewActivity = document.getElementById('btnNewPlanActivity');
                     if (btnNewActivity) {
-                        const canCreate = currentUser.role === 'admin' || 
-                                        currentUser.role === 'supervisor' ||
-                                        (currentUser.planPermissions && currentUser.planPermissions.canApprove);
+                        const canCreate = currentUser.planPermissions && currentUser.planPermissions.canApprove;
                         btnNewActivity.style.display = canCreate ? 'block' : 'none';
                     }
                 } else if (tabId === 'reporte-diario') {
@@ -5422,24 +5420,15 @@
                 return;
             }
 
-            // Construir array de permisos basado en checkboxes
+            // Construir array de permisos basado en checkboxes (todos los roles)
             const permissions = [];
-
-            // Admin y Supervisor tienen todos los permisos automáticamente
-            if (role === 'admin' || role === 'supervisor') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion');
-            } else if (role === 'reportes') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial');
-            } else {
-                // Operadores y otros roles: usar checkboxes
-                if (canViewReporte) permissions.push('reporte-diario');
-                if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
-                if (canViewProduccion) permissions.push('produccion');
-                if (canViewVentas) permissions.push('ventas');
-                if (canViewPlan) permissions.push('plan');
-                if (canViewHistorial) permissions.push('historial');
-                if (canViewConfig) permissions.push('configuracion');
-            }
+            if (canViewReporte) permissions.push('reporte-diario');
+            if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
+            if (canViewProduccion) permissions.push('produccion');
+            if (canViewVentas) permissions.push('ventas');
+            if (canViewPlan) permissions.push('plan');
+            if (canViewHistorial) permissions.push('historial');
+            if (canViewConfig) permissions.push('configuracion');
 
             // Crear nuevo usuario
             const newId = Math.max(...users.map(u => u.id), 0) + 1;
@@ -5453,10 +5442,10 @@
                 permissions: permissions,
                 planPermissions: {
                     canView: permissions.includes('plan'),
-                    canApprove: canApprovePlan || role === 'admin' || role === 'supervisor'
+                    canApprove: canApprovePlan
                 }
             };
-            
+
             try {
                 showSyncIndicator('💾 Creando usuario...', 'syncing');
                 users.push(newUser);
@@ -5552,24 +5541,15 @@
                 return;
             }
             
-            // Construir array de permisos basado en checkboxes
+            // Construir array de permisos basado en checkboxes (todos los roles)
             const permissions = [];
-            
-            // Admin y Supervisor tienen todos los permisos automáticamente
-            if (role === 'admin' || role === 'supervisor') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial', 'configuracion');
-            } else if (role === 'reportes') {
-                permissions.push('reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial');
-            } else {
-                // Operadores y otros roles: usar checkboxes
-                if (canViewReporte) permissions.push('reporte-diario');
-                if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
-                if (canViewProduccion) permissions.push('produccion');
-                if (canViewVentas) permissions.push('ventas');
-                if (canViewPlan) permissions.push('plan');
-                if (canViewHistorial) permissions.push('historial');
-                if (canViewConfig) permissions.push('configuracion');
-            }
+            if (canViewReporte) permissions.push('reporte-diario');
+            if (canViewMantenimiento) permissions.push('mantenimiento-preventivo');
+            if (canViewProduccion) permissions.push('produccion');
+            if (canViewVentas) permissions.push('ventas');
+            if (canViewPlan) permissions.push('plan');
+            if (canViewHistorial) permissions.push('historial');
+            if (canViewConfig) permissions.push('configuracion');
             
             // Actualizar usuario
             users[userIndex].fullName = fullName;
@@ -5581,7 +5561,7 @@
             users[userIndex].permissions = permissions;
             users[userIndex].planPermissions = {
                 canView: permissions.includes('plan'),
-                canApprove: canApprovePlan || role === 'admin' || role === 'supervisor'
+                canApprove: canApprovePlan
             };
             
             try {
