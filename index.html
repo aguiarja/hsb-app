@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -821,6 +822,8 @@
                 <h2>▶️ Iniciar Producción</h2>
                 <span class="close" onclick="document.getElementById('prodStartModal').style.display='none'">&times;</span>
             </div>
+            <div id="prodPreviousInfo" style="background:#e8f0fe; padding:12px; border-radius:8px; margin-bottom:15px; font-size:13px; color:#1e3c72; display:none;">
+            </div>
             <div class="form-group">
                 <label>🕐 Hora de Inicio:</label>
                 <input type="time" id="prodStartTime">
@@ -832,9 +835,16 @@
             <div class="form-group">
                 <label>📍 Fila de Inicio:</label>
                 <div style="display:flex; gap:10px;">
-                    <select id="prodStartRow" style="flex:1;"></select>
+                    <select id="prodStartRow" style="flex:1;" onchange="updateEstimatedEnd()"></select>
                     <select id="prodStartCol" style="flex:1;"></select>
                 </div>
+            </div>
+            <div class="form-group">
+                <label>📊 Filas estimadas a producir:</label>
+                <input type="number" id="prodEstimatedRows" min="1" max="24" placeholder="Ej: 4" oninput="updateEstimatedEnd()">
+            </div>
+            <div id="prodEstimatedEndDisplay" style="background:#f1f8f4; padding:12px; border-radius:8px; margin-bottom:15px; text-align:center;">
+                <span style="color:#999;">Ingresa filas estimadas para calcular</span>
             </div>
             <div class="form-group">
                 <label>👷 Operadores:</label>
@@ -6314,20 +6324,113 @@
         const MOLDS_PER_MODULE = 6;
         const COL_INDEX_MAP = { A: 1, B: 2, C: 3, D: 4 };
 
-        /** Convierte coordenada (row, col) a índice lineal */
+        // Secuencia alternada par/impar
+        const ODD_ROWS = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
+        const EVEN_ROWS = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+
+        /** Retorna la siguiente fila en la secuencia circular alternada */
+        function getNextSequenceRow(row) {
+            if (row % 2 !== 0) {
+                // Impar: siguiente impar, o cruza a par
+                return row < 23 ? row + 2 : 2;
+            } else {
+                // Par: siguiente par, o cruza a impar
+                return row < 24 ? row + 2 : 1;
+            }
+        }
+
+        /** Genera la secuencia circular completa de 24 filas empezando desde startRow */
+        function buildFullSequenceFromRow(startRow) {
+            const seq = [startRow];
+            let current = startRow;
+            for (let i = 1; i < 24; i++) {
+                current = getNextSequenceRow(current);
+                seq.push(current);
+            }
+            return seq;
+        }
+
+        /** Retorna array de N filas en secuencia desde startRow (inclusive) */
+        function getSequenceFromRow(startRow, count) {
+            const rows = [startRow];
+            let current = startRow;
+            for (let i = 1; i < count; i++) {
+                current = getNextSequenceRow(current);
+                rows.push(current);
+            }
+            return rows;
+        }
+
+        /** Calcula la distancia en módulos entre dos posiciones en la secuencia alternada */
+        function prodSeqDistance(fromRow, fromCol, toRow, toCol) {
+            const fullSeq = buildFullSequenceFromRow(fromRow);
+            const fromColIdx = COL_INDEX_MAP[fromCol]; // 1-4
+            const toColIdx = COL_INDEX_MAP[toCol];
+
+            const toRowPos = fullSeq.indexOf(toRow);
+            if (toRowPos === -1) return null;
+
+            // Módulos = (filas completas antes de toRow * 4) + columnas recorridas en la fila de inicio y fin
+            if (toRowPos === 0) {
+                // Misma fila
+                return toColIdx - fromColIdx + 1;
+            }
+            // Módulos en primera fila (desde fromCol hasta D)
+            const firstRowModules = 4 - fromColIdx + 1;
+            // Filas intermedias completas
+            const middleModules = (toRowPos - 1) * 4;
+            // Módulos en última fila (desde A hasta toCol)
+            const lastRowModules = toColIdx;
+            return firstRowModules + middleModules + lastRowModules;
+        }
+
+        /** Cuenta filas distintas recorridas en la secuencia entre startRow y endRow */
+        function countSequenceRows(startRow, endRow) {
+            if (startRow === endRow) return 1;
+            const fullSeq = buildFullSequenceFromRow(startRow);
+            const endPos = fullSeq.indexOf(endRow);
+            return endPos === -1 ? null : endPos + 1;
+        }
+
+        /** Calcula la fila fin estimada: N filas desde startRow, retorna última fila */
+        function calculateEstimatedEnd(startRow, estimatedRows) {
+            if (!startRow || !estimatedRows || estimatedRows < 1) return null;
+            const rows = getSequenceFromRow(startRow, estimatedRows);
+            return rows[rows.length - 1];
+        }
+
+        /** Busca el último registro de producción (anterior a hoy) para auto-proponer */
+        function detectPreviousProduction() {
+            const dates = Object.keys(productionRecords).sort().reverse();
+            for (const date of dates) {
+                if (date >= currentDate) continue;
+                const rec = productionRecords[date];
+                if (rec && rec.endRow && rec.endCol) {
+                    const nextRow = getNextSequenceRow(rec.endRow);
+                    return {
+                        date: date,
+                        endRow: rec.endRow,
+                        endCol: rec.endCol,
+                        nextRow: nextRow,
+                        nextCol: 'A'
+                    };
+                }
+            }
+            return null;
+        }
+
+        /** Convierte coordenada (row, col) a índice lineal (legacy, para validaciones simples) */
         function prodCoordToIndex(row, col) {
             return (row - 1) * 4 + COL_INDEX_MAP[col];
         }
 
-        /** Calcula todos los KPIs de producción */
+        /** Calcula todos los KPIs de producción usando secuencia alternada */
         function calculateProductionKPIs(startRow, startCol, endRow, endCol, startTime, endTime) {
-            const startIndex = prodCoordToIndex(startRow, startCol);
-            const endIndex = prodCoordToIndex(endRow, endCol);
-            if (endIndex < startIndex) return null;
+            const modulesProduced = prodSeqDistance(startRow, startCol, endRow, endCol);
+            if (!modulesProduced || modulesProduced < 1) return null;
 
-            const modulesProduced = endIndex - startIndex + 1;
             const moldsProduced = modulesProduced * MOLDS_PER_MODULE;
-            const rowsProduced = endRow - startRow + 1;
+            const rowsProduced = countSequenceRows(startRow, endRow);
 
             const [sh, sm] = startTime.split(':').map(Number);
             const [eh, em] = endTime.split(':').map(Number);
@@ -6355,11 +6458,20 @@
             });
         }
 
-        /** Genera <option> para filas 1-24 */
-        function buildProdRowOptions(selected) {
+        /** Genera <option> para filas en orden de secuencia alternada */
+        function buildProdRowOptions(selected, sequenceStartRow) {
             let html = '<option value="">-- Fila --</option>';
-            for (let i = 1; i <= CUBA_ROWS; i++) {
-                html += `<option value="${i}" ${i == selected ? 'selected' : ''}>${i}</option>`;
+            if (sequenceStartRow) {
+                // Ordenar filas según secuencia circular desde sequenceStartRow
+                const seq = buildFullSequenceFromRow(sequenceStartRow);
+                seq.forEach(row => {
+                    html += `<option value="${row}" ${row == selected ? 'selected' : ''}>${row}</option>`;
+                });
+            } else {
+                // Fallback: orden numérico
+                for (let i = 1; i <= CUBA_ROWS; i++) {
+                    html += `<option value="${i}" ${i == selected ? 'selected' : ''}>${i}</option>`;
+                }
             }
             return html;
         }
@@ -6367,6 +6479,26 @@
         /** Genera <option> para columnas A-D */
         function buildProdColOptions(selected) {
             return CUBA_COLS.map(c => `<option value="${c}" ${c === selected ? 'selected' : ''}>${c}</option>`).join('');
+        }
+
+        /** Recalcula y muestra la fila estimada de fin en el modal de inicio */
+        function updateEstimatedEnd() {
+            const startRow = parseInt(document.getElementById('prodStartRow').value);
+            const estimatedRows = parseInt(document.getElementById('prodEstimatedRows').value);
+            const display = document.getElementById('prodEstimatedEndDisplay');
+            if (!startRow || !estimatedRows || estimatedRows < 1) {
+                display.innerHTML = '<span style="color:#999;">Ingresa filas estimadas para calcular</span>';
+                return;
+            }
+            const endRow = calculateEstimatedEnd(startRow, estimatedRows);
+            const seqRows = getSequenceFromRow(startRow, estimatedRows);
+            const totalModules = estimatedRows * 4;
+            const totalMolds = totalModules * MOLDS_PER_MODULE;
+            display.innerHTML = `
+                <strong style="color:#1e3c72; font-size:16px;">Fila estimada de fin: ${endRow}D</strong><br>
+                <span style="color:#666; font-size:13px;">Secuencia: ${seqRows.join(' → ')}</span><br>
+                <span style="color:#666; font-size:13px;">Módulos: ${totalModules} | Moldes: ${totalMolds}</span>
+            `;
         }
 
         /** Genera checkboxes de operadores */
@@ -6464,6 +6596,9 @@
                         <div class="stat-card"><div class="stat-number">${rec.startRow}${rec.startCol}</div><div class="stat-label">Fila Inicio</div></div>
                         <div class="stat-card"><div class="stat-number">${opNames.length}</div><div class="stat-label">Operadores</div></div>
                     </div>
+                    ${rec.estimatedRows ? `<div style="background:#e8f0fe; padding:10px 15px; border-radius:8px; margin-bottom:15px; font-size:14px; color:#1e3c72;">
+                        📊 Estimado: <strong>${rec.estimatedRows} filas</strong> → Fin estimado: <strong>${rec.estimatedEndRow}D</strong>
+                    </div>` : ''}
                     <p style="color:#666; margin-bottom:15px;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
                     ${partialsHTML}
                     <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
@@ -6504,6 +6639,7 @@
                     <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin-bottom:20px; font-size:15px; line-height:2;">
                         <p><strong>Fila Inicio:</strong> ${rec.startRow}${rec.startCol}</p>
                         <p><strong>Fila Fin:</strong> ${rec.endRow}${rec.endCol}</p>
+                        <p><strong>Filas Producidas:</strong> ${kpis ? kpis.rowsProduced : 'N/A'}${rec.estimatedRows ? ` <span style="color:#667eea; font-size:13px;">(estimado: ${rec.estimatedRows})</span>` : ''}</p>
                         <p><strong>Número de Moldes:</strong> ${kpis ? kpis.moldsProduced : 'N/A'}</p>
                         <p><strong>Hora de Inicio:</strong> ${rec.startTime}</p>
                         <p><strong>Hora de Fin:</strong> ${rec.endTime}</p>
@@ -6536,6 +6672,7 @@
                     </div>
                     <div style="background:#f1f8f4; padding:15px; border-radius:8px; font-size:14px;">
                         <p><strong>Rango:</strong> ${rec.startRow}${rec.startCol} → ${rec.endRow}${rec.endCol}</p>
+                        ${rec.estimatedRows ? `<p><strong>Estimado:</strong> ${rec.estimatedRows} filas (fin est. ${rec.estimatedEndRow}D) | <strong>Real:</strong> ${kpis ? kpis.rowsProduced : rec.rowsProduced || '?'} filas</p>` : ''}
                         <p><strong>Horario:</strong> ${rec.startTime} — ${rec.endTime}</p>
                         <p><strong>Temperatura:</strong> ${rec.startTemp || '-'}°C → ${rec.endTemp || '-'}°C</p>
                         <p><strong>Operadores:</strong> ${opNames.join(', ') || 'N/A'}</p>
@@ -6548,8 +6685,28 @@
         function openProdStartModal() {
             document.getElementById('prodStartTime').value = getCurrentTimeStr();
             document.getElementById('prodStartTemp').value = '';
-            document.getElementById('prodStartRow').innerHTML = buildProdRowOptions(1);
-            document.getElementById('prodStartCol').innerHTML = buildProdColOptions('A');
+            document.getElementById('prodEstimatedRows').value = '';
+            document.getElementById('prodEstimatedEndDisplay').innerHTML = '<span style="color:#999;">Ingresa filas estimadas para calcular</span>';
+
+            // Detectar producción anterior para auto-proponer
+            const prev = detectPreviousProduction();
+            const infoEl = document.getElementById('prodPreviousInfo');
+            let proposedRow = 2; // Default si no hay registro previo
+            let proposedCol = 'A';
+
+            if (prev) {
+                const prevDateStr = new Date(prev.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                infoEl.innerHTML = `ℹ️ Última producción: <strong>${prevDateStr}</strong>, terminó en fila <strong>${prev.endRow}${prev.endCol}</strong> → Siguiente: <strong>${prev.nextRow}A</strong>`;
+                infoEl.style.display = 'block';
+                proposedRow = prev.nextRow;
+                proposedCol = prev.nextCol;
+            } else {
+                infoEl.innerHTML = 'ℹ️ No hay registro de producción anterior. Selecciona la fila de inicio.';
+                infoEl.style.display = 'block';
+            }
+
+            document.getElementById('prodStartRow').innerHTML = buildProdRowOptions(proposedRow, proposedRow);
+            document.getElementById('prodStartCol').innerHTML = buildProdColOptions(proposedCol);
             buildOperatorCheckboxes('prodStartOperators', []);
             document.getElementById('prodStartModal').style.display = 'block';
         }
@@ -6560,6 +6717,8 @@
             const startRow = parseInt(document.getElementById('prodStartRow').value);
             const startCol = document.getElementById('prodStartCol').value;
             const operatorIds = getSelectedProdOperators();
+            const estimatedRows = parseInt(document.getElementById('prodEstimatedRows').value) || null;
+            const estimatedEndRow = estimatedRows ? calculateEstimatedEnd(startRow, estimatedRows) : null;
 
             if (!startTime) return alert('La hora de inicio es requerida');
             if (!startRow || !startCol) return alert('La fila de inicio es requerida');
@@ -6568,6 +6727,8 @@
 
             const record = {
                 date: currentDate, startTime, startTemp, startRow, startCol,
+                estimatedRows: estimatedRows,
+                estimatedEndRow: estimatedEndRow,
                 operatorIds,
                 operatorNamesSnapshot: getProductionOperatorNames(operatorIds),
                 confirmed: false,
@@ -6587,9 +6748,12 @@
         }
 
         function openProdEndModal() {
+            const rec = productionRecords[currentDate];
             document.getElementById('prodEndTime').value = getCurrentTimeStr();
             document.getElementById('prodEndTemp').value = '';
-            document.getElementById('prodEndRow').innerHTML = buildProdRowOptions('');
+            // Ordenar filas según secuencia desde el startRow del registro actual
+            const seqStart = rec ? rec.startRow : null;
+            document.getElementById('prodEndRow').innerHTML = buildProdRowOptions('', seqStart);
             document.getElementById('prodEndCol').innerHTML = buildProdColOptions('D');
             document.getElementById('prodEndModal').style.display = 'block';
         }
@@ -6607,8 +6771,10 @@
             if (!endRow || !endCol) return alert('La fila de fin es requerida');
             if (isNaN(endTemp)) return alert('La temperatura es requerida');
 
-            if (prodCoordToIndex(endRow, endCol) < prodCoordToIndex(rec.startRow, rec.startCol))
-                return alert('La posición de fin debe ser posterior a la de inicio');
+            // Validar que la posición de fin está en la secuencia después del inicio
+            const dist = prodSeqDistance(rec.startRow, rec.startCol, endRow, endCol);
+            if (!dist || dist < 1)
+                return alert('La posición de fin debe ser posterior a la de inicio en la secuencia');
 
             const [sh, sm] = rec.startTime.split(':').map(Number);
             const [eh, em] = endTime.split(':').map(Number);
@@ -6631,11 +6797,11 @@
             if (!rec) return;
             document.getElementById('prodEditStartTime').value = rec.startTime;
             document.getElementById('prodEditStartTemp').value = rec.startTemp || '';
-            document.getElementById('prodEditStartRow').innerHTML = buildProdRowOptions(rec.startRow);
+            document.getElementById('prodEditStartRow').innerHTML = buildProdRowOptions(rec.startRow, rec.startRow);
             document.getElementById('prodEditStartCol').innerHTML = buildProdColOptions(rec.startCol);
             document.getElementById('prodEditEndTime').value = rec.endTime || '';
             document.getElementById('prodEditEndTemp').value = rec.endTemp || '';
-            document.getElementById('prodEditEndRow').innerHTML = buildProdRowOptions(rec.endRow);
+            document.getElementById('prodEditEndRow').innerHTML = buildProdRowOptions(rec.endRow, rec.startRow);
             document.getElementById('prodEditEndCol').innerHTML = buildProdColOptions(rec.endCol);
             buildOperatorCheckboxes('prodEditOperators', rec.operatorIds || []);
             document.getElementById('prodEditModal').style.display = 'block';
@@ -6657,8 +6823,9 @@
             if (isNaN(startTemp)) return alert('Temperatura de inicio requerida');
             if (isNaN(endTemp)) return alert('Temperatura de fin requerida');
             if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
-            if (prodCoordToIndex(endRow, endCol) < prodCoordToIndex(startRow, startCol))
-                return alert('La posición de fin debe ser posterior a la de inicio');
+            const dist = prodSeqDistance(startRow, startCol, endRow, endCol);
+            if (!dist || dist < 1)
+                return alert('La posición de fin debe ser posterior a la de inicio en la secuencia');
             const [sh, sm] = startTime.split(':').map(Number);
             const [eh, em] = endTime.split(':').map(Number);
             if ((eh * 60 + em) <= (sh * 60 + sm))
@@ -6762,15 +6929,15 @@
             return getNextPosition(last.toRow, last.toCol);
         }
 
-        /** Obtiene la posición siguiente a (row, col) en la secuencia de la cuba */
+        /** Obtiene la posición siguiente a (row, col) en la secuencia alternada de la cuba */
         function getNextPosition(row, col) {
             const colIdx = COL_INDEX_MAP[col];
             if (colIdx < 4) {
                 // Siguiente columna en la misma fila
-                return { row: row, col: CUBA_COLS[colIdx] }; // colIdx is 1-based, array is 0-based, so CUBA_COLS[colIdx] = next col
+                return { row: row, col: CUBA_COLS[colIdx] };
             }
-            // Siguiente fila, columna A
-            return { row: row + 1, col: 'A' };
+            // Siguiente fila en secuencia alternada, columna A
+            return { row: getNextSequenceRow(row), col: 'A' };
         }
 
         function openPartialModal() {
@@ -6778,7 +6945,7 @@
             if (!rec) return;
 
             const from = getPartialFromPosition(rec);
-            document.getElementById('partialRow').innerHTML = buildProdRowOptions(from.row);
+            document.getElementById('partialRow').innerHTML = buildProdRowOptions(from.row, rec.startRow);
             document.getElementById('partialCol').innerHTML = buildProdColOptions(from.col);
             document.getElementById('partialFromLabel').textContent = `Calculando desde posición: ${from.row}${from.col}`;
             document.getElementById('partialModalTitle').textContent = `📦 Producción Parcial (Carga ${(rec.partialLoads || []).length + 1})`;
@@ -6804,14 +6971,12 @@
             if (!toRow || !toCol) return alert('Selecciona fila y columna');
 
             const from = getPartialFromPosition(rec);
-            const fromIndex = prodCoordToIndex(from.row, from.col);
-            const toIndex = prodCoordToIndex(toRow, toCol);
+            const modules = prodSeqDistance(from.row, from.col, toRow, toCol);
 
-            if (toIndex < fromIndex) {
-                return alert(`La posición ${toRow}${toCol} debe ser igual o posterior a ${from.row}${from.col}`);
+            if (!modules || modules < 1) {
+                return alert(`La posición ${toRow}${toCol} debe ser posterior a ${from.row}${from.col} en la secuencia`);
             }
 
-            const modules = toIndex - fromIndex + 1;
             const molds = modules * MOLDS_PER_MODULE;
             const partials = rec.partialLoads || [];
             const prevTotal = partials.reduce((sum, p) => sum + (p.moldsLoaded || 0), 0);
@@ -6836,9 +7001,7 @@
             const toRow = parseInt(document.getElementById('partialRow').value);
             const toCol = document.getElementById('partialCol').value;
             const from = getPartialFromPosition(rec);
-            const fromIndex = prodCoordToIndex(from.row, from.col);
-            const toIndex = prodCoordToIndex(toRow, toCol);
-            const modules = toIndex - fromIndex + 1;
+            const modules = prodSeqDistance(from.row, from.col, toRow, toCol);
             const molds = modules * MOLDS_PER_MODULE;
 
             const partialEntry = {
