@@ -1033,9 +1033,17 @@
             <div id="dispatchStep2" style="display:none;">
                 <div id="dispatchInventoryBadge" style="text-align:center; margin-bottom:15px;"></div>
                 <div class="form-group">
-                    <label>📦 Número de Moldes:</label>
-                    <input type="number" id="dispatchMoldsQty" min="1" placeholder="Cantidad">
+                    <label>📏 Unidad de medida:</label>
+                    <select id="dispatchUnit" onchange="onDispatchUnitChange()" style="padding:10px; border-radius:8px; border:1px solid #ddd; font-size:15px;">
+                        <option value="moldes">🧊 Moldes</option>
+                        <option value="tiras">🧊 Tiras (1 molde = 5 tiras)</option>
+                    </select>
                 </div>
+                <div class="form-group">
+                    <label id="dispatchQtyLabel">📦 Número de Moldes:</label>
+                    <input type="number" id="dispatchMoldsQty" min="1" placeholder="Cantidad" oninput="updateDispatchCalcPreview()">
+                </div>
+                <div id="dispatchCalcPreview" style="background:#f1f8f4; padding:10px; border-radius:8px; margin-bottom:10px; text-align:center; display:none;"></div>
                 <!-- COMENTADO: Tipo de precio — se usará más adelante
                 <div class="form-group">
                     <label>💲 Tipo de Precio:</label>
@@ -7336,10 +7344,10 @@
             
             // Despachos de hoy
             const todayDispatches = getDispatchesByDate(currentDate);
-            const todayMolds = todayDispatches.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+            const todayMolds = todayDispatches.filter(d => d.status === 'dispatched').reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+            const todayTirasVendidas = todayDispatches.filter(d => d.status === 'dispatched' && d.dispatchUnit === 'tiras').reduce((s, d) => s + (d.dispatchTiras || 0), 0);
             const todayMerma = todayDispatches.filter(d => d.status === 'dispatched').reduce((s, d) => s + (d.merma || 0), 0);
             const todayDonacionesTiras = todayDispatches.filter(d => d.status === 'donacion').reduce((s, d) => s + (d.donacionTiras || 0), 0);
-            const todayDonaciones = todayDispatches.filter(d => d.status === 'donacion').reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
             const todayPending = todayDispatches.filter(d => d.status === 'pending_approval');
             
             let html = `
@@ -7351,7 +7359,8 @@
                     </div>
                     <div class="stat-card" style="border-top:3px solid #28a745;">
                         <div class="stat-number" style="color:#28a745;">${todayMolds}</div>
-                        <div class="stat-label">Vendidos Hoy</div>
+                        <div class="stat-label">Moldes Vendidos</div>
+                        ${todayTirasVendidas > 0 ? `<div style="color:#17a2b8; font-size:12px; margin-top:4px;">+ ${todayTirasVendidas} tiras</div>` : ''}
                     </div>
                     <div class="stat-card" style="border-top:3px solid #ffc107;">
                         <div class="stat-number" style="color:#ffc107;">${todayMerma}</div>
@@ -7378,9 +7387,11 @@
                     <h4 style="color:#856404; margin-bottom:10px;">⏳ Pendientes de Aprobación (${todayPending.length})</h4>`;
                 todayPending.forEach(d => {
                     const cli = salesClients[d.clientId] || {};
+                    const pIsTiras = d.dispatchUnit === 'tiras';
+                    const pQtyDisplay = pIsTiras ? `${d.dispatchTiras || 0} tiras` : `${d.moldsRequested} moldes`;
                     html += `<div style="background:#fff3e0; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div>
-                            <strong>${cli.name || 'N/A'}</strong> — ${d.moldsRequested} moldes
+                            <strong>${cli.name || 'N/A'}</strong> — ${pQtyDisplay}
                             <br><small style="color:#666;">${d.observations || ''}</small>
                         </div>
                         <div style="display:flex; gap:5px;">
@@ -7402,8 +7413,10 @@
                     /* COMENTADO: Tipo de precio — se usará más adelante
                     const pt = salesPriceTypes[d.priceTypeId] || {};
                     */
+                    const dIsTiras = d.dispatchUnit === 'tiras';
+                    const dQtyDisplay = dIsTiras ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
                     html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px;">
-                        <strong>${cli.name || 'N/A'}</strong> — ${d.moldsDispatched} moldes
+                        <strong>${cli.name || 'N/A'}</strong> — ${dQtyDisplay}
                         ${d.merma > 0 ? ` | Merma: ${d.merma}` : ''}
                         ${d.dispatchObs ? `<br><small style="color:#666;">${d.dispatchObs}</small>` : ''}
                     </div>`;
@@ -7497,27 +7510,71 @@
         function dispatchGoStep2() {
             const clientId = document.getElementById('dispatchSelectedClientId').value;
             if (!clientId) return alert('Selecciona un cliente');
-            
+
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-            document.getElementById('dispatchInventoryBadge').innerHTML = `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+            let badgeHTML = `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
+            if (tirasDisp > 0) {
+                badgeHTML += ` <span style="background:#17a2b8; color:white; padding:8px 16px; border-radius:20px; font-size:14px;">🧊 <strong>${tirasDisp}</strong> tiras sueltas</span>`;
+            }
+            document.getElementById('dispatchInventoryBadge').innerHTML = badgeHTML;
             document.getElementById('dispatchMoldsQty').value = '';
             document.getElementById('dispatchObs').value = '';
+            document.getElementById('dispatchUnit').value = 'moldes';
+            document.getElementById('dispatchQtyLabel').textContent = '📦 Número de Moldes:';
+            document.getElementById('dispatchCalcPreview').style.display = 'none';
             document.getElementById('dispatchInventoryWarning').style.display = 'none';
-            
-            /* COMENTADO: Tipo de precio — se usará más adelante
-            const client = salesClients[clientId];
-            const allowedPrices = client.allowedPriceTypes || [];
-            const select = document.getElementById('dispatchPriceType');
-            select.innerHTML = '<option value="">-- Seleccionar --</option>';
-            Object.entries(salesPriceTypes).forEach(([id, pt]) => {
-                if (allowedPrices.length === 0 || allowedPrices.includes(id)) {
-                    select.innerHTML += `<option value="${id}">${pt.name} — $${parseFloat(pt.price).toFixed(2)}</option>`;
-                }
-            });
-            */
-            
+
             document.getElementById('dispatchStep1').style.display = 'none';
             document.getElementById('dispatchStep2').style.display = 'block';
+        }
+
+        function onDispatchUnitChange() {
+            const unit = document.getElementById('dispatchUnit').value;
+            const label = document.getElementById('dispatchQtyLabel');
+            const input = document.getElementById('dispatchMoldsQty');
+            input.value = '';
+            document.getElementById('dispatchCalcPreview').style.display = 'none';
+            if (unit === 'tiras') {
+                label.textContent = '🧊 Número de Tiras:';
+                input.placeholder = 'Cantidad de tiras';
+            } else {
+                label.textContent = '📦 Número de Moldes:';
+                input.placeholder = 'Cantidad';
+            }
+        }
+
+        function updateDispatchCalcPreview() {
+            const unit = document.getElementById('dispatchUnit').value;
+            const display = document.getElementById('dispatchCalcPreview');
+            if (unit !== 'tiras') { display.style.display = 'none'; return; }
+
+            const tiras = parseInt(document.getElementById('dispatchMoldsQty').value) || 0;
+            if (tiras < 1) { display.style.display = 'none'; return; }
+
+            const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+            const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
+
+            if (tiras > totalTiras) {
+                display.innerHTML = `<span style="color:#dc3545; font-weight:bold;">⚠️ Insuficiente. Total disponible: ${totalTiras} tiras (${avail} moldes + ${tirasDisp} tiras)</span>`;
+            } else {
+                let tirasNecesarias = tiras;
+                let moldesADescontar = 0;
+                let tirasRestantes = tirasDisp;
+                if (tirasRestantes >= tirasNecesarias) {
+                    tirasRestantes -= tirasNecesarias;
+                    tirasNecesarias = 0;
+                } else {
+                    tirasNecesarias -= tirasRestantes;
+                    tirasRestantes = 0;
+                    moldesADescontar = Math.ceil(tirasNecesarias / TIRAS_PER_MOLD);
+                    tirasRestantes = (moldesADescontar * TIRAS_PER_MOLD) - tirasNecesarias;
+                }
+                display.innerHTML = `<span style="color:#1e3c72;">Venta: <strong>${tiras} tiras</strong></span><br>
+                    <small style="color:#666;">${moldesADescontar > 0 ? `Se descontarán ${moldesADescontar} molde(s) del inventario` : 'Se usan tiras sueltas disponibles'}${tirasRestantes > 0 ? ` → Quedan ${tirasRestantes} tiras sueltas` : ''}</small>`;
+            }
+            display.style.display = 'block';
         }
 
         function dispatchBackStep1() {
@@ -7527,48 +7584,52 @@
 
         function dispatchCargar() {
             const clientId = document.getElementById('dispatchSelectedClientId').value;
-            const molds = parseInt(document.getElementById('dispatchMoldsQty').value);
-            /* COMENTADO: Tipo de precio — se usará más adelante
-            const priceTypeId = document.getElementById('dispatchPriceType').value;
-            */
+            const qty = parseInt(document.getElementById('dispatchMoldsQty').value);
+            const unit = document.getElementById('dispatchUnit').value;
             const priceTypeId = ''; // Temporalmente sin tipo de precio
             const obs = document.getElementById('dispatchObs').value.trim();
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
             const warn = document.getElementById('dispatchInventoryWarning');
 
-            if (!molds || molds <= 0) return alert('Ingresa una cantidad válida');
-            /* COMENTADO: Validación de tipo de precio — se usará más adelante
-            if (!priceTypeId) return alert('Selecciona un tipo de precio');
-            */
+            if (!qty || qty <= 0) return alert('Ingresa una cantidad válida');
 
-            if (molds > avail) {
-                warn.textContent = `⚠️ Inventario insuficiente. Disponible: ${avail} moldes. Solicitado: ${molds}`;
-                warn.style.display = 'block';
-                return;
+            if (unit === 'tiras') {
+                // Validar tiras disponibles (tiras sueltas + moldes * 5)
+                const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
+                if (qty > totalTiras) {
+                    warn.textContent = `⚠️ Inventario insuficiente. Total disponible: ${totalTiras} tiras (${avail} moldes + ${tirasDisp} tiras)`;
+                    warn.style.display = 'block';
+                    return;
+                }
+            } else {
+                if (qty > avail) {
+                    warn.textContent = `⚠️ Inventario insuficiente. Disponible: ${avail} moldes. Solicitado: ${qty}`;
+                    warn.style.display = 'block';
+                    return;
+                }
             }
             warn.style.display = 'none';
 
             const client = salesClients[clientId];
             if (!client.hasCredit) {
-                // Sin crédito → pendiente de aprobación
-                savePendingDispatch(clientId, molds, priceTypeId, obs);
+                savePendingDispatch(clientId, qty, priceTypeId, obs, unit);
             } else {
-                // Con crédito → ir a paso 3 despacho
-                showDispatchStep3(clientId, molds, priceTypeId, obs);
+                showDispatchStep3(clientId, qty, priceTypeId, obs, unit);
             }
         }
 
-        async function savePendingDispatch(clientId, molds, priceTypeId, obs) {
+        async function savePendingDispatch(clientId, qty, priceTypeId, obs, unit) {
             const client = salesClients[clientId] || {};
-            /* COMENTADO: Tipo de precio — se usará más adelante
-            const pt = salesPriceTypes[priceTypeId] || {};
-            */
+            const isTiras = (unit === 'tiras');
             try {
                 showSyncIndicator('⚙️ Guardando...', 'syncing');
                 await salesDispatchesRef.push({
                     date: currentDate,
                     clientId, clientName: client.name,
-                    moldsRequested: molds, moldsDispatched: 0,
+                    moldsRequested: isTiras ? 0 : qty, moldsDispatched: 0,
+                    dispatchUnit: unit || 'moldes',
+                    dispatchTiras: isTiras ? qty : 0,
                     priceTypeId: priceTypeId || '', priceTypeName: '', priceValue: 0,
                     merma: 0, observations: obs, dispatchObs: '',
                     status: 'pending_approval',
@@ -7583,77 +7644,132 @@
             }
         }
 
-        function showDispatchStep3(clientId, molds, priceTypeId, obs) {
+        function showDispatchStep3(clientId, qty, priceTypeId, obs, unit) {
             const client = salesClients[clientId] || {};
-            /* COMENTADO: Tipo de precio — se usará más adelante
-            const pt = salesPriceTypes[priceTypeId] || {};
-            const total = molds * (pt.price || 0);
-            */
+            const isTiras = (unit === 'tiras');
 
             document.getElementById('dispatchStep3Info').innerHTML = `
                 <p><strong>Cliente:</strong> ${client.name}</p>
-                <p><strong>Moldes:</strong> ${molds}</p>
+                <p><strong>${isTiras ? 'Tiras' : 'Moldes'}:</strong> ${qty}</p>
                 ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ''}`;
-                /* COMENTADO: Líneas de precio — se usará más adelante
-                <p><strong>Precio:</strong> ${pt.name} — $${parseFloat(pt.price || 0).toFixed(2)} c/u</p>
-                <p><strong>Total:</strong> $${total.toFixed(2)}</p>
-                */
             document.getElementById('dispatchMerma').value = '0';
             document.getElementById('dispatchDespachoObs').value = '';
             document.getElementById('dispatchStep2').style.display = 'none';
             document.getElementById('dispatchStep3').style.display = 'block';
 
             // Guardar datos en hidden para el confirm
-            document.getElementById('dispatchStep3').dataset.clientId = clientId;
-            document.getElementById('dispatchStep3').dataset.molds = molds;
-            document.getElementById('dispatchStep3').dataset.priceTypeId = priceTypeId || '';
-            document.getElementById('dispatchStep3').dataset.obs = obs;
+            const ds = document.getElementById('dispatchStep3').dataset;
+            ds.clientId = clientId;
+            ds.molds = isTiras ? 0 : qty;
+            ds.dispatchUnit = unit || 'moldes';
+            ds.dispatchTiras = isTiras ? qty : 0;
+            ds.priceTypeId = priceTypeId || '';
+            ds.obs = obs;
         }
 
         async function confirmDispatch() {
             const ds = document.getElementById('dispatchStep3').dataset;
             const clientId = ds.clientId;
-            const molds = parseInt(ds.molds);
+            const molds = parseInt(ds.molds) || 0;
+            const dispatchUnit = ds.dispatchUnit || 'moldes';
+            const dispatchTiras = parseInt(ds.dispatchTiras) || 0;
             const priceTypeId = ds.priceTypeId || '';
             const obs = ds.obs || '';
             const merma = parseInt(document.getElementById('dispatchMerma').value) || 0;
             const dispatchObs = document.getElementById('dispatchDespachoObs').value.trim();
+            const isTiras = (dispatchUnit === 'tiras');
 
             if (merma < 0) return alert('La merma no puede ser negativa');
 
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-            const totalDeduct = molds + merma;
-            if (totalDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail}. Necesario: ${totalDeduct} (${molds} + ${merma} merma)`);
-
+            const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
             const client = salesClients[clientId] || {};
-            /* COMENTADO: Tipo de precio — se usará más adelante
-            const pt = salesPriceTypes[priceTypeId] || {};
-            */
 
-            try {
-                showSyncIndicator('⚙️ Despachando...', 'syncing');
-                await salesDispatchesRef.push({
-                    date: currentDate,
-                    clientId, clientName: client.name,
-                    moldsRequested: molds, moldsDispatched: molds,
-                    priceTypeId: priceTypeId, priceTypeName: '', priceValue: 0,
-                    merma, observations: obs, dispatchObs,
-                    totalAmount: 0,
-                    status: 'dispatched',
-                    createdBy: currentUser.fullName,
-                    createdAt: new Date().toISOString(),
-                    dispatchedAt: new Date().toISOString()
-                });
-                
-                // Descontar inventario
-                const newAvail = avail - totalDeduct;
-                await salesInventoryRef.update({ available: newAvail, lastUpdated: new Date().toISOString() });
-                
-                document.getElementById('dispatchModal').style.display = 'none';
-                showSyncIndicator(`✅ Despachado: ${molds} moldes`, 'synced');
-            } catch (err) {
-                console.error(err);
-                showSyncIndicator('✗ Error', 'error');
+            if (isTiras) {
+                // Lógica de tiras: igual que donación
+                const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
+                if (dispatchTiras > totalTiras) return alert(`Inventario insuficiente. Total disponible: ${totalTiras} tiras`);
+
+                let tirasNecesarias = dispatchTiras;
+                let moldesADescontar = 0;
+                let nuevasTirasSueltas = tirasDisp;
+
+                if (nuevasTirasSueltas >= tirasNecesarias) {
+                    nuevasTirasSueltas -= tirasNecesarias;
+                    tirasNecesarias = 0;
+                } else {
+                    tirasNecesarias -= nuevasTirasSueltas;
+                    nuevasTirasSueltas = 0;
+                    moldesADescontar = Math.ceil(tirasNecesarias / TIRAS_PER_MOLD);
+                    nuevasTirasSueltas = (moldesADescontar * TIRAS_PER_MOLD) - tirasNecesarias;
+                }
+
+                // Merma en moldes si aplica
+                const totalMoldsDeduct = moldesADescontar + merma;
+                if (totalMoldsDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail} moldes. Necesario: ${totalMoldsDeduct}`);
+
+                try {
+                    showSyncIndicator('⚙️ Despachando...', 'syncing');
+                    await salesDispatchesRef.push({
+                        date: currentDate,
+                        clientId, clientName: client.name,
+                        moldsRequested: 0, moldsDispatched: 0,
+                        dispatchUnit: 'tiras',
+                        dispatchTiras: dispatchTiras,
+                        dispatchMoldesDescontados: moldesADescontar,
+                        priceTypeId: priceTypeId, priceTypeName: '', priceValue: 0,
+                        merma, observations: obs, dispatchObs,
+                        totalAmount: 0,
+                        status: 'dispatched',
+                        createdBy: currentUser.fullName,
+                        createdAt: new Date().toISOString(),
+                        dispatchedAt: new Date().toISOString()
+                    });
+
+                    const newAvail = avail - totalMoldsDeduct;
+                    await salesInventoryRef.update({
+                        available: newAvail,
+                        tirasDisponibles: nuevasTirasSueltas,
+                        lastUpdated: new Date().toISOString()
+                    });
+
+                    document.getElementById('dispatchModal').style.display = 'none';
+                    showSyncIndicator(`✅ Despachado: ${dispatchTiras} tiras`, 'synced');
+                } catch (err) {
+                    console.error(err);
+                    showSyncIndicator('✗ Error', 'error');
+                }
+            } else {
+                // Lógica original de moldes
+                const totalDeduct = molds + merma;
+                if (totalDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail}. Necesario: ${totalDeduct} (${molds} + ${merma} merma)`);
+
+                try {
+                    showSyncIndicator('⚙️ Despachando...', 'syncing');
+                    await salesDispatchesRef.push({
+                        date: currentDate,
+                        clientId, clientName: client.name,
+                        moldsRequested: molds, moldsDispatched: molds,
+                        dispatchUnit: 'moldes',
+                        dispatchTiras: 0,
+                        priceTypeId: priceTypeId, priceTypeName: '', priceValue: 0,
+                        merma, observations: obs, dispatchObs,
+                        totalAmount: 0,
+                        status: 'dispatched',
+                        createdBy: currentUser.fullName,
+                        createdAt: new Date().toISOString(),
+                        dispatchedAt: new Date().toISOString()
+                    });
+
+                    const newAvail = avail - totalDeduct;
+                    await salesInventoryRef.update({ available: newAvail, lastUpdated: new Date().toISOString() });
+
+                    document.getElementById('dispatchModal').style.display = 'none';
+                    showSyncIndicator(`✅ Despachado: ${molds} moldes`, 'synced');
+                } catch (err) {
+                    console.error(err);
+                    showSyncIndicator('✗ Error', 'error');
+                }
             }
         }
 
@@ -7662,10 +7778,18 @@
             if (!d) return;
             
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-            if (d.moldsRequested > avail) return alert(`Inventario insuficiente (${avail} disponible). No se puede aprobar.`);
-            
+            const dUnit = d.dispatchUnit || 'moldes';
+            const dTiras = d.dispatchTiras || 0;
+            if (dUnit === 'tiras') {
+                const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+                const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
+                if (dTiras > totalTiras) return alert(`Inventario insuficiente. Total: ${totalTiras} tiras`);
+            } else {
+                if (d.moldsRequested > avail) return alert(`Inventario insuficiente (${avail} disponible). No se puede aprobar.`);
+            }
+
             // Aprobar → ir directo a paso 3
-            showDispatchStep3(d.clientId, d.moldsRequested, d.priceTypeId, d.observations || '');
+            showDispatchStep3(d.clientId, dUnit === 'tiras' ? dTiras : d.moldsRequested, d.priceTypeId, d.observations || '', dUnit);
             
             // Marcar pendiente como "aprobado, en despacho" y reasignar el key
             document.getElementById('dispatchStep3').dataset.pendingKey = key;
@@ -8068,7 +8192,7 @@
                 const sales = dispatches.filter(d => d.status === 'dispatched');
                 const donacionesList = dispatches.filter(d => d.status === 'merma' || d.status === 'donacion');
                 const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
-                const totalDonacion = donacionesList.reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
+                const totalDonacionTiras = donacionesList.reduce((s, d) => s + (d.donacionTiras || 0), 0);
                 const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
                 
                 // Agrupar ventas por cliente
@@ -8087,7 +8211,7 @@
                     <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:12px;">
                         <div style="background:#e8f5e9; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">${totalMolds}</strong><br><small>Moldes</small></div>
                         <div style="background:#e3f2fd; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">${sales.length}</strong><br><small>Despachos</small></div>
-                        <div style="background:#e0f7fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#00838f; font-size:18px;">${totalDonacion}</strong><br><small>Donaciones</small></div>
+                        <div style="background:#e0f7fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#00838f; font-size:18px;">${totalDonacionTiras}</strong><br><small>Tiras Donadas</small></div>
                         <!-- COMENTADO: Total precio — se usará más adelante
                         <div style="background:#f3e5f5; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$${totalAmount.toFixed(0)}</strong><br><small>Total</small></div>
                         -->
@@ -8110,8 +8234,10 @@
                         /* COMENTADO: Tipo de precio — se usará más adelante
                         const pt = salesPriceTypes[d.priceTypeId] || {};
                         */
+                        const hIsTiras = d.dispatchUnit === 'tiras';
+                        const hQtyDisp = hIsTiras ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
                         html += `<div style="${i > 0 ? 'border-top:1px solid #eee; margin-top:4px; padding-top:4px;' : ''}">
-                            📦 ${d.moldsDispatched} moldes${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}
+                            📦 ${hQtyDisp}${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}
                             ${d.dispatchObs ? '<br><small style="color:#666;">' + d.dispatchObs + '</small>' : ''}
                         </div>`;
                     });
@@ -8146,7 +8272,7 @@
             const donaciones = dispatches.filter(d => d.status === 'donacion' || d.status === 'merma');
             const totalMoldsSold = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
             const totalMerma = sales.reduce((s, d) => s + (d.merma || 0), 0);
-            const totalDonaciones = donaciones.reduce((s, d) => s + (d.donacion || d.merma || 0), 0);
+            const totalDonacionesTiras = donaciones.reduce((s, d) => s + (d.donacionTiras || 0), 0);
             const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const vToggle = 'rpt_ventas_' + dateStr.replace(/-/g,'');
@@ -8161,7 +8287,7 @@
             html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
             html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMoldsSold + '</strong><br><small style="color:#555;">Moldes Vendidos</small></div>';
             html += '<div style="background:#ffebee; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#c62828; font-size:20px;">' + totalMerma + '</strong><br><small style="color:#555;">Merma</small></div>';
-            html += '<div style="background:#e0f7fa; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#00838f; font-size:20px;">' + totalDonaciones + '</strong><br><small style="color:#555;">Donaciones</small></div>';
+            html += '<div style="background:#e0f7fa; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#00838f; font-size:20px;">' + totalDonacionesTiras + '</strong><br><small style="color:#555;">Tiras Donadas</small></div>';
             html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + avail + '</strong><br><small style="color:#555;">Disponibles</small></div>';
             html += '</div></div>';
             
@@ -8206,7 +8332,9 @@
             if (donaciones.length > 0) {
                 html += '<div style="background:#e0f7fa; padding:8px 12px; border-top:1px solid #eee;">';
                 donaciones.forEach(function(d) {
-                    html += '<div style="padding:2px 0;">🎁 Donación: ' + (d.donacion || d.merma || 0) + ' moldes — ' + (d.observations || 'Sin detalle') + '</div>';
+                    var dTiras = d.donacionTiras || 0;
+                    var dDisplay = dTiras > 0 ? dTiras + ' tiras' : (d.donacion || d.merma || 0) + ' moldes';
+                    html += '<div style="padding:2px 0;">🎁 Donación: ' + dDisplay + ' — ' + (d.observations || 'Sin detalle') + '</div>';
                 });
                 html += '</div>';
             }
