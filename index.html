@@ -7507,23 +7507,46 @@
             document.getElementById('dispatchClientSearch').value = c.name;
         }
 
+        function isClienteTiras(clientId) {
+            const c = salesClients[clientId];
+            if (!c) return false;
+            return (c.name || '').toLowerCase().replace(/\s+/g, '').includes('clientetiras');
+        }
+
         function dispatchGoStep2() {
             const clientId = document.getElementById('dispatchSelectedClientId').value;
             if (!clientId) return alert('Selecciona un cliente');
 
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
-            let badgeHTML = `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
+            let badgeHTML = `<div style="display:flex; flex-direction:column; gap:6px; align-items:center;">`;
+            badgeHTML += `<span style="background:#667eea; color:white; padding:8px 20px; border-radius:20px; font-size:14px;">📦 Disponible: <strong>${avail}</strong> moldes</span>`;
             if (tirasDisp > 0) {
-                badgeHTML += ` <span style="background:#17a2b8; color:white; padding:8px 16px; border-radius:20px; font-size:14px;">🧊 <strong>${tirasDisp}</strong> tiras sueltas</span>`;
+                badgeHTML += `<span style="background:#17a2b8; color:white; padding:8px 16px; border-radius:20px; font-size:14px;">🧊 <strong>${tirasDisp}</strong> tiras sueltas</span>`;
             }
+            badgeHTML += `</div>`;
             document.getElementById('dispatchInventoryBadge').innerHTML = badgeHTML;
             document.getElementById('dispatchMoldsQty').value = '';
             document.getElementById('dispatchObs').value = '';
-            document.getElementById('dispatchUnit').value = 'moldes';
-            document.getElementById('dispatchQtyLabel').textContent = '📦 Número de Moldes:';
             document.getElementById('dispatchCalcPreview').style.display = 'none';
             document.getElementById('dispatchInventoryWarning').style.display = 'none';
+
+            // Determinar unidad según cliente
+            const esTiras = isClienteTiras(clientId);
+            const unitSelect = document.getElementById('dispatchUnit');
+            const unitGroup = unitSelect.closest('.form-group');
+
+            if (esTiras) {
+                unitSelect.value = 'tiras';
+                unitGroup.style.display = 'none';
+                document.getElementById('dispatchQtyLabel').textContent = '🧊 Número de Tiras:';
+                document.getElementById('dispatchMoldsQty').placeholder = 'Cantidad de tiras';
+            } else {
+                unitSelect.value = 'moldes';
+                unitGroup.style.display = 'none';
+                document.getElementById('dispatchQtyLabel').textContent = '📦 Número de Moldes:';
+                document.getElementById('dispatchMoldsQty').placeholder = 'Cantidad';
+            }
 
             document.getElementById('dispatchStep1').style.display = 'none';
             document.getElementById('dispatchStep2').style.display = 'block';
