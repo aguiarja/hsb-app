@@ -780,7 +780,7 @@
                             class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
                         🧊 Producción
                     </button>
-                    <button id="btnHistorialVentas" onclick="showHistorialMode('ventas')" 
+                    <button id="btnHistorialVentas" onclick="toggleHistorialVentas()"
                             class="btn" style="flex: 1; background: #6c757d; color: white; padding: 12px;">
                         💰 Ventas
                     </button>
@@ -788,13 +788,26 @@
                 <!-- Sub-botones de Mantenimiento (ocultos por defecto) -->
                 <div id="historialSubButtons" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid #e0e0e0;">
                     <div style="display: flex; gap: 10px;">
-                        <button id="btnHistorialPorFecha" onclick="showHistorialMode('porFecha')" 
+                        <button id="btnHistorialPorFecha" onclick="showHistorialMode('porFecha')"
                                 class="btn" style="flex: 1; background: #6c757d; color: white; padding: 10px; font-size:13px;">
                             📅 Por Fecha
                         </button>
-                        <button id="btnHistorialPorSeccion" onclick="showHistorialMode('porSeccion')" 
+                        <button id="btnHistorialPorSeccion" onclick="showHistorialMode('porSeccion')"
                                 class="btn" style="flex: 1; background: #6c757d; color: white; padding: 10px; font-size:13px;">
                             📦 Por Equipo/Área
+                        </button>
+                    </div>
+                </div>
+                <!-- Sub-botones de Ventas (ocultos por defecto) -->
+                <div id="historialVentasSubButtons" style="display:none; margin-top:10px; padding-top:10px; border-top:1px solid #e0e0e0;">
+                    <div style="display: flex; gap: 10px;">
+                        <button id="btnHistVentasFecha" onclick="showHistorialMode('ventasFecha')"
+                                class="btn" style="flex: 1; background: #6c757d; color: white; padding: 10px; font-size:13px;">
+                            📅 Por Fecha
+                        </button>
+                        <button id="btnHistVentasCliente" onclick="showHistorialMode('ventasCliente')"
+                                class="btn" style="flex: 1; background: #6c757d; color: white; padding: 10px; font-size:13px;">
+                            👤 Por Cliente
                         </button>
                     </div>
                 </div>
@@ -2810,7 +2823,7 @@
             // Actualizar fecha operacional
             const dateDisplay = document.getElementById('currentDateDisplay');
             if (dateDisplay) {
-                const dateObj = new Date(currentDate + 'T00:00:00');
+                const dateObj = new Date(currentDate + 'T12:00:00');
                 const formattedDate = dateObj.toLocaleDateString('es-ES', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -3131,7 +3144,7 @@
                 document.getElementById('executeActivityDetails').innerHTML = `
                     <strong>Sección:</strong> ${sectionName}<br>
                     <strong>Frecuencia:</strong> ${getFrequencyLabel(activity.frequency)}<br>
-                    <strong>Fecha:</strong> ${new Date(currentDate + 'T00:00:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}
+                    <strong>Fecha:</strong> ${new Date(currentDate + 'T12:00:00').toLocaleDateString('es-ES', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}
                 `;
                 
                 document.getElementById('executeDescription').value = '';
@@ -4511,8 +4524,10 @@
         
         function toggleHistorialMantenimiento() {
             const subBtns = document.getElementById('historialSubButtons');
+            const ventasSubBtns = document.getElementById('historialVentasSubButtons');
             const isVisible = subBtns.style.display !== 'none';
-            
+
+            ventasSubBtns.style.display = 'none';
             if (isVisible) {
                 subBtns.style.display = 'none';
                 document.getElementById('btnHistorialMantenimiento').style.background = '#6c757d';
@@ -4525,30 +4540,61 @@
             }
         }
 
+        function toggleHistorialVentas() {
+            const ventasSubBtns = document.getElementById('historialVentasSubButtons');
+            const mantSubBtns = document.getElementById('historialSubButtons');
+            const isVisible = ventasSubBtns.style.display !== 'none';
+
+            mantSubBtns.style.display = 'none';
+            if (isVisible) {
+                ventasSubBtns.style.display = 'none';
+                document.getElementById('btnHistorialVentas').style.background = '#6c757d';
+            } else {
+                ventasSubBtns.style.display = 'block';
+                document.getElementById('btnHistorialVentas').style.background = '#667eea';
+                document.getElementById('btnHistorialMantenimiento').style.background = '#6c757d';
+                document.getElementById('btnHistorialProduccion').style.background = '#6c757d';
+                showHistorialMode('ventasFecha');
+            }
+        }
+
         function showHistorialMode(mode) {
             historialMode = mode;
-            
+
             const btnMant = document.getElementById('btnHistorialMantenimiento');
             const btnProd = document.getElementById('btnHistorialProduccion');
             const btnVentas = document.getElementById('btnHistorialVentas');
             const btnFecha = document.getElementById('btnHistorialPorFecha');
             const btnSeccion = document.getElementById('btnHistorialPorSeccion');
             const subBtns = document.getElementById('historialSubButtons');
-            
-            // Reset all main buttons
+            const ventasSubBtns = document.getElementById('historialVentasSubButtons');
+            const btnVFecha = document.getElementById('btnHistVentasFecha');
+            const btnVCliente = document.getElementById('btnHistVentasCliente');
+
+            // Reset main buttons
             btnMant.style.background = '#6c757d';
             btnProd.style.background = '#6c757d';
             btnVentas.style.background = '#6c757d';
             subBtns.style.display = 'none';
+            ventasSubBtns.style.display = 'none';
             if (btnFecha) btnFecha.style.background = '#6c757d';
             if (btnSeccion) btnSeccion.style.background = '#6c757d';
-            
+            if (btnVFecha) btnVFecha.style.background = '#6c757d';
+            if (btnVCliente) btnVCliente.style.background = '#6c757d';
+
             if (mode === 'produccion') {
                 btnProd.style.background = '#667eea';
                 renderHistorialProduccion();
-            } else if (mode === 'ventas') {
+            } else if (mode === 'ventasFecha' || mode === 'ventasCliente') {
                 btnVentas.style.background = '#667eea';
-                renderHistorialVentas();
+                ventasSubBtns.style.display = 'block';
+                if (btnVFecha) btnVFecha.style.background = mode === 'ventasFecha' ? '#667eea' : '#6c757d';
+                if (btnVCliente) btnVCliente.style.background = mode === 'ventasCliente' ? '#667eea' : '#6c757d';
+                if (mode === 'ventasFecha') {
+                    renderHistorialVentas();
+                } else {
+                    renderHistorialVentasPorCliente();
+                }
             } else {
                 btnMant.style.background = '#667eea';
                 subBtns.style.display = 'block';
@@ -6413,7 +6459,7 @@
             
             // Obtener día operacional
             const operationalDate = getOperationalDate();
-            const operationalDateFormatted = new Date(operationalDate + 'T00:00:00').toLocaleDateString('es-ES', {
+            const operationalDateFormatted = new Date(operationalDate + 'T12:00:00').toLocaleDateString('es-ES', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
@@ -6704,7 +6750,7 @@
                     <div class="report-summary" style="text-align:center; padding:40px;">
                         <div style="font-size:80px; margin-bottom:20px;">🧊</div>
                         <h2 style="color:#1e3c72; margin-bottom:10px;">Producción del Día</h2>
-                        <p style="color:#666; margin-bottom:5px;">${new Date(currentDate+'T00:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
+                        <p style="color:#666; margin-bottom:5px;">${new Date(currentDate+'T12:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
                         <p style="color:#999; margin-bottom:30px;">No se ha iniciado la producción de hoy</p>
                         <button onclick="openProdStartModal()" class="btn" style="font-size:18px; padding:15px 40px;">
                             ▶️ Iniciar Producción
@@ -6868,7 +6914,7 @@
             let proposedCol = 'A';
 
             if (prev) {
-                const prevDateStr = new Date(prev.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                const prevDateStr = new Date(prev.date + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
                 infoEl.innerHTML = `ℹ️ Última producción: <strong>${prevDateStr}</strong>, terminó en fila <strong>${prev.endRow}${prev.endCol}</strong> → Siguiente: <strong>${prev.nextRow}A</strong>`;
                 infoEl.style.display = 'block';
                 proposedRow = prev.nextRow;
@@ -7236,7 +7282,7 @@
 
                 html += `<div class="report-summary" style="margin-bottom:15px; border-left:4px solid ${borderColor};">`;
                 html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">`;
-                html += `<h3 style="color:#1e3c72; font-size:16px;">📅 ${new Date(date+'T00:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</h3>`;
+                html += `<h3 style="color:#1e3c72; font-size:16px;">📅 ${new Date(date+'T12:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</h3>`;
                 html += `<span>${statusIcon}</span></div>`;
 
                 if (kpis) {
@@ -8195,68 +8241,68 @@
         function renderHistorialVentas() {
             const container = document.getElementById('historialContent');
             const allDispatches = Object.entries(salesDispatches).filter(([, d]) => d.status === 'dispatched' || d.status === 'merma' || d.status === 'donacion');
-            
+
             // Agrupar por fecha
             const byDate = {};
             allDispatches.forEach(([k, d]) => {
                 if (!byDate[d.date]) byDate[d.date] = [];
                 byDate[d.date].push({ ...d, _key: k });
             });
-            
+
             const dates = Object.keys(byDate).sort().reverse();
             if (dates.length === 0) {
                 container.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">No hay historial de ventas.</p>';
                 return;
             }
-            
+
             let html = '';
             dates.forEach(date => {
                 const dispatches = byDate[date];
                 const sales = dispatches.filter(d => d.status === 'dispatched');
-                const donacionesList = dispatches.filter(d => d.status === 'merma' || d.status === 'donacion');
+                const donaciones = dispatches.filter(d => d.status === 'donacion');
                 const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
-                const totalDonacionTiras = donacionesList.reduce((s, d) => s + (d.donacionTiras || 0), 0);
-                const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
-                
+                const totalTirasVendidas = sales.filter(d => d.dispatchUnit === 'tiras').reduce((s, d) => s + (d.dispatchTiras || 0), 0);
+                const totalDonacionTiras = donaciones.reduce((s, d) => s + (d.donacionTiras || 0), 0);
+                const totalMerma = sales.reduce((s, d) => s + (d.merma || 0), 0);
+
                 // Agrupar ventas por cliente
                 const byClient = {};
                 sales.forEach(d => {
                     if (!byClient[d.clientId]) byClient[d.clientId] = { name: d.clientName, dispatches: [] };
                     byClient[d.clientId].dispatches.push(d);
                 });
-                
-                const dateLabel = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                
+
+                const dateLabel = new Date(date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
                 html += `<div class="report-summary" style="margin-bottom:15px; border-left:4px solid #28a745;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                         <h3 style="color:#1e3c72; font-size:15px;">📅 ${dateLabel}</h3>
                     </div>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(100px, 1fr)); gap:8px; margin-bottom:12px;">
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(80px, 1fr)); gap:6px; margin-bottom:12px;">
                         <div style="background:#e8f5e9; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">${totalMolds}</strong><br><small>Moldes</small></div>
+                        ${totalTirasVendidas > 0 ? `<div style="background:#e8f5e9; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32; font-size:18px;">${totalTirasVendidas}</strong><br><small>Tiras</small></div>` : ''}
                         <div style="background:#e3f2fd; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#1565c0; font-size:18px;">${sales.length}</strong><br><small>Despachos</small></div>
-                        <div style="background:#e0f7fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#00838f; font-size:18px;">${totalDonacionTiras}</strong><br><small>Tiras Donadas</small></div>
-                        <!-- COMENTADO: Total precio — se usará más adelante
-                        <div style="background:#f3e5f5; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#7b1fa2; font-size:18px;">$${totalAmount.toFixed(0)}</strong><br><small>Total</small></div>
-                        -->
+                        ${totalDonacionTiras > 0 ? `<div style="background:#e0f7fa; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#00838f; font-size:18px;">${totalDonacionTiras}</strong><br><small>Tiras Donadas</small></div>` : ''}
+                        ${totalMerma > 0 ? `<div style="background:#ffebee; padding:8px; border-radius:6px; text-align:center;"><strong style="color:#c62828; font-size:18px;">${totalMerma}</strong><br><small>Merma</small></div>` : ''}
                     </div>`;
-                
+
                 // Detalle por cliente con expandible
                 Object.entries(byClient).forEach(([cId, cData]) => {
                     const cMolds = cData.dispatches.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+                    const cTiras = cData.dispatches.filter(d => d.dispatchUnit === 'tiras').reduce((s, d) => s + (d.dispatchTiras || 0), 0);
                     const cMerma = cData.dispatches.reduce((s, d) => s + (d.merma || 0), 0);
                     const toggleId = `hist_${date}_${cId}`.replace(/[^a-zA-Z0-9_]/g, '_');
-                    
+                    let cQtyStr = cMolds > 0 ? `${cMolds} moldes` : '';
+                    if (cTiras > 0) cQtyStr += (cQtyStr ? ' + ' : '') + `${cTiras} tiras`;
+
                     html += `<div style="background:#f8f9fa; border-radius:8px; margin-bottom:6px; overflow:hidden;">
-                        <div onclick="document.getElementById('${toggleId}').style.display = document.getElementById('${toggleId}').style.display==='none'?'block':'none'" 
+                        <div onclick="document.getElementById('${toggleId}').style.display = document.getElementById('${toggleId}').style.display==='none'?'block':'none'"
                              style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-                            <span><strong>${cData.name}</strong> — ${cMolds} moldes (${cData.dispatches.length} despachos)${cMerma > 0 ? ' | Merma: ' + cMerma : ''}</span>
+                            <span><strong>${cData.name}</strong> — ${cQtyStr} (${cData.dispatches.length} desp.)${cMerma > 0 ? ' | Merma: ' + cMerma : ''}</span>
                             <span style="color:#667eea;">▼</span>
                         </div>
                         <div id="${toggleId}" style="display:none; padding:8px 12px; border-top:1px solid #e0e0e0; font-size:13px;">`;
                     cData.dispatches.forEach((d, i) => {
-                        /* COMENTADO: Tipo de precio — se usará más adelante
-                        const pt = salesPriceTypes[d.priceTypeId] || {};
-                        */
                         const hIsTiras = d.dispatchUnit === 'tiras';
                         const hQtyDisp = hIsTiras ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
                         html += `<div style="${i > 0 ? 'border-top:1px solid #eee; margin-top:4px; padding-top:4px;' : ''}">
@@ -8266,19 +8312,106 @@
                     });
                     html += `</div></div>`;
                 });
-                
-                // Mermas del día
-                if (mermas.length > 0) {
-                    html += `<div style="background:#ffebee; padding:8px 12px; border-radius:6px; font-size:13px; margin-top:6px;">`;
-                    mermas.forEach(m => {
-                        html += `<div>📦 Merma: ${m.merma} moldes — ${m.observations || 'Sin detalle'}</div>`;
+
+                // Donaciones del día
+                if (donaciones.length > 0) {
+                    html += `<div style="background:#e0f7fa; padding:8px 12px; border-radius:6px; font-size:13px; margin-top:6px;">`;
+                    donaciones.forEach(d => {
+                        const dTiras = d.donacionTiras || 0;
+                        html += `<div style="padding:2px 0;">🎁 Donación: ${dTiras} tiras — ${d.observations || 'Sin detalle'}</div>`;
                     });
                     html += `</div>`;
                 }
-                
+
                 html += `</div>`;
             });
-            
+
+            container.innerHTML = html;
+        }
+
+        function renderHistorialVentasPorCliente() {
+            const container = document.getElementById('historialContent');
+            const allDispatches = Object.entries(salesDispatches).filter(([, d]) => d.status === 'dispatched' || d.status === 'donacion');
+
+            if (allDispatches.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:40px; color:#999;">No hay historial de ventas.</p>';
+                return;
+            }
+
+            // Agrupar por cliente
+            const byClient = {};
+            allDispatches.forEach(([k, d]) => {
+                const cId = d.clientId || 'unknown';
+                if (!byClient[cId]) byClient[cId] = { name: d.clientName || 'Sin nombre', dispatches: [] };
+                byClient[cId].dispatches.push({ ...d, _key: k });
+            });
+
+            // Ordenar clientes por nombre
+            const clientEntries = Object.entries(byClient).sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+            let html = '';
+            clientEntries.forEach(([cId, cData]) => {
+                const sales = cData.dispatches.filter(d => d.status === 'dispatched');
+                const donaciones = cData.dispatches.filter(d => d.status === 'donacion');
+                const totalMolds = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+                const totalTiras = sales.filter(d => d.dispatchUnit === 'tiras').reduce((s, d) => s + (d.dispatchTiras || 0), 0);
+                const totalDonTiras = donaciones.reduce((s, d) => s + (d.donacionTiras || 0), 0);
+                const totalMerma = sales.reduce((s, d) => s + (d.merma || 0), 0);
+                const isDonacion = cData.name === 'DONACIÓN';
+                const toggleId = `histcli_${cId}`.replace(/[^a-zA-Z0-9_]/g, '_');
+
+                // Agrupar despachos del cliente por fecha
+                const byDateMap = {};
+                cData.dispatches.forEach(d => {
+                    if (!byDateMap[d.date]) byDateMap[d.date] = [];
+                    byDateMap[d.date].push(d);
+                });
+                const dateSorted = Object.keys(byDateMap).sort().reverse();
+
+                let statsHTML = '';
+                if (isDonacion) {
+                    statsHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;">
+                        <div style="background:#e0f7fa; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#00838f;">${totalDonTiras}</strong><br><small>Tiras Donadas</small></div>
+                        <div style="background:#e3f2fd; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#1565c0;">${dateSorted.length}</strong><br><small>Días</small></div>
+                    </div>`;
+                } else {
+                    statsHTML = `<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(70px, 1fr)); gap:6px; margin-bottom:10px;">
+                        <div style="background:#e8f5e9; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32;">${totalMolds}</strong><br><small>Moldes</small></div>
+                        ${totalTiras > 0 ? `<div style="background:#e8f5e9; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#2e7d32;">${totalTiras}</strong><br><small>Tiras</small></div>` : ''}
+                        <div style="background:#e3f2fd; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#1565c0;">${sales.length}</strong><br><small>Despachos</small></div>
+                        <div style="background:#fff8e1; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#f57f17;">${dateSorted.length}</strong><br><small>Días</small></div>
+                        ${totalMerma > 0 ? `<div style="background:#ffebee; padding:6px; border-radius:6px; text-align:center;"><strong style="color:#c62828;">${totalMerma}</strong><br><small>Merma</small></div>` : ''}
+                    </div>`;
+                }
+
+                html += `<div class="report-summary" style="margin-bottom:12px; border-left:4px solid ${isDonacion ? '#17a2b8' : '#28a745'};">
+                    <div onclick="document.getElementById('${toggleId}').style.display = document.getElementById('${toggleId}').style.display==='none'?'block':'none'; this.querySelector('.chv').textContent=document.getElementById('${toggleId}').style.display==='none'?'▼':'▲';"
+                         style="cursor:pointer; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="color:#1e3c72; font-size:15px; margin:0;">${isDonacion ? '🎁' : '👤'} ${cData.name}</h3>
+                        <span class="chv" style="color:#667eea; font-weight:bold;">▼</span>
+                    </div>
+                    ${statsHTML}
+                    <div id="${toggleId}" style="display:none; border-top:1px solid #eee; padding-top:8px;">`;
+
+                dateSorted.forEach(date => {
+                    const dayDispatches = byDateMap[date];
+                    const dLabel = new Date(date + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                    html += `<div style="margin-bottom:6px;">
+                        <div style="font-size:12px; font-weight:bold; color:#667eea; margin-bottom:3px;">📅 ${dLabel}</div>`;
+                    dayDispatches.forEach(d => {
+                        if (d.status === 'donacion') {
+                            html += `<div style="font-size:13px; padding:3px 0;">🎁 ${d.donacionTiras || 0} tiras — ${d.observations || 'Sin detalle'}</div>`;
+                        } else {
+                            const qDisp = d.dispatchUnit === 'tiras' ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
+                            html += `<div style="font-size:13px; padding:3px 0;">📦 ${qDisp}${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}${d.dispatchObs ? ' — <small style="color:#666;">' + d.dispatchObs + '</small>' : ''}</div>`;
+                        }
+                    });
+                    html += `</div>`;
+                });
+
+                html += `</div></div>`;
+            });
+
             container.innerHTML = html;
         }
 
