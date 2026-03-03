@@ -3961,6 +3961,14 @@
             container.innerHTML = renderDayReport(currentDate, true);
         }
         
+        function _rptUserTime(data) {
+            if (!data) return '';
+            var parts = [];
+            if (data.user) parts.push(data.user);
+            if (data.timestamp) { try { parts.push(new Date(data.timestamp).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})); } catch(e) {} }
+            return parts.length > 0 ? ' <small style="color:#999;">(' + parts.join(' · ') + ')</small>' : '';
+        }
+
         function renderDayReport(dateStr, isCurrentDay) {
             if (!dailyLogs[dateStr]) return '';
             
@@ -3991,24 +3999,26 @@
                             if (dm && dm.value !== null && !isNaN(dm.value)) {
                                 var v = parseFloat(dm.value);
                                 var oor = (act.min != null && v < act.min) || (act.max != null && v > act.max);
-                                dHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (AM):</strong> ' + (oor ? '⚠️ ' : '') + dm.value + ' ' + (act.unit || '') + ' <small style="color:#999;">' + (dm.user || '') + '</small></p>';
+                                dHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (AM):</strong> ' + (oor ? '⚠️ ' : '') + dm.value + ' ' + (act.unit || '') + _rptUserTime(dm) + '</p>';
                             }
                             if (da && da.value !== null && !isNaN(da.value)) {
                                 var v2 = parseFloat(da.value);
                                 var oor2 = (act.min != null && v2 < act.min) || (act.max != null && v2 > act.max);
-                                dHTML += '<p style="' + (oor2 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (PM):</strong> ' + (oor2 ? '⚠️ ' : '') + da.value + ' ' + (act.unit || '') + ' <small style="color:#999;">' + (da.user || '') + '</small></p>';
+                                dHTML += '<p style="' + (oor2 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (PM):</strong> ' + (oor2 ? '⚠️ ' : '') + da.value + ' ' + (act.unit || '') + _rptUserTime(da) + '</p>';
                             }
                         } else if (act.type === 'nivel_aceite') {
                             if (dm && dm.oilLevel) sC++;
                             if (da && da.oilLevel) sC++;
                             var oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
-                            if (dm && dm.oilLevel) dHTML += '<p><strong>' + act.name + ' (AM):</strong> ' + (oilMap[dm.oilLevel] || dm.oilLevel) + '</p>';
-                            if (da && da.oilLevel) dHTML += '<p><strong>' + act.name + ' (PM):</strong> ' + (oilMap[da.oilLevel] || da.oilLevel) + '</p>';
+                            if (dm && dm.oilLevel) dHTML += '<p><strong>' + act.name + ' (AM):</strong> ' + (oilMap[dm.oilLevel] || dm.oilLevel) + _rptUserTime(dm) + '</p>';
+                            if (da && da.oilLevel) dHTML += '<p><strong>' + act.name + ' (PM):</strong> ' + (oilMap[da.oilLevel] || da.oilLevel) + _rptUserTime(da) + '</p>';
                         } else {
-                            if (dm && (dm.status === 'ok' || dm.oilLevel)) sC++;
-                            if (da && (da.status === 'ok' || da.oilLevel)) sC++;
-                            if (dm && dm.status === 'ok') dHTML += '<p><strong>' + act.name + ' (AM):</strong> ✓ OK</p>';
-                            if (da && da.status === 'ok') dHTML += '<p><strong>' + act.name + ' (PM):</strong> ✓ OK</p>';
+                            if (dm && (dm.status === 'ok' || dm.status === 'no_ok' || dm.oilLevel)) sC++;
+                            if (da && (da.status === 'ok' || da.status === 'no_ok' || da.oilLevel)) sC++;
+                            if (dm && dm.status === 'ok') dHTML += '<p><strong>' + act.name + ' (AM):</strong> ✓ OK' + _rptUserTime(dm) + '</p>';
+                            else if (dm && dm.status === 'no_ok') dHTML += '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + ' (AM):</strong> ❌ No OK' + _rptUserTime(dm) + '</p>';
+                            if (da && da.status === 'ok') dHTML += '<p><strong>' + act.name + ' (PM):</strong> ✓ OK' + _rptUserTime(da) + '</p>';
+                            else if (da && da.status === 'no_ok') dHTML += '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + ' (PM):</strong> ❌ No OK' + _rptUserTime(da) + '</p>';
                         }
                     } else if (act.frequency === 'Diario') {
                         sT += 1;
@@ -4017,16 +4027,17 @@
                             if (ad && ad.value !== null && !isNaN(ad.value)) { sC++;
                                 var v3 = parseFloat(ad.value);
                                 var oor3 = (act.min != null && v3 < act.min) || (act.max != null && v3 > act.max);
-                                dHTML += '<p style="' + (oor3 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ':</strong> ' + (oor3 ? '⚠️ ' : '') + ad.value + ' ' + (act.unit || '') + '</p>';
+                                dHTML += '<p style="' + (oor3 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ':</strong> ' + (oor3 ? '⚠️ ' : '') + ad.value + ' ' + (act.unit || '') + _rptUserTime(ad) + '</p>';
                             }
                         } else if (act.type === 'nivel_aceite') {
                             if (ad && ad.oilLevel) { sC++;
                                 var oM = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
-                                dHTML += '<p><strong>' + act.name + ':</strong> ' + (oM[ad.oilLevel] || ad.oilLevel) + '</p>';
+                                dHTML += '<p><strong>' + act.name + ':</strong> ' + (oM[ad.oilLevel] || ad.oilLevel) + _rptUserTime(ad) + '</p>';
                             }
                         } else {
-                            if (ad && ad.status === 'ok') { sC++;
-                                dHTML += '<p><strong>' + act.name + ':</strong> ✓ OK</p>';
+                            if (ad && (ad.status === 'ok' || ad.status === 'no_ok')) { sC++;
+                                if (ad.status === 'ok') dHTML += '<p><strong>' + act.name + ':</strong> ✓ OK' + _rptUserTime(ad) + '</p>';
+                                else dHTML += '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + ':</strong> ❌ No OK' + _rptUserTime(ad) + '</p>';
                             }
                         }
                     }
@@ -6652,8 +6663,9 @@
             ).join('');
         }
 
-        function getSelectedProdOperators() {
-            return Array.from(document.querySelectorAll('input[name="prodOperatorCheck"]:checked')).map(cb => cb.value);
+        function getSelectedProdOperators(containerId) {
+            const scope = containerId ? document.getElementById(containerId) : document;
+            return Array.from(scope.querySelectorAll('input[name="prodOperatorCheck"]:checked')).map(cb => cb.value);
         }
 
         function openEditOperatorsModal() {
@@ -6664,7 +6676,7 @@
         }
 
         async function saveEditOperators() {
-            const operatorIds = getSelectedProdOperators();
+            const operatorIds = getSelectedProdOperators('prodEditOpsContainer');
             if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
 
             try {
@@ -6877,7 +6889,7 @@
             const startTemp = parseNegativeTemp(document.getElementById('prodStartTemp').value);
             const startRow = parseInt(document.getElementById('prodStartRow').value);
             const startCol = document.getElementById('prodStartCol').value;
-            const operatorIds = getSelectedProdOperators();
+            const operatorIds = getSelectedProdOperators('prodStartOperators');
             const estimatedRows = parseInt(document.getElementById('prodEstimatedRows').value) || null;
             const estimatedEndRow = estimatedRows ? calculateEstimatedEnd(startRow, estimatedRows) : null;
 
@@ -6977,7 +6989,7 @@
             const endTemp = parseNegativeTemp(document.getElementById('prodEditEndTemp').value);
             const endRow = parseInt(document.getElementById('prodEditEndRow').value);
             const endCol = document.getElementById('prodEditEndCol').value;
-            const operatorIds = getSelectedProdOperators();
+            const operatorIds = getSelectedProdOperators('prodEditOperators');
 
             if (!startTime || !startRow || !startCol) return alert('Datos de inicio incompletos');
             if (!endTime || !endRow || !endCol) return alert('Datos de fin incompletos');
