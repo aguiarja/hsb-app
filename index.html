@@ -2700,7 +2700,10 @@
                 tabContent.classList.add('active');
                 
                 if (tabId === 'mantenimiento-preventivo') {
+                    document.getElementById('sectionDetail').classList.remove('active');
+                    document.getElementById('sectionsList').style.display = '';
                     renderSections();
+                    window.scrollTo(0, 0);
                 } else if (tabId === 'plan') {
                     renderPlan();
                     // Mostrar botón para Admin y Supervisor siempre
@@ -3530,8 +3533,9 @@
 
         function backToSectionsList() {
             document.getElementById('sectionDetail').classList.remove('active');
-            document.getElementById('sectionsList').style.display = 'block';
+            document.getElementById('sectionsList').style.display = '';
             renderSections();
+            window.scrollTo(0, 0);
         }
 
         function saveSectionAndReturn() {
