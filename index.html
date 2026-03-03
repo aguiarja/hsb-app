@@ -1011,7 +1011,12 @@
             </div>
             <!-- Paso 2: Resumen -->
             <div id="partialStep2" style="display:none;">
-                <div id="partialSummaryContent" style="background:#f8f9fa; padding:20px; border-radius:8px; margin-bottom:20px; font-size:15px; line-height:2;"></div>
+                <div id="partialSummaryContent" style="background:#f8f9fa; padding:20px; border-radius:8px; margin-bottom:15px; font-size:15px; line-height:2;"></div>
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>⚠️ Moldes Dañados:</label>
+                    <input type="number" id="partialDamagedMolds" min="0" value="0" placeholder="0" oninput="updatePartialDamagedPreview()">
+                    <div id="partialDamagedPreview" style="display:none; background:#ffebee; padding:8px; border-radius:6px; margin-top:6px; font-size:13px; color:#c62828;"></div>
+                </div>
                 <div style="text-align:center; display:flex; gap:10px; justify-content:center;">
                     <button onclick="showPartialStep1()" class="btn" style="background:#6c757d;">⬅️ Volver</button>
                     <button onclick="savePartialLoad()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">📦 Cargar a Almacén</button>
@@ -1081,9 +1086,11 @@
                     <label>🧊 Merma (moldes):</label>
                     <input type="number" id="dispatchMerma" min="0" value="0" placeholder="0">
                 </div>
+                <textarea id="dispatchDespachoObs" rows="1" style="display:none;"></textarea>
                 <div class="form-group">
-                    <label>📝 Observaciones de Despacho:</label>
-                    <textarea id="dispatchDespachoObs" rows="2" placeholder="Opcional..."></textarea>
+                    <label>📸 Fotos del despacho (máx. 3):</label>
+                    <input type="file" id="dispatchPhotos" accept="image/*" capture="environment" multiple onchange="updateDispatchPhotosPreview()">
+                    <div id="dispatchPhotosPreview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;"></div>
                 </div>
                 <div style="text-align:center; margin-top:15px;">
                     <button onclick="confirmDispatch()" class="btn" style="background:linear-gradient(135deg,#28a745,#218838); font-size:16px; padding:14px 40px;">✅ Confirmar Despacho</button>
@@ -7209,8 +7216,21 @@
             `;
 
             document.getElementById('partialSummaryContent').innerHTML = summaryHTML;
+            document.getElementById('partialDamagedMolds').value = '0';
+            document.getElementById('partialDamagedPreview').style.display = 'none';
             document.getElementById('partialStep1').style.display = 'none';
             document.getElementById('partialStep2').style.display = 'block';
+        }
+
+        function updatePartialDamagedPreview() {
+            const damaged = parseInt(document.getElementById('partialDamagedMolds').value) || 0;
+            const preview = document.getElementById('partialDamagedPreview');
+            if (damaged > 0) {
+                preview.innerHTML = `⚠️ Se descontarán <strong>${damaged}</strong> molde(s) dañado(s) del total a cargar`;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
         }
 
         async function savePartialLoad() {
@@ -7221,7 +7241,13 @@
             const toCol = document.getElementById('partialCol').value;
             const from = getPartialFromPosition(rec);
             const modules = prodSeqDistance(from.row, from.col, toRow, toCol);
-            const molds = modules * MOLDS_PER_MODULE;
+            const moldsBruto = modules * MOLDS_PER_MODULE;
+            const damaged = parseInt(document.getElementById('partialDamagedMolds').value) || 0;
+
+            if (damaged < 0) return alert('Moldes dañados no puede ser negativo');
+            if (damaged > moldsBruto) return alert(`Moldes dañados (${damaged}) no puede ser mayor que los producidos (${moldsBruto})`);
+
+            const moldsNeto = moldsBruto - damaged;
 
             const partialEntry = {
                 fromRow: from.row,
@@ -7229,7 +7255,9 @@
                 toRow: toRow,
                 toCol: toCol,
                 modulesLoaded: modules,
-                moldsLoaded: molds,
+                moldsLoaded: moldsNeto,
+                moldsBruto: moldsBruto,
+                damagedMolds: damaged,
                 timestamp: new Date().toISOString(),
                 user: currentUser.fullName
             };
@@ -7237,25 +7265,29 @@
             const partials = rec.partialLoads || [];
             partials.push(partialEntry);
 
+            // Acumular dañados totales
+            const totalDamaged = partials.reduce((s, p) => s + (p.damagedMolds || 0), 0);
+
             try {
                 showSyncIndicator('⚙️ Guardando carga parcial...', 'syncing');
                 await productionRecordsRef.child(currentDate).update({
-                    partialLoads: partials
+                    partialLoads: partials,
+                    totalDamagedMolds: totalDamaged
                 });
-                
-                // ✅ INTEGRACIÓN VENTAS: Sumar moldes parciales al inventario
+
+                // ✅ INTEGRACIÓN VENTAS: Sumar moldes NETOS (sin dañados) al inventario
                 const currentAvailable = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
-                const newAvailable = currentAvailable + molds;
+                const newAvailable = currentAvailable + moldsNeto;
                 await salesInventoryRef.update({
                     available: newAvailable,
                     lastUpdated: new Date().toISOString(),
                     lastSource: 'partial_' + currentDate + '_' + partials.length,
-                    lastAdded: molds
+                    lastAdded: moldsNeto
                 });
-                console.log(`📦 Inventario ventas (parcial): ${currentAvailable} + ${molds} = ${newAvailable}`);
-                
+                console.log(`📦 Inventario ventas (parcial): ${currentAvailable} + ${moldsNeto} (${moldsBruto} - ${damaged} dañados) = ${newAvailable}`);
+
                 document.getElementById('prodPartialModal').style.display = 'none';
-                showSyncIndicator(`✅ ${molds} moldes cargados a almacén`, 'synced');
+                showSyncIndicator(`✅ ${moldsNeto} moldes cargados a almacén${damaged > 0 ? ` (${damaged} dañados)` : ''}`, 'synced');
             } catch (err) {
                 console.error('Error guardando parcial:', err);
                 showSyncIndicator('✗ Error', 'error');
@@ -7723,6 +7755,8 @@
                 ${obs ? `<p><strong>Obs:</strong> ${obs}</p>` : ''}`;
             document.getElementById('dispatchMerma').value = '0';
             document.getElementById('dispatchDespachoObs').value = '';
+            document.getElementById('dispatchPhotos').value = '';
+            document.getElementById('dispatchPhotosPreview').innerHTML = '';
             document.getElementById('dispatchStep2').style.display = 'none';
             document.getElementById('dispatchStep3').style.display = 'block';
 
@@ -7736,6 +7770,44 @@
             ds.obs = obs;
         }
 
+        function updateDispatchPhotosPreview() {
+            const input = document.getElementById('dispatchPhotos');
+            const preview = document.getElementById('dispatchPhotosPreview');
+            preview.innerHTML = '';
+            if (!input.files || input.files.length === 0) return;
+            const files = Array.from(input.files).slice(0, 3);
+            // Limitar a 3 archivos
+            if (input.files.length > 3) {
+                alert('Máximo 3 fotos. Solo se subirán las primeras 3.');
+            }
+            files.forEach((file, i) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML += `<div style="position:relative; display:inline-block;">
+                        <img src="${e.target.result}" style="width:70px; height:70px; object-fit:cover; border-radius:8px; border:2px solid #28a745;">
+                        <small style="position:absolute; bottom:2px; left:4px; background:rgba(0,0,0,0.6); color:white; padding:1px 4px; border-radius:4px; font-size:10px;">${i+1}</small>
+                    </div>`;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function uploadDispatchPhotos(dateStr, timestamp) {
+            const input = document.getElementById('dispatchPhotos');
+            if (!input.files || input.files.length === 0) return [];
+            const files = Array.from(input.files).slice(0, 3);
+            const urls = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileName = `despacho_${dateStr}_${timestamp}_${i+1}_${file.name}`;
+                const storageRef = firebase.storage().ref('dispatch_photos/' + fileName);
+                await storageRef.put(file);
+                const url = await storageRef.getDownloadURL();
+                urls.push(url);
+            }
+            return urls;
+        }
+
         async function confirmDispatch() {
             const ds = document.getElementById('dispatchStep3').dataset;
             const clientId = ds.clientId;
@@ -7745,7 +7817,7 @@
             const priceTypeId = ds.priceTypeId || '';
             const obs = ds.obs || '';
             const merma = parseInt(document.getElementById('dispatchMerma').value) || 0;
-            const dispatchObs = document.getElementById('dispatchDespachoObs').value.trim();
+            const dispatchObs = '';
             const isTiras = (dispatchUnit === 'tiras');
 
             if (merma < 0) return alert('La merma no puede ser negativa');
@@ -7753,9 +7825,18 @@
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
             const client = salesClients[clientId] || {};
+            const timestamp = Date.now();
+
+            // Subir fotos
+            let photoURLs = [];
+            try {
+                showSyncIndicator('⚙️ Despachando...', 'syncing');
+                photoURLs = await uploadDispatchPhotos(currentDate, timestamp);
+            } catch (photoErr) {
+                console.error('Error subiendo fotos:', photoErr);
+            }
 
             if (isTiras) {
-                // Lógica de tiras: igual que donación
                 const totalTiras = tirasDisp + (avail * TIRAS_PER_MOLD);
                 if (dispatchTiras > totalTiras) return alert(`Inventario insuficiente. Total disponible: ${totalTiras} tiras`);
 
@@ -7773,12 +7854,10 @@
                     nuevasTirasSueltas = (moldesADescontar * TIRAS_PER_MOLD) - tirasNecesarias;
                 }
 
-                // Merma en moldes si aplica
                 const totalMoldsDeduct = moldesADescontar + merma;
                 if (totalMoldsDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail} moldes. Necesario: ${totalMoldsDeduct}`);
 
                 try {
-                    showSyncIndicator('⚙️ Despachando...', 'syncing');
                     await salesDispatchesRef.push({
                         date: currentDate,
                         clientId, clientName: client.name,
@@ -7788,6 +7867,7 @@
                         dispatchMoldesDescontados: moldesADescontar,
                         priceTypeId: priceTypeId, priceTypeName: '', priceValue: 0,
                         merma, observations: obs, dispatchObs,
+                        photoURLs: photoURLs,
                         totalAmount: 0,
                         status: 'dispatched',
                         createdBy: currentUser.fullName,
@@ -7809,12 +7889,10 @@
                     showSyncIndicator('✗ Error', 'error');
                 }
             } else {
-                // Lógica original de moldes
                 const totalDeduct = molds + merma;
                 if (totalDeduct > avail) return alert(`Inventario insuficiente. Disponible: ${avail}. Necesario: ${totalDeduct} (${molds} + ${merma} merma)`);
 
                 try {
-                    showSyncIndicator('⚙️ Despachando...', 'syncing');
                     await salesDispatchesRef.push({
                         date: currentDate,
                         clientId, clientName: client.name,
@@ -7823,6 +7901,7 @@
                         dispatchTiras: 0,
                         priceTypeId: priceTypeId, priceTypeName: '', priceValue: 0,
                         merma, observations: obs, dispatchObs,
+                        photoURLs: photoURLs,
                         totalAmount: 0,
                         status: 'dispatched',
                         createdBy: currentUser.fullName,
@@ -8427,12 +8506,13 @@
             const sales = dispatches.filter(d => d.status === 'dispatched');
             const donaciones = dispatches.filter(d => d.status === 'donacion' || d.status === 'merma');
             const totalMoldsSold = sales.reduce((s, d) => s + (d.moldsDispatched || 0), 0);
+            const totalTirasVendidas = sales.filter(d => d.dispatchUnit === 'tiras').reduce((s, d) => s + (d.dispatchTiras || 0), 0);
             const totalMerma = sales.reduce((s, d) => s + (d.merma || 0), 0);
             const totalDonacionesTiras = donaciones.reduce((s, d) => s + (d.donacionTiras || 0), 0);
             const totalAmount = sales.reduce((s, d) => s + (d.totalAmount || 0), 0);
             const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
             const vToggle = 'rpt_ventas_' + dateStr.replace(/-/g,'');
-            
+
             // ========== CARD VENTAS ==========
             var html = '<div style="background:white; border:1px solid #e8e8e8; border-radius:12px; margin-bottom:10px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,0.08);">';
             html += '<div onclick="var el=document.getElementById(\'' + vToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.chv\').textContent=el.style.display===\'none\'?\'▼\':\'▲\';" style="cursor:pointer; padding:12px;">';
@@ -8443,6 +8523,7 @@
             html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
             html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalMoldsSold + '</strong><br><small style="color:#555;">Moldes Vendidos</small></div>';
             html += '<div style="background:#ffebee; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#c62828; font-size:20px;">' + totalMerma + '</strong><br><small style="color:#555;">Merma</small></div>';
+            if (totalTirasVendidas > 0) html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalTirasVendidas + '</strong><br><small style="color:#555;">Tiras Vendidas</small></div>';
             html += '<div style="background:#e0f7fa; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#00838f; font-size:20px;">' + totalDonacionesTiras + '</strong><br><small style="color:#555;">Tiras Donadas</small></div>';
             html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + avail + '</strong><br><small style="color:#555;">Disponibles</small></div>';
             html += '</div></div>';
@@ -8454,31 +8535,37 @@
             var byClient = {};
             sales.forEach(function(d) {
                 var cId = d.clientId || 'unknown';
-                if (!byClient[cId]) byClient[cId] = { name: d.clientName || 'Sin nombre', totalMolds: 0, totalMerma: 0, count: 0, dispatches: [] };
-                byClient[cId].totalMolds += (d.moldsDispatched || 0);
+                if (!byClient[cId]) byClient[cId] = { name: d.clientName || 'Sin nombre', totalMolds: 0, totalTiras: 0, totalMerma: 0, count: 0, dispatches: [] };
+                if (d.dispatchUnit === 'tiras') {
+                    byClient[cId].totalTiras += (d.dispatchTiras || 0);
+                } else {
+                    byClient[cId].totalMolds += (d.moldsDispatched || 0);
+                }
                 byClient[cId].totalMerma += (d.merma || 0);
                 byClient[cId].count++;
                 byClient[cId].dispatches.push(d);
             });
-            
+
             Object.values(byClient).forEach(function(client) {
                 var cToggle = vToggle + '_' + client.name.replace(/[^a-zA-Z0-9]/g, '');
+                var cQtyStr = '';
+                if (client.totalMolds > 0) cQtyStr += client.totalMolds + ' moldes';
+                if (client.totalTiras > 0) cQtyStr += (cQtyStr ? ' + ' : '') + client.totalTiras + ' tiras';
+                if (!cQtyStr) cQtyStr = '0';
                 html += '<div style="border-bottom:1px solid #f0f0f0;">';
                 html += '<div onclick="var el=document.getElementById(\'' + cToggle + '\'); el.style.display=el.style.display===\'none\'?\'block\':\'none\'; this.querySelector(\'.sch\').textContent=el.style.display===\'none\'?\'▶\':\'▼\';" style="padding:10px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">';
-                html += '<div><strong>' + client.name + '</strong> — ' + client.totalMolds + ' moldes (' + client.count + ' despacho' + (client.count > 1 ? 's' : '') + ')';
+                html += '<div><strong>' + client.name + '</strong> — ' + cQtyStr + ' (' + client.count + ' despacho' + (client.count > 1 ? 's' : '') + ')';
                 if (client.totalMerma > 0) html += ' | Merma: ' + client.totalMerma;
                 html += '</div>';
                 html += '<span class="sch" style="color:#667eea; font-size:12px;">▶</span>';
                 html += '</div>';
                 html += '<div id="' + cToggle + '" style="display:none; padding:4px 12px 10px;">';
                 client.dispatches.forEach(function(d) {
+                    var dIsTiras = d.dispatchUnit === 'tiras';
+                    var dQty = dIsTiras ? (d.dispatchTiras || 0) + ' tiras' : (d.moldsDispatched || 0) + ' moldes';
                     html += '<div style="padding:4px 0; border-top:1px solid #f5f5f5; font-size:12px;">';
-                    html += '📦 ' + (d.moldsDispatched || 0) + ' moldes';
+                    html += '📦 ' + dQty;
                     if (d.merma > 0) html += ' + ' + d.merma + ' merma';
-                    /* COMENTADO: Tipo de precio — se usará más adelante
-                    html += ' — ' + (d.priceTypeName || 'S/T');
-                    html += ' $' + (d.totalAmount || 0).toFixed(2);
-                    */
                     html += '</div>';
                 });
                 html += '</div></div>';
