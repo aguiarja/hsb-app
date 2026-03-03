@@ -960,6 +960,20 @@
         </div>
     </div>
 
+    <!-- Modal: Editar Operadores (producción activa) -->
+    <div id="prodEditOpsModal" class="modal">
+        <div class="modal-content" style="max-width:400px;">
+            <div class="modal-header">
+                <h2>👷 Editar Operadores</h2>
+                <span class="close" onclick="document.getElementById('prodEditOpsModal').style.display='none'">&times;</span>
+            </div>
+            <div id="prodEditOpsContainer" style="max-height:300px; overflow-y:auto; border:1px solid #e0e0e0; border-radius:8px; padding:10px; margin-bottom:15px;"></div>
+            <div style="text-align:center;">
+                <button onclick="saveEditOperators()" class="btn" style="font-size:16px; padding:14px 40px;">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Producción Parcial -->
     <div id="prodPartialModal" class="modal">
         <div class="modal-content">
@@ -3258,9 +3272,14 @@
             }
 
             const activityData = dailyLogs[currentDate].sections[currentSectionId].activities[activityKey];
-            
+
             const fieldDiv = document.createElement('div');
             const turnoLabel = turno ? ` (${turno === 'manana' ? 'Mañana' : 'Tarde'})` : '';
+
+            // Tag de usuario y hora
+            const userTimeTag = activityData.user && activityData.timestamp
+                ? `<div style="margin-top:4px;"><small style="color:#999; font-size:11px;">👤 ${activityData.user} — 🕐 ${new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})}</small></div>`
+                : '';
             
             if (activity.type === 'parametros') {
                 const value = activityData.value;
@@ -3305,6 +3324,7 @@
                     ${inputHTML}
                     ${hasAlert ? `<div class="alert-message">${alertLabel}</div>` : ''}
                     ${activity.min != null && activity.max != null ? `<small style="color: #666;">${rangeLabel}</small>` : ''}
+                    ${userTimeTag}
                 `;
             } else if (activity.type === 'nivel_aceite') {
                 // Campo especial para Nivel de Aceite con 4 niveles
@@ -3327,9 +3347,10 @@
                         <option value="vacio" ${oilLevel === 'vacio' ? 'selected' : ''}>🔴 Vacío</option>
                     </select>
                     ${hasAlert ? `<div class="alert-message">⚠️ Nivel bajo - Umbral mínimo</div>` : ''}
+                    ${userTimeTag}
                     <div class="form-group" style="margin-top: 10px;">
                         <label>Observaciones:</label>
-                        <input type="text" id="activity_${activityKey}_obs" 
+                        <input type="text" id="activity_${activityKey}_obs"
                                value="${activityData.observations || ''}"
                                placeholder="Opcional"
                                onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
@@ -3364,6 +3385,7 @@
                         </div>
                     </div>
                     ${isAlert ? `<div class="alert-message">⚠️ Chequeo reportado como No OK</div>` : ''}
+                    ${userTimeTag}
                     <div class="form-group">
                         <label>Observaciones${isAlert ? ' (describir falla):' : ':'}</label>
                         <input type="text" id="activity_${activityKey}_obs"
@@ -6634,6 +6656,31 @@
             return Array.from(document.querySelectorAll('input[name="prodOperatorCheck"]:checked')).map(cb => cb.value);
         }
 
+        function openEditOperatorsModal() {
+            const rec = productionRecords[currentDate];
+            if (!rec) return;
+            buildOperatorCheckboxes('prodEditOpsContainer', rec.operatorIds || []);
+            document.getElementById('prodEditOpsModal').style.display = 'block';
+        }
+
+        async function saveEditOperators() {
+            const operatorIds = getSelectedProdOperators();
+            if (operatorIds.length === 0) return alert('Selecciona al menos un operador');
+
+            try {
+                showSyncIndicator('⚙️ Guardando operadores...', 'syncing');
+                await productionRecordsRef.child(currentDate).update({
+                    operatorIds: operatorIds,
+                    operatorNamesSnapshot: getProductionOperatorNames(operatorIds)
+                });
+                document.getElementById('prodEditOpsModal').style.display = 'none';
+                showSyncIndicator('✓ Operadores actualizados', 'synced');
+            } catch (err) {
+                console.error('Error actualizando operadores:', err);
+                showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
         // ========== RENDER PRODUCCIÓN (Estados A-D) ==========
         function renderProduccion() {
             const container = document.getElementById('produccionContent');
@@ -6710,7 +6757,10 @@
                     ${rec.estimatedRows ? `<div style="background:#e8f0fe; padding:10px 15px; border-radius:8px; margin-bottom:15px; font-size:14px; color:#1e3c72;">
                         📊 Estimado: <strong>${rec.estimatedRows} filas</strong> → Fin estimado: <strong>${rec.estimatedEndRow}D</strong>
                     </div>` : ''}
-                    <p style="color:#666; margin-bottom:15px;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px;">
+                        <p style="color:#666; margin:0;">👷 Operadores: <strong>${opNames.join(', ') || 'N/A'}</strong></p>
+                        <button onclick="openEditOperatorsModal()" style="background:#667eea; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:12px;">✏️ Editar</button>
+                    </div>
                     ${partialsHTML}
                     <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
                         <button onclick="openPartialModal()" class="btn" style="background:linear-gradient(135deg,#ff9800,#f57c00); font-size:15px; padding:14px 30px;">
