@@ -1212,8 +1212,9 @@
                             style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
                         <option value="">-- Seleccionar --</option>
                         <option value="parametros">Parámetros (valores numéricos)</option>
-                        <option value="chequeo">Chequeo (OK/No OK)</option>
+                        <option value="chequeo">Chequeo (OK/FALLA)</option>
                         <option value="nivel_aceite">Nivel de Aceite (4 niveles)</option>
+                        <option value="nivel">Nivel (% porcentaje)</option>
                     </select>
                 </div>
                 
@@ -1238,13 +1239,74 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Campos condicionales para tipo NIVEL -->
+                <div id="nivelFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Tipo de Alarma:</label>
+                        <select id="nivelAlarmType" onchange="toggleNivelAlarmFields()"
+                                style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                            <option value="none">Sin alarma</option>
+                            <option value="min">Mínimo (alerta si baja de un umbral)</option>
+                            <option value="max">Máximo (alerta si supera un umbral)</option>
+                            <option value="range">Rango (alerta fuera de mín-máx)</option>
+                            <option value="cambio">Cambio (alerta si difiere del anterior)</option>
+                        </select>
+                    </div>
+
+                    <div id="nivelAlarmMinField" style="display: none;">
+                        <div class="form-group">
+                            <label>Umbral Mínimo (%):</label>
+                            <select id="nivelAlarmMin" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="10">10%</option>
+                                <option value="20">20%</option>
+                                <option value="30">30%</option>
+                                <option value="40">40%</option>
+                                <option value="50">50%</option>
+                                <option value="60">60%</option>
+                                <option value="70">70%</option>
+                                <option value="80">80%</option>
+                                <option value="90">90%</option>
+                                <option value="100">100%</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="nivelAlarmMaxField" style="display: none;">
+                        <div class="form-group">
+                            <label>Umbral Máximo (%):</label>
+                            <select id="nivelAlarmMax" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="10">10%</option>
+                                <option value="20">20%</option>
+                                <option value="30">30%</option>
+                                <option value="40">40%</option>
+                                <option value="50">50%</option>
+                                <option value="60">60%</option>
+                                <option value="70">70%</option>
+                                <option value="80">80%</option>
+                                <option value="90">90%</option>
+                                <option value="100">100%</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="background: #fff3e0; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #ff9800;">
+                        <small style="color: #e65100; font-weight: 500;">
+                            ℹ️ La alarma se mostrará en rojo cuando el valor registrado viole la condición configurada.
+                        </small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label>Frecuencia:</label>
                     <select id="activityFrequency" style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid #ddd;">
                         <option value="">-- Seleccionar --</option>
-                        <option value="2 veces al dia">2 veces al día (Mañana y Tarde)</option>
                         <option value="Diario">Diario (Una vez al día)</option>
+                        <option value="2 veces al dia">2 veces al día (Mañana y Tarde)</option>
+                        <option value="3 veces al dia">3 veces al día (Mañana, Tarde y Noche)</option>
+                        <option value="4 veces al dia">4 veces al día (Mañana, Tarde, Noche y Madrugada)</option>
                     </select>
                     <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #2196f3;">
                         <small style="color: #1976d2; font-weight: 500;">
@@ -1515,14 +1577,40 @@
                             <input type="checkbox" id="newUserCanViewMantenimiento" style="margin-right: 8px; width:18px; height:18px;">
                             <span>🔧 Mantenimiento</span>
                         </label>
-                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewProduccion" style="margin-right: 8px; width:18px; height:18px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 4px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewProduccion" style="margin-right: 8px; width:18px; height:18px;"
+                                   onchange="document.getElementById('newProdSubPerms').style.display = this.checked ? 'block' : 'none'; if(!this.checked){document.getElementById('newUserCanStartProd').checked=false;document.getElementById('newUserCanPartialLoad').checked=false;document.getElementById('newUserCanEndProd').checked=false;document.getElementById('newUserCanConfirmProd').checked=false;}">
                             <span>🧊 Producción</span>
                         </label>
-                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="newUserCanViewVentas" style="margin-right: 8px; width:18px; height:18px;">
+                        <div id="newProdSubPerms" style="display:none; margin-left:26px; margin-bottom:8px; padding:8px 12px; background:#e3f2fd; border-radius:6px; border-left:3px solid #1565c0;">
+                            <label style="display:flex; align-items:center; margin-bottom:5px; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="newUserCanStartProd" style="margin-right:6px; width:15px; height:15px;">
+                                <span>▶️ Iniciar producción</span>
+                            </label>
+                            <label style="display:flex; align-items:center; margin-bottom:5px; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="newUserCanPartialLoad" style="margin-right:6px; width:15px; height:15px;">
+                                <span>📦 Cargas parciales</span>
+                            </label>
+                            <label style="display:flex; align-items:center; margin-bottom:5px; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="newUserCanEndProd" style="margin-right:6px; width:15px; height:15px;">
+                                <span>⏹️ Finalizar producción</span>
+                            </label>
+                            <label style="display:flex; align-items:center; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="newUserCanConfirmProd" style="margin-right:6px; width:15px; height:15px;">
+                                <span>✅ Confirmar producción</span>
+                            </label>
+                        </div>
+                        <label style="display: flex; align-items: center; margin-bottom: 4px; cursor: pointer;">
+                            <input type="checkbox" id="newUserCanViewVentas" style="margin-right: 8px; width:18px; height:18px;"
+                                   onchange="document.getElementById('newSalesSubPerms').style.display = this.checked ? 'block' : 'none'; if(!this.checked){document.getElementById('newUserCanDeleteSale').checked=false;}">
                             <span>💰 Ventas</span>
                         </label>
+                        <div id="newSalesSubPerms" style="display:none; margin-left:26px; margin-bottom:8px; padding:8px 12px; background:#fff3e0; border-radius:6px; border-left:3px solid #ff9800;">
+                            <label style="display:flex; align-items:center; cursor:pointer; font-size:13px;">
+                                <input type="checkbox" id="newUserCanDeleteSale" style="margin-right:6px; width:15px; height:15px;">
+                                <span>🗑️ Puede borrar venta</span>
+                            </label>
+                        </div>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
                             <input type="checkbox" id="newUserCanViewPlan" style="margin-right: 8px; width:18px; height:18px;">
                             <span>📅 Plan</span>
@@ -1547,9 +1635,8 @@
                             <span>⭐ Puede aprobar actividades periódicas (Plan)</span>
                         </label>
                     </div>
-                    <small style="color: #666; display: block; margin-top: 5px;">Admin y Supervisor tienen todos los permisos automáticamente</small>
                 </div>
-                
+
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button onclick="saveNewUser()" class="btn" style="flex: 1; background: #28a745; padding: 12px; font-size: 15px; font-weight: bold;">
                         ✓ Crear Usuario
@@ -1612,14 +1699,40 @@
                             <input type="checkbox" id="editUserCanViewMantenimiento" style="margin-right: 8px; width:18px; height:18px;">
                             <span>🔧 Mantenimiento</span>
                         </label>
-                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewProduccion" style="margin-right: 8px; width:18px; height:18px;">
+                        <label style="display: flex; align-items: center; margin-bottom: 4px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewProduccion" style="margin-right: 8px; width:18px; height:18px;"
+                                   onchange="document.getElementById('editProdSubPerms').style.display = this.checked ? 'block' : 'none'; if(!this.checked){document.getElementById('editUserCanStartProd').checked=false;document.getElementById('editUserCanPartialLoad').checked=false;document.getElementById('editUserCanEndProd').checked=false;document.getElementById('editUserCanConfirmProd').checked=false;}">
                             <span>🧊 Producción</span>
                         </label>
-                        <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
-                            <input type="checkbox" id="editUserCanViewVentas" style="margin-right: 8px; width:18px; height:18px;">
+                        <div id="editProdSubPerms" style="display:none; margin-left:26px; margin-bottom:8px; padding:8px 12px; background:#e3f2fd; border-radius:6px; border-left:3px solid #1565c0;">
+                            <label style="display:flex; align-items:center; margin-bottom:5px; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="editUserCanStartProd" style="margin-right:6px; width:15px; height:15px;">
+                                <span>▶️ Iniciar producción</span>
+                            </label>
+                            <label style="display:flex; align-items:center; margin-bottom:5px; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="editUserCanPartialLoad" style="margin-right:6px; width:15px; height:15px;">
+                                <span>📦 Cargas parciales</span>
+                            </label>
+                            <label style="display:flex; align-items:center; margin-bottom:5px; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="editUserCanEndProd" style="margin-right:6px; width:15px; height:15px;">
+                                <span>⏹️ Finalizar producción</span>
+                            </label>
+                            <label style="display:flex; align-items:center; cursor:pointer; font-size:12px;">
+                                <input type="checkbox" id="editUserCanConfirmProd" style="margin-right:6px; width:15px; height:15px;">
+                                <span>✅ Confirmar producción</span>
+                            </label>
+                        </div>
+                        <label style="display: flex; align-items: center; margin-bottom: 4px; cursor: pointer;">
+                            <input type="checkbox" id="editUserCanViewVentas" style="margin-right: 8px; width:18px; height:18px;"
+                                   onchange="document.getElementById('editSalesSubPerms').style.display = this.checked ? 'block' : 'none'; if(!this.checked){document.getElementById('editUserCanDeleteSale').checked=false;}">
                             <span>💰 Ventas</span>
                         </label>
+                        <div id="editSalesSubPerms" style="display:none; margin-left:26px; margin-bottom:8px; padding:8px 12px; background:#fff3e0; border-radius:6px; border-left:3px solid #ff9800;">
+                            <label style="display:flex; align-items:center; cursor:pointer; font-size:13px;">
+                                <input type="checkbox" id="editUserCanDeleteSale" style="margin-right:6px; width:15px; height:15px;">
+                                <span>🗑️ Puede borrar venta</span>
+                            </label>
+                        </div>
                         <label style="display: flex; align-items: center; margin-bottom: 8px; cursor: pointer;">
                             <input type="checkbox" id="editUserCanViewPlan" style="margin-right: 8px; width:18px; height:18px;">
                             <span>📅 Plan</span>
@@ -1644,7 +1757,7 @@
                         </label>
                     </div>
                 </div>
-                
+
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button onclick="saveEditedUser()" class="btn" style="flex: 1; background: #28a745; padding: 12px; font-size: 15px; font-weight: bold;">
                         ✓ Guardar Cambios
@@ -1686,6 +1799,7 @@
             });
         }
 
+        // === FIREBASE PROD CONFIG === (Proyecto: hsb-app-784ba)
         const firebaseConfig = {
             apiKey: "AIzaSyCTMEffJZejx03s5ImhcP7CBPX5cPAv-2M",
             authDomain: "hsb-app-784ba.firebaseapp.com",
@@ -1707,7 +1821,7 @@
                 database = firebase.database();
                 storage = firebase.storage();
                 initializeRefs(); // Initialize database references
-                console.log('🔥 Firebase initialized successfully!');
+                console.log('🔥 Firebase initialized successfully! [DEV: hsb-app-dev-784ba]');
                 return true;
             } catch (error) {
                 console.error('❌ Error loading Firebase:', error);
@@ -1768,6 +1882,7 @@
         let salesPriceTypesRef;
         let salesInventoryRef;
         let salesDispatchesRef;
+        let salesInvSnapshotsRef;
         let novedadesPorSeccionRef;
 
         function initializeRefs() {
@@ -1788,6 +1903,7 @@
             salesPriceTypesRef = database.ref('sales_priceTypes');
             salesInventoryRef = database.ref('sales_inventory');
             salesDispatchesRef = database.ref('sales_dispatches');
+            salesInvSnapshotsRef = database.ref('sales_inventorySnapshots');
             novedadesPorSeccionRef = database.ref('novedadesPorSeccion');
         }
 
@@ -1804,6 +1920,7 @@
         window.salesPriceTypes = {};
         window.salesInventory = { available: 0 };
         window.salesDispatches = {};
+        window.salesInvSnapshots = {};
         
         // Referencias locales para compatibilidad
         let users = [];
@@ -1825,8 +1942,30 @@
         let salesInventory = window.salesInventory;
         let salesDispatches = window.salesDispatches;
 
+        // ==================== TURNO HELPERS ====================
+        var TURNO_INFO = {
+            manana: { label: 'Turno Mañana', emoji: '☀️', icon: '🌅', bg: '#fff8e1', color: '#e65100', detailBg: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' },
+            tarde: { label: 'Turno Tarde', emoji: '🌤️', icon: '🌆', bg: '#e3f2fd', color: '#1565c0', detailBg: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' },
+            noche: { label: 'Turno Noche', emoji: '🌙', icon: '🌙', bg: '#ede7f6', color: '#4527a0', detailBg: 'linear-gradient(135deg, #ede7f6 0%, #d1c4e9 100%)' },
+            madrugada: { label: 'Turno Madrugada', emoji: '🌃', icon: '🌃', bg: '#fce4ec', color: '#880e4f', detailBg: 'linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%)' }
+        };
+        var ALL_TURNOS = ['manana', 'tarde', 'noche', 'madrugada'];
+
+        // Devuelve array de turnos para una frecuencia. [] para Diario.
+        function getActivityTurnos(frequency) {
+            if (frequency === '2 veces al dia') return ['manana', 'tarde'];
+            if (frequency === '3 veces al dia') return ['manana', 'tarde', 'noche'];
+            if (frequency === '4 veces al dia') return ['manana', 'tarde', 'noche', 'madrugada'];
+            return []; // Diario
+        }
+
+        // Devuelve true si la frecuencia tiene múltiples turnos
+        function isMultiTurno(frequency) {
+            return getActivityTurnos(frequency).length > 0;
+        }
+
         // ==================== FIREBASE HELPERS ====================
-        
+
         function showLoading() {
             document.getElementById('loadingOverlay').classList.add('active');
         }
@@ -1876,30 +2015,48 @@
                 planPermissions: {
                     canView: true,
                     canApprove: true
+                },
+                productionPermissions: {
+                    canStartProduction: true,
+                    canPartialLoad: true,
+                    canEndProduction: true,
+                    canConfirmProduction: true
                 }
             },
-            { 
-                id: 2, 
-                username: 'supervisor', 
-                password: 'super123', 
+            {
+                id: 2,
+                username: 'supervisor',
+                password: 'super123',
                 fullName: 'Supervisor',
                 role: 'supervisor',
                 permissions: ['reporte-diario', 'mantenimiento-preventivo', 'produccion', 'ventas', 'plan', 'historial'],
                 planPermissions: {
                     canView: true,
                     canApprove: true
+                },
+                productionPermissions: {
+                    canStartProduction: true,
+                    canPartialLoad: true,
+                    canEndProduction: true,
+                    canConfirmProduction: true
                 }
             },
-            { 
-                id: 3, 
-                username: 'operador', 
-                password: 'operador123', 
+            {
+                id: 3,
+                username: 'operador',
+                password: 'operador123',
                 fullName: 'Operador General',
                 role: 'operador',
                 permissions: ['mantenimiento-preventivo', 'reporte-diario', 'produccion', 'ventas'],
                 planPermissions: {
                     canView: false,
                     canApprove: false
+                },
+                productionPermissions: {
+                    canStartProduction: true,
+                    canPartialLoad: false,
+                    canEndProduction: false,
+                    canConfirmProduction: false
                 }
             }
         ];
@@ -2088,6 +2245,9 @@
                 window.salesInventory = salesInventory;
                 window.salesDispatches = salesDispatches;
 
+                // Asegurar snapshot de inventario inicial para hoy
+                ensureInventorySnapshot(currentDate);
+
                 console.log('✅ Data loaded successfully!');
                 console.log(`📊 Loaded: ${users.length} users, ${sections.length} sections, ${activities.length} activities`);
                 console.log(`📋 Alertas: ${alerts.length}, Actividades no realizadas en ${Object.keys(notCompletedActivities).length} días`);
@@ -2130,14 +2290,14 @@
                         // Agregar actividades de esta sección
                         const sectionActivities = activities.filter(a => a.sectionId === section.id);
                         sectionActivities.forEach(activity => {
-                            if (activity.frequency === '2 veces al dia') {
-                                log.sections[section.id].activities[`${activity.id}_manana`] = {
-                                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
-                                };
-                                log.sections[section.id].activities[`${activity.id}_tarde`] = {
-                                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
-                                };
-                            } else if (activity.frequency === 'Diario') {
+                            var turnos = getActivityTurnos(activity.frequency);
+                            if (turnos.length > 0) {
+                                turnos.forEach(function(t) {
+                                    log.sections[section.id].activities[`${activity.id}_${t}`] = {
+                                        value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                                    };
+                                });
+                            } else {
                                 log.sections[section.id].activities[activity.id] = {
                                     value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
                                 };
@@ -2793,14 +2953,14 @@
                     
                     const sectionActivities = activities.filter(a => a.sectionId === section.id);
                     sectionActivities.forEach(activity => {
-                        if (activity.frequency === '2 veces al dia') {
-                            newLog.sections[section.id].activities[`${activity.id}_manana`] = {
-                                value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
-                            };
-                            newLog.sections[section.id].activities[`${activity.id}_tarde`] = {
-                                value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
-                            };
-                        } else if (activity.frequency === 'Diario') {
+                        var turnos = getActivityTurnos(activity.frequency);
+                        if (turnos.length > 0) {
+                            turnos.forEach(function(t) {
+                                newLog.sections[section.id].activities[`${activity.id}_${t}`] = {
+                                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                                };
+                            });
+                        } else {
                             newLog.sections[section.id].activities[activity.id] = {
                                 value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
                             };
@@ -2815,7 +2975,16 @@
         }
 
         // ==================== RENDER SECTIONS ====================
-        
+
+        // Helper: verifica si un campo de actividad está completado
+        function _isFieldComplete(activity, data) {
+            if (!data) return false;
+            if (activity.type === 'parametros') return data.value !== null && data.value !== undefined && data.value !== '' && !isNaN(data.value);
+            if (activity.type === 'nivel_aceite') return !!data.oilLevel;
+            if (activity.type === 'nivel') return data.nivelValue !== null && data.nivelValue !== undefined;
+            return data.status === 'ok' || data.status === 'no_ok'; // chequeo
+        }
+
         function renderSections() {
             console.log('=== RENDERING SECTIONS ===');
             
@@ -2865,44 +3034,17 @@
                 const sectionActivities = activities.filter(a => a.sectionId === section.id);
                 
                 sectionActivities.forEach(activity => {
-                    if (activity.frequency === '2 veces al dia') {
-                        totalFields += 2;
-                        const activityDataMorning = dailyLogs[currentDate].sections[section.id].activities[`${activity.id}_manana`];
-                        const activityDataAfternoon = dailyLogs[currentDate].sections[section.id].activities[`${activity.id}_tarde`];
-                        
-                        if (activity.type === 'parametros') {
-                            // Cuenta como completado si tiene CUALQUIER valor válido (incluso fuera de rango)
-                            if (activityDataMorning && activityDataMorning.value !== null && activityDataMorning.value !== undefined && activityDataMorning.value !== '' && !isNaN(activityDataMorning.value)) {
-                                completedFields++;
-                            }
-                            if (activityDataAfternoon && activityDataAfternoon.value !== null && activityDataAfternoon.value !== undefined && activityDataAfternoon.value !== '' && !isNaN(activityDataAfternoon.value)) {
-                                completedFields++;
-                            }
-                        } else if (activity.type === 'nivel_aceite') {
-                            // Para nivel de aceite, cuenta si tiene oilLevel seleccionado
-                            if (activityDataMorning && activityDataMorning.oilLevel) completedFields++;
-                            if (activityDataAfternoon && activityDataAfternoon.oilLevel) completedFields++;
-                        } else {
-                            // Para chequeos, solo cuenta si está marcado como OK
-                            if (activityDataMorning && activityDataMorning.status === 'ok') completedFields++;
-                            if (activityDataAfternoon && activityDataAfternoon.status === 'ok') completedFields++;
-                        }
-                    } else if (activity.frequency === 'Diario') {
+                    var turnos = getActivityTurnos(activity.frequency);
+                    if (turnos.length > 0) {
+                        totalFields += turnos.length;
+                        turnos.forEach(function(t) {
+                            var ad = dailyLogs[currentDate].sections[section.id].activities[`${activity.id}_${t}`];
+                            if (_isFieldComplete(activity, ad)) completedFields++;
+                        });
+                    } else {
                         totalFields += 1;
-                        const activityData = dailyLogs[currentDate].sections[section.id].activities[activity.id];
-                        
-                        if (activity.type === 'parametros') {
-                            // Cuenta como completado si tiene CUALQUIER valor válido (incluso fuera de rango)
-                            if (activityData && activityData.value !== null && activityData.value !== undefined && activityData.value !== '' && !isNaN(activityData.value)) {
-                                completedFields++;
-                            }
-                        } else if (activity.type === 'nivel_aceite') {
-                            // Para nivel de aceite, cuenta si tiene oilLevel seleccionado
-                            if (activityData && activityData.oilLevel) completedFields++;
-                        } else {
-                            // Para chequeos, solo cuenta si está marcado como OK
-                            if (activityData && activityData.status === 'ok') completedFields++;
-                        }
+                        var ad = dailyLogs[currentDate].sections[section.id].activities[activity.id];
+                        if (_isFieldComplete(activity, ad)) completedFields++;
                     }
                 });
                 
@@ -2970,7 +3112,7 @@
             content.innerHTML = '';
             
             const sectionActivities = activities
-                .filter(a => a.sectionId === sectionId && (a.frequency === '2 veces al dia' || a.frequency === 'Diario'))
+                .filter(a => a.sectionId === sectionId && (isMultiTurno(a.frequency) || a.frequency === 'Diario'))
                 .sort((a, b) => a.order - b.order);
             
             // ===== ACTIVIDADES PERIÓDICAS APROBADAS =====
@@ -2993,36 +3135,74 @@
             if (sectionActivities.length === 0 && periodicActivities.length === 0) {
                 content.innerHTML = '<p style="padding: 20px; color: #666;">No hay actividades configuradas</p>';
             } else {
-                // 1. PRIMERO: Actividades diarias (Mañana y Tarde)
-                const actividades2Veces = sectionActivities.filter(a => a.frequency === '2 veces al dia');
-                const actividadesOtras = sectionActivities.filter(a => a.frequency !== '2 veces al dia');
-                
-                if (actividades2Veces.length > 0) {
-                    // Header TURNO MAÑANA
-                    const headerManana = document.createElement('div');
-                    headerManana.style.cssText = 'background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%); color: white; padding: 12px 20px; margin: 0 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
-                    headerManana.innerHTML = '🌅 TURNO MAÑANA';
-                    content.appendChild(headerManana);
-                    
-                    // Todas las actividades de MAÑANA
-                    actividades2Veces.forEach(activity => {
-                        renderActivityField(content, activity, 'manana');
+                // 1. PRIMERO: Actividades con múltiples turnos, agrupadas por turno
+                var multiTurnoActs = sectionActivities.filter(a => isMultiTurno(a.frequency));
+                var actividadesDiario = sectionActivities.filter(a => !isMultiTurno(a.frequency));
+
+                var TURNO_HEADER_STYLES = {
+                    manana: 'background: linear-gradient(135deg, #FFA726 0%, #FB8C00 100%);',
+                    tarde: 'background: linear-gradient(135deg, #5C6BC0 0%, #3F51B5 100%);',
+                    noche: 'background: linear-gradient(135deg, #7E57C2 0%, #5E35B1 100%);',
+                    madrugada: 'background: linear-gradient(135deg, #EC407A 0%, #C2185B 100%);'
+                };
+
+                ALL_TURNOS.forEach(function(turno, turnoIdx) {
+                    var actsForTurno = multiTurnoActs.filter(function(a) {
+                        return getActivityTurnos(a.frequency).indexOf(turno) !== -1;
                     });
-                    
-                    // Header TURNO TARDE
-                    const headerTarde = document.createElement('div');
-                    headerTarde.style.cssText = 'background: linear-gradient(135deg, #5C6BC0 0%, #3F51B5 100%); color: white; padding: 12px 20px; margin: 20px 0 15px 0; border-radius: 8px; font-weight: bold; font-size: 16px; text-align: center;';
-                    headerTarde.innerHTML = '🌆 TURNO TARDE';
-                    content.appendChild(headerTarde);
-                    
-                    // Todas las actividades de TARDE
-                    actividades2Veces.forEach(activity => {
-                        renderActivityField(content, activity, 'tarde');
+                    if (actsForTurno.length === 0) return;
+                    var info = TURNO_INFO[turno];
+
+                    // Calcular completadas por turno
+                    var turnoTotal = actsForTurno.length;
+                    var turnoCompleted = 0;
+                    var secData = dailyLogs[currentDate] && dailyLogs[currentDate].sections && dailyLogs[currentDate].sections[sectionId];
+                    actsForTurno.forEach(function(act) {
+                        var actKey = act.id + '_' + turno;
+                        var ad = secData && secData.activities && secData.activities[actKey];
+                        if (_isFieldComplete(act, ad)) turnoCompleted++;
                     });
-                }
-                
-                // Actividades que no son "2 veces al dia"
-                actividadesOtras.forEach(activity => {
+                    var turnoPercent = turnoTotal > 0 ? Math.round((turnoCompleted / turnoTotal) * 100) : 0;
+                    var allDone = turnoCompleted === turnoTotal;
+
+                    // Wrapper
+                    var turnoWrapper = document.createElement('div');
+                    turnoWrapper.style.marginBottom = '8px';
+                    if (turnoIdx === 0) turnoWrapper.style.marginTop = '0';
+
+                    // Header clickable
+                    var hdr = document.createElement('div');
+                    hdr.style.cssText = TURNO_HEADER_STYLES[turno] + ' color: white; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;';
+                    hdr.innerHTML = '<span>' + info.icon + ' ' + info.label.toUpperCase() + '</span>'
+                        + '<span style="display:flex; align-items:center; gap:10px;">'
+                        + '<span style="background:rgba(255,255,255,0.25); padding:3px 10px; border-radius:12px; font-size:14px;">'
+                        + (allDone ? '✅ ' : '') + turnoCompleted + '/' + turnoTotal
+                        + '</span>'
+                        + '<span class="turno-chevron" style="font-size:12px; transition:transform 0.2s;">▶</span>'
+                        + '</span>';
+
+                    // Contenedor de actividades (oculto por defecto)
+                    var actsContainer = document.createElement('div');
+                    actsContainer.style.display = 'none';
+                    actsContainer.style.padding = '5px 0 0 0';
+
+                    hdr.onclick = function() {
+                        var isOpen = actsContainer.style.display !== 'none';
+                        actsContainer.style.display = isOpen ? 'none' : 'block';
+                        var chevron = hdr.querySelector('.turno-chevron');
+                        chevron.textContent = isOpen ? '▶' : '▼';
+                    };
+
+                    turnoWrapper.appendChild(hdr);
+                    actsForTurno.forEach(function(activity) {
+                        renderActivityField(actsContainer, activity, turno);
+                    });
+                    turnoWrapper.appendChild(actsContainer);
+                    content.appendChild(turnoWrapper);
+                });
+
+                // Actividades "Diario"
+                actividadesDiario.forEach(activity => {
                     renderActivityField(content, activity);
                 });
                 
@@ -3039,32 +3219,7 @@
                 }
             }
 
-            // Fotos de la sección
-            const photosDiv = document.createElement('div');
-            photosDiv.className = 'form-group';
-            photosDiv.innerHTML = `
-                <label>📸 Fotos de esta Sección (Opcional):</label>
-                <input type="file" id="sectionPhotos_${sectionId}" multiple accept="image/*" style="display: none;">
-                <div class="photo-upload" onclick="document.getElementById('sectionPhotos_${sectionId}').click()">
-                    <p>📷 Haz clic para agregar fotos</p>
-                </div>
-                <div id="sectionPhotosPreview_${sectionId}" class="photo-preview"></div>
-            `;
-            content.appendChild(photosDiv);
-
-            document.getElementById(`sectionPhotos_${sectionId}`).addEventListener('change', function(e) {
-                const preview = document.getElementById(`sectionPhotosPreview_${sectionId}`);
-                preview.innerHTML = '';
-                for (let file of e.target.files) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const img = document.createElement('img');
-                        img.src = event.target.result;
-                        preview.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+            // (Fotos de sección eliminadas — ahora son por actividad individual)
         }
         
         function renderPeriodicActivityField(container, activity) {
@@ -3285,6 +3440,78 @@
             }
         }
 
+        // Genera HTML del bloque de fotos por actividad (botón + preview)
+        function getPhotoBlockHTML(activityKey, activityId, turno, photos) {
+            var photosHTML = '';
+            if (photos && photos.length > 0) {
+                var regId = window.registerPhotos(photos);
+                photos.forEach(function(url, i) {
+                    photosHTML += '<img src="' + url + '" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #ddd;" onclick="window.openCarouselById(\'' + regId + '\',' + i + ')">';
+                });
+            }
+            return '<div style="margin-top:8px;">' +
+                '<div id="activity_' + activityKey + '_photos" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">' + photosHTML + '</div>' +
+                '<label for="activity_' + activityKey + '_photoInput" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:#667eea;color:white;border-radius:5px;cursor:pointer;font-size:12px;">' +
+                '📷 Foto</label>' +
+                '<input type="file" id="activity_' + activityKey + '_photoInput" accept="image/*" capture="environment" style="display:none;" ' +
+                'onchange="uploadActivityPhoto(' + activityId + ', \'' + (turno || '') + '\', this.files[0], \'' + activityKey + '\')">' +
+                '</div>';
+        }
+
+        // Sube foto de actividad a Firebase Storage
+        async function uploadActivityPhoto(activityId, turno, file, activityKey) {
+            if (!file) return;
+
+            var path = 'dailyLogs/' + currentDate + '/sections/' + currentSectionId + '/activities/' + activityKey;
+
+            showSyncIndicator('📷 Subiendo foto...', 'syncing');
+
+            try {
+                var timestamp = Date.now();
+                var fileName = 'activities/' + currentDate + '/' + activityKey + '_' + timestamp + '_' + file.name;
+                var storageRef = storage.ref(fileName);
+
+                // Upload con timeout de 15s
+                var uploadTask = storageRef.put(file);
+                var timeoutP = new Promise(function(_, reject) {
+                    setTimeout(function() { reject(new Error('Timeout')); }, 15000);
+                });
+
+                await Promise.race([uploadTask, timeoutP]);
+
+                var url = await storageRef.getDownloadURL();
+
+                // Agregar URL al array de fotos en Firebase
+                var snap = await database.ref(path + '/photos').once('value');
+                var currentPhotos = snap.val() || [];
+                if (!Array.isArray(currentPhotos)) currentPhotos = Object.values(currentPhotos);
+                currentPhotos.push(url);
+
+                await database.ref(path).update({ photos: currentPhotos });
+
+                showSyncIndicator('✓ Foto guardada', 'synced');
+
+                // Actualizar preview en DOM
+                var photosDiv = document.getElementById('activity_' + activityKey + '_photos');
+                if (photosDiv) {
+                    var img = document.createElement('img');
+                    img.src = url;
+                    img.style.cssText = 'width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #ddd;';
+                    img.onclick = function() { window.open(url, '_blank'); };
+                    photosDiv.appendChild(img);
+                }
+
+                // Limpiar input
+                var fileInput = document.getElementById('activity_' + activityKey + '_photoInput');
+                if (fileInput) fileInput.value = '';
+
+            } catch(e) {
+                console.error('Error subiendo foto de actividad:', e);
+                showSyncIndicator('❌ Error foto', 'error');
+                alert('Error al subir la foto. Intente de nuevo.');
+            }
+        }
+
         function renderActivityField(container, activity, turno = null) {
             if (!dailyLogs[currentDate] || !dailyLogs[currentDate].sections[currentSectionId]) {
                 console.error('Data not initialized!');
@@ -3302,7 +3529,8 @@
             const activityData = dailyLogs[currentDate].sections[currentSectionId].activities[activityKey];
 
             const fieldDiv = document.createElement('div');
-            const turnoLabel = turno ? ` (${turno === 'manana' ? 'Mañana' : 'Tarde'})` : '';
+            var _tl = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche', madrugada: 'Madrugada' };
+            const turnoLabel = turno ? ` (${_tl[turno] || turno})` : '';
 
             // Tag de usuario y hora
             const userTimeTag = activityData.user && activityData.timestamp
@@ -3353,6 +3581,14 @@
                     ${hasAlert ? `<div class="alert-message">${alertLabel}</div>` : ''}
                     ${activity.min != null && activity.max != null ? `<small style="color: #666;">${rangeLabel}</small>` : ''}
                     ${userTimeTag}
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Observaciones:</label>
+                        <input type="text" id="activity_${activityKey}_obs"
+                               value="${activityData.observations || ''}"
+                               placeholder="Opcional"
+                               onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
+                    </div>
+                    ${getPhotoBlockHTML(activityKey, activity.id, turno, activityData.photos)}
                 `;
             } else if (activity.type === 'nivel_aceite') {
                 // Campo especial para Nivel de Aceite con 4 niveles
@@ -3383,9 +3619,68 @@
                                placeholder="Opcional"
                                onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
                     </div>
+                    ${getPhotoBlockHTML(activityKey, activity.id, turno, activityData.photos)}
+                `;
+            } else if (activity.type === 'nivel') {
+                // Campo especial para Nivel (%) con dropdown de porcentajes y alarma configurable
+                const nivelValue = activityData.nivelValue;
+                const isCompleted = nivelValue !== null && nivelValue !== undefined;
+                // Obtener valor previo para alarma tipo "cambio" — buscar en cualquier turno/fecha
+                var prevNivel = null;
+                if (activity.alarmType === 'cambio') {
+                    prevNivel = getLastNivelValue(activity.id, currentSectionId, activityKey, currentDate);
+                } else {
+                    const nivelHistory = activityData.history || [];
+                    prevNivel = nivelHistory.length > 0 ? nivelHistory[nivelHistory.length - 1].nivelValue : null;
+                }
+                const hasAlert = isCompleted && checkNivelAlarm(activity, nivelValue, prevNivel);
+
+                fieldDiv.className = `activity-field ${isCompleted ? 'completed' : 'pending'}`;
+
+                // Construir opciones de porcentaje
+                let optionsHTML = '<option value="">-- Seleccionar nivel --</option>';
+                for (let p = 10; p <= 100; p += 10) {
+                    const emoji = p >= 80 ? '🟢' : (p >= 50 ? '🟡' : (p >= 30 ? '🟠' : '🔴'));
+                    optionsHTML += `<option value="${p}" ${nivelValue === p ? 'selected' : ''}>${emoji} ${p}%</option>`;
+                }
+
+                // Label de alarma configurada
+                let alarmLabel = '';
+                const at = activity.alarmType || 'none';
+                if (at === 'min' && activity.alarmMin != null) {
+                    alarmLabel = `<small style="color: #666;">Alarma si &lt; ${activity.alarmMin}%</small>`;
+                } else if (at === 'max' && activity.alarmMax != null) {
+                    alarmLabel = `<small style="color: #666;">Alarma si &gt; ${activity.alarmMax}%</small>`;
+                } else if (at === 'range' && activity.alarmMin != null && activity.alarmMax != null) {
+                    alarmLabel = `<small style="color: #666;">Rango normal: ${activity.alarmMin}% - ${activity.alarmMax}%</small>`;
+                } else if (at === 'cambio') {
+                    alarmLabel = `<small style="color: #666;">Alarma si cambia respecto al anterior</small>`;
+                }
+
+                const alertMsg = hasAlert ? `<div class="alert-message">${getNivelAlarmMessage(activity, nivelValue, prevNivel)}</div>` : '';
+
+                fieldDiv.innerHTML = `
+                    <label>${activity.name}${turnoLabel} (%):</label>
+                    <select id="activity_${activityKey}_nivel"
+                            class="${isCompleted ? 'completed' : 'pending'}"
+                            style="width: 100%; padding: 10px; border-radius: 5px; border: 2px solid ${isCompleted ? '#28a745' : '#ffc107'}; font-size: 14px;"
+                            onchange="updateNivelValue(${activity.id}, '${turno || ''}', this.value)">
+                        ${optionsHTML}
+                    </select>
+                    ${alertMsg}
+                    ${alarmLabel}
+                    ${userTimeTag}
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label>Observaciones:</label>
+                        <input type="text" id="activity_${activityKey}_obs"
+                               value="${activityData.observations || ''}"
+                               placeholder="Opcional"
+                               onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
+                    </div>
+                    ${getPhotoBlockHTML(activityKey, activity.id, turno, activityData.photos)}
                 `;
             } else {
-                // Chequeo OK / No OK
+                // Chequeo OK / FALLA
                 const status = activityData.status || '';
                 const isCompleted = status === 'ok' || status === 'no_ok';
                 const isAlert = status === 'no_ok';
@@ -3409,10 +3704,10 @@
                                    ${status === 'no_ok' ? 'checked' : ''}
                                    onchange="handleChequeoChange(${activity.id}, '${turno || ''}', 'no_ok', this.checked, '${activityKey}')"
                                    style="display:none;">
-                            <span style="font-size:16px; font-weight:bold; color:${status === 'no_ok' ? '#dc3545' : '#999'};">❌ No OK</span>
+                            <span style="font-size:16px; font-weight:bold; color:${status === 'no_ok' ? '#dc3545' : '#999'};">❌ FALLA</span>
                         </div>
                     </div>
-                    ${isAlert ? `<div class="alert-message">⚠️ Chequeo reportado como No OK</div>` : ''}
+                    ${isAlert ? `<div class="alert-message">⚠️ Chequeo reportado como FALLA</div>` : ''}
                     ${userTimeTag}
                     <div class="form-group">
                         <label>Observaciones${isAlert ? ' (describir falla):' : ':'}</label>
@@ -3421,16 +3716,29 @@
                                placeholder="${isAlert ? 'Obligatorio - Describir problema' : 'Opcional'}"
                                onchange="updateActivityObservations(${activity.id}, '${turno || ''}', this.value)">
                     </div>
+                    ${getPhotoBlockHTML(activityKey, activity.id, turno, activityData.photos)}
                 `;
             }
-            
+
             container.appendChild(fieldDiv);
         }
         
         async function updateOilLevel(activityId, turno, level) {
             const activityKey = turno ? `${activityId}_${turno}` : activityId;
             const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
-            
+
+            // Guardar historial si hay valor previo
+            try {
+                const snap = await database.ref(path).once('value');
+                const prev = snap.val();
+                if (prev && prev.oilLevel && prev.user) {
+                    const historyEntry = { oilLevel: prev.oilLevel, user: prev.user, timestamp: prev.timestamp };
+                    const currentHistory = prev.history || [];
+                    currentHistory.push(historyEntry);
+                    await database.ref(path).update({ history: currentHistory });
+                }
+            } catch(e) { console.error('Error guardando historial:', e); }
+
             await database.ref(path).update({
                 oilLevel: level || null,
                 user: level ? currentUser.fullName : null,
@@ -3486,6 +3794,149 @@
             }, 300);
         }
 
+        // ==================== NIVEL (%) — Helpers y Save ====================
+        // Busca el último nivelValue reportado para una actividad en cualquier turno/fecha
+        // excludeKey: activityKey actual (ej "5_manana"), excludeDate: fecha a excluir para ese key
+        function getLastNivelValue(activityId, sectionId, excludeKey, excludeDate) {
+            var dLogs = window.dailyLogs || {};
+            var candidates = []; // {nivelValue, timestamp}
+            var dates = Object.keys(dLogs).sort();
+            // Solo revisar los últimos 7 días
+            var recentDates = dates.slice(-7);
+            recentDates.forEach(function(dt) {
+                var secData = dLogs[dt] && dLogs[dt].sections && dLogs[dt].sections[sectionId];
+                if (!secData || !secData.activities) return;
+                var acts = secData.activities;
+                var keys = [activityId + '', activityId + '_manana', activityId + '_tarde', activityId + '_noche', activityId + '_madrugada'];
+                keys.forEach(function(k) {
+                    // Excluir solo el entry actual (mismo key Y misma fecha)
+                    if (k === excludeKey && dt === excludeDate) return;
+                    var data = acts[k];
+                    if (data && data.nivelValue !== null && data.nivelValue !== undefined && data.timestamp) {
+                        candidates.push({ nivelValue: data.nivelValue, timestamp: data.timestamp });
+                    }
+                    // También incluir historial (valores previos dentro del mismo entry)
+                    if (data && data.history && Array.isArray(data.history)) {
+                        data.history.forEach(function(h) {
+                            if (h.nivelValue !== null && h.nivelValue !== undefined && h.timestamp) {
+                                candidates.push({ nivelValue: h.nivelValue, timestamp: h.timestamp });
+                            }
+                        });
+                    }
+                });
+            });
+            if (candidates.length === 0) return null;
+            candidates.sort(function(a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+            return candidates[0].nivelValue;
+        }
+
+        function checkNivelAlarm(activity, value, prevValue) {
+            if (!activity || value === null || value === undefined) return false;
+            const at = activity.alarmType || 'none';
+            if (at === 'none') return false;
+            if (at === 'min' && activity.alarmMin != null) return value < activity.alarmMin;
+            if (at === 'max' && activity.alarmMax != null) return value > activity.alarmMax;
+            if (at === 'range') {
+                if (activity.alarmMin != null && value < activity.alarmMin) return true;
+                if (activity.alarmMax != null && value > activity.alarmMax) return true;
+            }
+            if (at === 'cambio') {
+                if (prevValue !== null && prevValue !== undefined && value !== prevValue) return true;
+            }
+            return false;
+        }
+
+        function getNivelAlarmMessage(activity, value, prevValue) {
+            const at = activity.alarmType || 'none';
+            if (at === 'min') return '⚠️ Nivel bajo - Por debajo del mínimo (' + activity.alarmMin + '%)';
+            if (at === 'max') return '⚠️ Nivel alto - Por encima del máximo (' + activity.alarmMax + '%)';
+            if (at === 'range') return '⚠️ Nivel fuera de rango (' + activity.alarmMin + '% - ' + activity.alarmMax + '%)';
+            if (at === 'cambio' && prevValue !== null && prevValue !== undefined) return '⚠️ Nivel cambió respecto al anterior (' + prevValue + '% → ' + value + '%)';
+            return '';
+        }
+
+        function toggleNivelAlarmFields() {
+            const alarmType = document.getElementById('nivelAlarmType').value;
+            document.getElementById('nivelAlarmMinField').style.display =
+                (alarmType === 'min' || alarmType === 'range') ? 'block' : 'none';
+            document.getElementById('nivelAlarmMaxField').style.display =
+                (alarmType === 'max' || alarmType === 'range') ? 'block' : 'none';
+        }
+
+        async function updateNivelValue(activityId, turno, nivelValue) {
+            const activityKey = turno ? `${activityId}_${turno}` : activityId;
+            const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
+
+            const parsedValue = nivelValue ? parseInt(nivelValue) : null;
+
+            // Guardar historial si hay valor previo
+            var prevNivelValue = null;
+            try {
+                const snap = await database.ref(path).once('value');
+                const prev = snap.val();
+                if (prev && prev.nivelValue !== null && prev.nivelValue !== undefined) {
+                    prevNivelValue = prev.nivelValue;
+                    if (prev.user) {
+                        const historyEntry = { nivelValue: prev.nivelValue, user: prev.user, timestamp: prev.timestamp };
+                        const currentHistory = prev.history || [];
+                        currentHistory.push(historyEntry);
+                        await database.ref(path).update({ history: currentHistory });
+                    }
+                }
+            } catch(e) { console.error('Error guardando historial:', e); }
+
+            await database.ref(path).update({
+                nivelValue: parsedValue,
+                user: parsedValue !== null ? currentUser.fullName : null,
+                timestamp: parsedValue !== null ? new Date().toISOString() : null
+            });
+
+            showSyncIndicator('💾 Guardando...', 'syncing');
+
+            // Actualizar DOM inmediatamente
+            const selectElement = document.getElementById(`activity_${activityKey}_nivel`);
+            if (selectElement) {
+                const fieldDiv = selectElement.closest('.activity-field');
+                const activity = window.activities.find(a => a.id == activityId);
+                // Para alarma "cambio", buscar último valor de cualquier turno
+                var alarmPrevValue = prevNivelValue;
+                if (activity && activity.alarmType === 'cambio') {
+                    alarmPrevValue = getLastNivelValue(activityId, currentSectionId, activityKey, currentDate);
+                }
+                const hasAlert = checkNivelAlarm(activity, parsedValue, alarmPrevValue);
+
+                if (parsedValue !== null) {
+                    fieldDiv.className = 'activity-field completed';
+                } else {
+                    fieldDiv.className = 'activity-field pending';
+                }
+
+                let alertDiv = fieldDiv.querySelector('.alert-message');
+                if (hasAlert) {
+                    const alertMsg = getNivelAlarmMessage(activity, parsedValue, alarmPrevValue);
+                    if (!alertDiv) {
+                        alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert-message';
+                        selectElement.insertAdjacentElement('afterend', alertDiv);
+                    }
+                    alertDiv.textContent = alertMsg;
+                } else {
+                    if (alertDiv) alertDiv.remove();
+                }
+
+                if (parsedValue !== null) {
+                    selectElement.style.border = '2px solid #28a745';
+                    selectElement.className = 'completed';
+                } else {
+                    selectElement.style.border = '2px solid #ffc107';
+                    selectElement.className = 'pending';
+                }
+            }
+
+            setTimeout(() => { renderSections(); }, 300);
+        }
+        // ==================== FIN NIVEL (%) ====================
+
         async function updateActivityValue(activityId, turno, value) {
             const activityKey = turno ? `${activityId}_${turno}` : activityId;
             const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
@@ -3500,7 +3951,19 @@
                     numValue = -Math.abs(numValue);
                 }
             }
-            
+
+            // Guardar historial si hay valor previo
+            try {
+                const snap = await database.ref(path).once('value');
+                const prev = snap.val();
+                if (prev && prev.value !== null && prev.value !== undefined && !isNaN(prev.value) && prev.user) {
+                    const historyEntry = { value: prev.value, user: prev.user, timestamp: prev.timestamp };
+                    const currentHistory = prev.history || [];
+                    currentHistory.push(historyEntry);
+                    await database.ref(path).update({ history: currentHistory });
+                }
+            } catch(e) { console.error('Error guardando historial:', e); }
+
             await database.ref(path).update({
                 value: numValue,
                 user: numValue !== null ? currentUser.fullName : null,
@@ -3518,7 +3981,7 @@
             }, 300);
         }
 
-        /** Maneja checkboxes OK / No OK mutuamente excluyentes */
+        /** Maneja checkboxes OK / FALLA mutuamente excluyentes */
         function handleChequeoChange(activityId, turno, status, checked, activityKey) {
             if (checked) {
                 // Desmarcar el otro checkbox
@@ -3532,7 +3995,19 @@
         async function updateActivityStatus(activityId, turno, status, checked) {
             const activityKey = turno ? `${activityId}_${turno}` : activityId;
             const path = `dailyLogs/${currentDate}/sections/${currentSectionId}/activities/${activityKey}`;
-            
+
+            // Guardar historial si hay valor previo
+            try {
+                const snap = await database.ref(path).once('value');
+                const prev = snap.val();
+                if (prev && prev.status && prev.user) {
+                    const historyEntry = { status: prev.status, user: prev.user, timestamp: prev.timestamp };
+                    const currentHistory = prev.history || [];
+                    currentHistory.push(historyEntry);
+                    await database.ref(path).update({ history: currentHistory });
+                }
+            } catch(e) { console.error('Error guardando historial:', e); }
+
             await database.ref(path).update({
                 status: checked ? status : null,
                 user: currentUser.fullName,
@@ -3994,12 +4469,46 @@
             var parts = [];
             if (data.user) parts.push(data.user);
             if (data.timestamp) { try { parts.push(new Date(data.timestamp).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})); } catch(e) {} }
-            return parts.length > 0 ? ' <small style="color:#999;">(' + parts.join(' · ') + ')</small>' : '';
+            var result = parts.length > 0 ? ' <small style="color:#999;">(' + parts.join(' · ') + ')</small>' : '';
+            if (data.observations && data.observations.trim()) {
+                result += '<br><small style="color:#666; font-style:italic; margin-left:8px;">📝 ' + data.observations + '</small>';
+            }
+            return result;
+        }
+
+        // Renderiza thumbnails de fotos de una actividad en reportes
+        function _rptPhotos(data) {
+            if (!data || !data.photos || data.photos.length === 0) return '';
+            var photos = Array.isArray(data.photos) ? data.photos : Object.values(data.photos);
+            if (photos.length === 0) return '';
+            var regId = window.registerPhotos(photos);
+            var label = photos.length === 1 ? '(📷 Foto)' : '(📷 ' + photos.length + ' Fotos)';
+            return ' <span style="cursor:pointer;color:#667eea;text-decoration:underline;font-size:12px;" onclick="window.openCarouselById(\'' + regId + '\',0)">' + label + '</span>';
+        }
+
+        // Renderiza historial de cambios previos de una actividad
+        function _rptHistory(data, type) {
+            if (!data || !data.history || !Array.isArray(data.history) || data.history.length === 0) return '';
+            var html = '';
+            var oilMap = {'full': 'Full', '3/4': '3/4', '1/2': '1/2', 'vacio': 'Vacío'};
+            data.history.forEach(function(h) {
+                var val = '';
+                if (type === 'parametros' && h.value !== undefined) val = h.value;
+                else if (type === 'nivel_aceite' && h.oilLevel) val = oilMap[h.oilLevel] || h.oilLevel;
+                else if (type === 'nivel' && h.nivelValue !== undefined) val = h.nivelValue + '%';
+                else if (type === 'chequeo' && h.status) val = h.status === 'ok' ? 'OK' : 'FALLA';
+                else return; // skip if no value
+                var parts = [];
+                if (h.user) parts.push(h.user);
+                if (h.timestamp) { try { parts.push(new Date(h.timestamp).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'})); } catch(e) {} }
+                html += '<br><small style="color:#999; font-style:italic; margin-left:8px;">🔄 Anterior: ' + val + (parts.length > 0 ? ' (' + parts.join(' · ') + ')' : '') + '</small>';
+            });
+            return html;
         }
 
         function renderDayReport(dateStr, isCurrentDay) {
             if (!dailyLogs[dateStr]) return '';
-            
+
             let reportHTML = '';
 
             // ========== 1. CARD MANTENIMIENTO ==========
@@ -4011,64 +4520,85 @@
                 var showInSummary = section.showInSummary || 'resumido';
                 if (showInSummary === 'no') return;
                 
-                var sectionActs = activities.filter(function(a) { return a.sectionId === section.id; });
+                var sectionActs = activities.filter(function(a) { return a.sectionId === section.id; }).sort(function(a, b) { return a.order - b.order; });
                 var sT = 0, sC = 0;
                 var dHTML = '';
-                
-                sectionActs.forEach(function(act) {
-                    if (act.frequency === '2 veces al dia') {
-                        sT += 2;
-                        var dm = dailyLogs[dateStr].sections[section.id].activities[act.id + '_manana'];
-                        var da = dailyLogs[dateStr].sections[section.id].activities[act.id + '_tarde'];
-                        
-                        if (act.type === 'parametros') {
-                            if (dm && dm.value !== null && dm.value !== undefined && dm.value !== '' && !isNaN(dm.value)) sC++;
-                            if (da && da.value !== null && da.value !== undefined && da.value !== '' && !isNaN(da.value)) sC++;
-                            if (dm && dm.value !== null && !isNaN(dm.value)) {
-                                var v = parseFloat(dm.value);
-                                var oor = (act.min != null && v < act.min) || (act.max != null && v > act.max);
-                                dHTML += '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (AM):</strong> ' + (oor ? '⚠️ ' : '') + dm.value + ' ' + (act.unit || '') + _rptUserTime(dm) + '</p>';
-                            }
-                            if (da && da.value !== null && !isNaN(da.value)) {
-                                var v2 = parseFloat(da.value);
-                                var oor2 = (act.min != null && v2 < act.min) || (act.max != null && v2 > act.max);
-                                dHTML += '<p style="' + (oor2 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ' (PM):</strong> ' + (oor2 ? '⚠️ ' : '') + da.value + ' ' + (act.unit || '') + _rptUserTime(da) + '</p>';
-                            }
-                        } else if (act.type === 'nivel_aceite') {
-                            if (dm && dm.oilLevel) sC++;
-                            if (da && da.oilLevel) sC++;
-                            var oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
-                            if (dm && dm.oilLevel) dHTML += '<p><strong>' + act.name + ' (AM):</strong> ' + (oilMap[dm.oilLevel] || dm.oilLevel) + _rptUserTime(dm) + '</p>';
-                            if (da && da.oilLevel) dHTML += '<p><strong>' + act.name + ' (PM):</strong> ' + (oilMap[da.oilLevel] || da.oilLevel) + _rptUserTime(da) + '</p>';
-                        } else {
-                            if (dm && (dm.status === 'ok' || dm.status === 'no_ok' || dm.oilLevel)) sC++;
-                            if (da && (da.status === 'ok' || da.status === 'no_ok' || da.oilLevel)) sC++;
-                            if (dm && dm.status === 'ok') dHTML += '<p><strong>' + act.name + ' (AM):</strong> ✓ OK' + _rptUserTime(dm) + '</p>';
-                            else if (dm && dm.status === 'no_ok') dHTML += '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + ' (AM):</strong> ❌ No OK' + _rptUserTime(dm) + '</p>';
-                            if (da && da.status === 'ok') dHTML += '<p><strong>' + act.name + ' (PM):</strong> ✓ OK' + _rptUserTime(da) + '</p>';
-                            else if (da && da.status === 'no_ok') dHTML += '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + ' (PM):</strong> ❌ No OK' + _rptUserTime(da) + '</p>';
+
+                // Helper: renderiza una línea de actividad para un dato/turno
+                function _rptActLine(act, d, label, actKey) {
+                    if (!d) return '';
+                    var oilMap = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
+                    var lbl = label ? ' (' + label + ')' : '';
+                    if (act.type === 'parametros') {
+                        if (d.value !== null && d.value !== undefined && d.value !== '' && !isNaN(d.value)) {
+                            var v = parseFloat(d.value);
+                            var oor = (act.min != null && v < act.min) || (act.max != null && v > act.max);
+                            return '<p style="' + (oor ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + lbl + ':</strong> ' + (oor ? '⚠️ ' : '') + d.value + ' ' + (act.unit || '') + _rptUserTime(d) + _rptHistory(d, 'parametros') + '</p>' + _rptPhotos(d);
                         }
-                    } else if (act.frequency === 'Diario') {
-                        sT += 1;
-                        var ad = dailyLogs[dateStr].sections[section.id].activities[act.id];
-                        if (act.type === 'parametros') {
-                            if (ad && ad.value !== null && !isNaN(ad.value)) { sC++;
-                                var v3 = parseFloat(ad.value);
-                                var oor3 = (act.min != null && v3 < act.min) || (act.max != null && v3 > act.max);
-                                dHTML += '<p style="' + (oor3 ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + ':</strong> ' + (oor3 ? '⚠️ ' : '') + ad.value + ' ' + (act.unit || '') + _rptUserTime(ad) + '</p>';
+                    } else if (act.type === 'nivel_aceite') {
+                        if (d.oilLevel) return '<p><strong>' + act.name + lbl + ':</strong> ' + (oilMap[d.oilLevel] || d.oilLevel) + _rptUserTime(d) + _rptHistory(d, 'nivel_aceite') + '</p>' + _rptPhotos(d);
+                    } else if (act.type === 'nivel') {
+                        if (d.nivelValue !== null && d.nivelValue !== undefined) {
+                            var pV = null;
+                            if (act.alarmType === 'cambio') {
+                                pV = getLastNivelValue(act.id, section.id, actKey || '', dateStr);
+                            } else {
+                                var hArr = d.history || [];
+                                pV = hArr.length > 0 ? hArr[hArr.length - 1].nivelValue : null;
                             }
-                        } else if (act.type === 'nivel_aceite') {
-                            if (ad && ad.oilLevel) { sC++;
-                                var oM = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'};
-                                dHTML += '<p><strong>' + act.name + ':</strong> ' + (oM[ad.oilLevel] || ad.oilLevel) + _rptUserTime(ad) + '</p>';
-                            }
-                        } else {
-                            if (ad && (ad.status === 'ok' || ad.status === 'no_ok')) { sC++;
-                                if (ad.status === 'ok') dHTML += '<p><strong>' + act.name + ':</strong> ✓ OK' + _rptUserTime(ad) + '</p>';
-                                else dHTML += '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + ':</strong> ❌ No OK' + _rptUserTime(ad) + '</p>';
-                            }
+                            var nA = checkNivelAlarm(act, d.nivelValue, pV);
+                            return '<p style="' + (nA ? 'color:#dc3545;font-weight:bold;' : '') + '"><strong>' + act.name + lbl + ':</strong> ' + (nA ? '⚠️ ' : '') + d.nivelValue + '%' + _rptUserTime(d) + _rptHistory(d, 'nivel') + '</p>' + _rptPhotos(d);
                         }
+                    } else {
+                        if (d.status === 'ok') return '<p><strong>' + act.name + lbl + ':</strong> ✓ OK' + _rptUserTime(d) + _rptHistory(d, 'chequeo') + '</p>' + _rptPhotos(d);
+                        if (d.status === 'no_ok') return '<p style="color:#dc3545;font-weight:bold;"><strong>' + act.name + lbl + ':</strong> ❌ FALLA' + _rptUserTime(d) + _rptHistory(d, 'chequeo') + '</p>' + _rptPhotos(d);
                     }
+                    return '';
+                }
+
+                // Helper: cuenta si una actividad está completada
+                function _isActCompleted(act, d) {
+                    if (!d) return false;
+                    if (act.type === 'parametros') return d.value !== null && d.value !== undefined && d.value !== '' && !isNaN(d.value);
+                    if (act.type === 'nivel_aceite') return !!d.oilLevel;
+                    if (act.type === 'nivel') return d.nivelValue !== null && d.nivelValue !== undefined;
+                    return d.status === 'ok' || d.status === 'no_ok';
+                }
+
+                // Separar actividades por frecuencia
+                var multiTurno = sectionActs.filter(function(a) { return isMultiTurno(a.frequency); });
+                var diario = sectionActs.filter(function(a) { return !isMultiTurno(a.frequency); });
+
+                // Contar totales
+                multiTurno.forEach(function(act) {
+                    var turnos = getActivityTurnos(act.frequency);
+                    sT += turnos.length;
+                    turnos.forEach(function(t) {
+                        var d = dailyLogs[dateStr].sections[section.id].activities[act.id + '_' + t];
+                        if (_isActCompleted(act, d)) sC++;
+                    });
+                });
+                diario.forEach(function(act) {
+                    sT += 1;
+                    var ad = dailyLogs[dateStr].sections[section.id].activities[act.id];
+                    if (_isActCompleted(act, ad)) sC++;
+                });
+
+                // Renderizar agrupado por turno
+                ALL_TURNOS.forEach(function(turno) {
+                    var actsForTurno = multiTurno.filter(function(a) { return getActivityTurnos(a.frequency).indexOf(turno) !== -1; });
+                    if (actsForTurno.length === 0) return;
+                    var ti = TURNO_INFO[turno];
+                    dHTML += '<div style="margin:6px 0 2px;padding:3px 6px;background:' + ti.bg + ';border-radius:4px;font-size:12px;font-weight:bold;color:' + ti.color + ';">' + ti.emoji + ' ' + ti.label + '</div>';
+                    actsForTurno.forEach(function(act) {
+                        var d = dailyLogs[dateStr].sections[section.id].activities[act.id + '_' + turno];
+                        dHTML += _rptActLine(act, d, '', act.id + '_' + turno);
+                    });
+                });
+                // ACTIVIDADES DIARIAS
+                diario.forEach(function(act) {
+                    var ad = dailyLogs[dateStr].sections[section.id].activities[act.id];
+                    dHTML += _rptActLine(act, ad, '', act.id + '');
                 });
                 
                 // Plan activities
@@ -4654,31 +5184,20 @@
 
                 sections.forEach(section => {
                     if (log.sections && log.sections[section.id]) {
-                        const sectionActs = activities.filter(a => a.sectionId === section.id && (a.frequency === '2 veces al dia' || a.frequency === 'Diario'));
-                        
+                        const sectionActs = activities.filter(a => a.sectionId === section.id).sort((a, b) => a.order - b.order);
+
                         sectionActs.forEach(activity => {
-                            if (activity.frequency === '2 veces al dia') {
-                                total += 2;
-                                const dm = log.sections[section.id].activities[`${activity.id}_manana`];
-                                const da = log.sections[section.id].activities[`${activity.id}_tarde`];
-                                if (dm) {
-                                    if (activity.type === 'parametros' && dm.value !== undefined && dm.value !== null && dm.value !== '' && !isNaN(dm.value)) completed++;
-                                    else if (activity.type === 'nivel_aceite' && dm.oilLevel) completed++;
-                                    else if (activity.type === 'chequeo' && (dm.status === 'ok' || dm.status === 'no_ok')) completed++;
-                                }
-                                if (da) {
-                                    if (activity.type === 'parametros' && da.value !== undefined && da.value !== null && da.value !== '' && !isNaN(da.value)) completed++;
-                                    else if (activity.type === 'nivel_aceite' && da.oilLevel) completed++;
-                                    else if (activity.type === 'chequeo' && (da.status === 'ok' || da.status === 'no_ok')) completed++;
-                                }
-                            } else if (activity.frequency === 'Diario') {
+                            var turnos = getActivityTurnos(activity.frequency);
+                            if (turnos.length > 0) {
+                                total += turnos.length;
+                                turnos.forEach(function(t) {
+                                    var d = log.sections[section.id].activities[`${activity.id}_${t}`];
+                                    if (_isFieldComplete(activity, d)) completed++;
+                                });
+                            } else {
                                 total += 1;
-                                const ad = log.sections[section.id].activities[activity.id];
-                                if (ad) {
-                                    if (activity.type === 'parametros' && ad.value !== undefined && ad.value !== null && ad.value !== '' && !isNaN(ad.value)) completed++;
-                                    else if (activity.type === 'nivel_aceite' && ad.oilLevel) completed++;
-                                    else if (activity.type === 'chequeo' && (ad.status === 'ok' || ad.status === 'no_ok')) completed++;
-                                }
+                                var ad = log.sections[section.id].activities[activity.id];
+                                if (_isFieldComplete(activity, ad)) completed++;
                             }
                         });
                     }
@@ -4861,87 +5380,105 @@
                 `;
                 
                 // Actividades de esta sección en esta fecha
-                const sectionActivities = window.activities.filter(a => a.sectionId === sectionId && (a.frequency === '2 veces al dia' || a.frequency === 'Diario'));
-                sectionActivities.forEach(activity => {
-                    const actData = log.sections[sectionId].activities;
-                    
-                    if (activity.frequency === '2 veces al dia') {
-                        const dataMorning = actData[`${activity.id}_manana`];
-                        const dataAfternoon = actData[`${activity.id}_tarde`];
-                        
-                        // MAÑANA
-                        if (dataMorning) {
-                            const userTag = dataMorning.user ? ` <small style="color: #666;">(${dataMorning.user})</small>` : '';
-                            const timeTag = dataMorning.timestamp ? ` <small style="color: #999;">${new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</small>` : '';
-                            
-                            if (activity.type === 'parametros' && dataMorning.value !== undefined && dataMorning.value !== null && dataMorning.value !== '' && !isNaN(dataMorning.value)) {
-                                const val = parseFloat(dataMorning.value);
-                                const outOfRange = activity.min != null && activity.max != null && (val < activity.min || val > activity.max);
-                                const style = outOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                html += `<p style="margin: 8px 0; ${style}"><strong>${activity.name} (Mañana):</strong> ${outOfRange ? '⚠️ ' : ''}${dataMorning.value} ${activity.unit || ''}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'nivel_aceite' && dataMorning.oilLevel) {
-                                const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataMorning.oilLevel] || dataMorning.oilLevel;
-                                const isLow = dataMorning.oilLevel === '1/2' || dataMorning.oilLevel === 'vacio';
-                                html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Mañana):</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'chequeo' && (dataMorning.status === 'ok' || dataMorning.status === 'no_ok')) {
-                                const chkOk = dataMorning.status === 'ok';
-                                html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Mañana):</strong> ${chkOk ? '✅ OK' : '❌ No OK'}${userTag}${timeTag}</p>`;
-                                if (!chkOk) html += `<p style="margin: 0 0 8px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataMorning.observations || 'Sin observación'}</p>`;
-                            } else if (dataMorning.incomplete) {
-                                html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
-                            } else {
-                                html += `<p style="margin: 8px 0; color: #999;"><strong>${activity.name} (Mañana):</strong> — Sin registro</p>`;
+                const sectionActivities = window.activities.filter(a => a.sectionId === sectionId && (isMultiTurno(a.frequency) || a.frequency === 'Diario')).sort((a, b) => a.order - b.order);
+                const actData = log.sections[sectionId].activities;
+                const multiTurno = sectionActivities.filter(a => isMultiTurno(a.frequency));
+                const diario = sectionActivities.filter(a => !isMultiTurno(a.frequency));
+
+                // --- Actividades multi-turno agrupadas por turno (dinámico) ---
+                if (multiTurno.length > 0) {
+                    ALL_TURNOS.forEach(function(turno) {
+                        var actsForTurno = multiTurno.filter(function(a) { return getActivityTurnos(a.frequency).indexOf(turno) !== -1; });
+                        if (actsForTurno.length === 0) return;
+                        var ti = TURNO_INFO[turno];
+                        html += `<h4 style="color:${ti.color};font-size:13px;margin:10px 0 5px;background:${ti.bg};padding:4px 8px;border-radius:4px;">${ti.emoji} ${ti.label}</h4>`;
+                        actsForTurno.forEach(activity => {
+                            const turnoData = actData[`${activity.id}_${turno}`];
+                            if (turnoData) {
+                                const userTag = turnoData.user ? ` <small style="color: #666;">(${turnoData.user})</small>` : '';
+                                const timeTag = turnoData.timestamp ? ` <small style="color: #999;">${new Date(turnoData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</small>` : '';
+
+                                if (activity.type === 'parametros' && turnoData.value !== undefined && turnoData.value !== null && turnoData.value !== '' && !isNaN(turnoData.value)) {
+                                    const val = parseFloat(turnoData.value);
+                                    const outOfRange = activity.min != null && activity.max != null && (val < activity.min || val > activity.max);
+                                    const style = outOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                    html += `<p style="margin: 8px 0; ${style}"><strong>${activity.name}:</strong> ${outOfRange ? '⚠️ ' : ''}${turnoData.value} ${activity.unit || ''}${userTag}${timeTag}</p>`;
+                                    if (turnoData.observations) html += `<p style="margin: 0 0 8px 15px; color: #666; font-size: 13px; font-style:italic;">📝 ${turnoData.observations}</p>`;
+                                    html += _rptHistory(turnoData, 'parametros');
+                                    html += _rptPhotos(turnoData);
+                                } else if (activity.type === 'nivel_aceite' && turnoData.oilLevel) {
+                                    const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[turnoData.oilLevel] || turnoData.oilLevel;
+                                    const isLow = turnoData.oilLevel === '1/2' || turnoData.oilLevel === 'vacio';
+                                    html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
+                                    if (turnoData.observations) html += `<p style="margin: 0 0 8px 15px; color: #666; font-size: 13px; font-style:italic;">📝 ${turnoData.observations}</p>`;
+                                    html += _rptHistory(turnoData, 'nivel_aceite');
+                                    html += _rptPhotos(turnoData);
+                                } else if (activity.type === 'nivel' && turnoData.nivelValue !== null && turnoData.nivelValue !== undefined) {
+                                    var _pvt = null;
+                                    if (activity.alarmType === 'cambio') { _pvt = getLastNivelValue(activity.id, sectionId, activity.id + '_' + turno, date); }
+                                    else { const _ht = turnoData.history || []; _pvt = _ht.length > 0 ? _ht[_ht.length-1].nivelValue : null; }
+                                    const nAlarm = checkNivelAlarm(activity, turnoData.nivelValue, _pvt);
+                                    html += `<p style="margin: 8px 0; ${nAlarm ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${nAlarm ? '⚠️ ' : ''}${turnoData.nivelValue}%${userTag}${timeTag}</p>`;
+                                    if (turnoData.observations) html += `<p style="margin: 0 0 8px 15px; color: #666; font-size: 13px; font-style:italic;">📝 ${turnoData.observations}</p>`;
+                                    html += _rptHistory(turnoData, 'nivel');
+                                    html += _rptPhotos(turnoData);
+                                } else if (activity.type === 'chequeo' && (turnoData.status === 'ok' || turnoData.status === 'no_ok')) {
+                                    const chkOk = turnoData.status === 'ok';
+                                    html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${chkOk ? '✅ OK' : '❌ FALLA'}${userTag}${timeTag}</p>`;
+                                    if (turnoData.observations) html += `<p style="margin: 0 0 8px 15px; color: ${!chkOk ? '#dc3545' : '#666'}; font-size: 13px; ${chkOk ? 'font-style:italic;' : ''}">📝 ${turnoData.observations}</p>`;
+                                    html += _rptHistory(turnoData, 'chequeo');
+                                    html += _rptPhotos(turnoData);
+                                } else if (turnoData.incomplete) {
+                                    html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                } else {
+                                    html += `<p style="margin: 8px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                }
                             }
-                        }
-                        
-                        // TARDE
-                        if (dataAfternoon) {
-                            const userTag = dataAfternoon.user ? ` <small style="color: #666;">(${dataAfternoon.user})</small>` : '';
-                            const timeTag = dataAfternoon.timestamp ? ` <small style="color: #999;">${new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</small>` : '';
-                            
-                            if (activity.type === 'parametros' && dataAfternoon.value !== undefined && dataAfternoon.value !== null && dataAfternoon.value !== '' && !isNaN(dataAfternoon.value)) {
-                                const val = parseFloat(dataAfternoon.value);
-                                const outOfRange = activity.min != null && activity.max != null && (val < activity.min || val > activity.max);
-                                const style = outOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                html += `<p style="margin: 8px 0; ${style}"><strong>${activity.name} (Tarde):</strong> ${outOfRange ? '⚠️ ' : ''}${dataAfternoon.value} ${activity.unit || ''}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'nivel_aceite' && dataAfternoon.oilLevel) {
-                                const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataAfternoon.oilLevel] || dataAfternoon.oilLevel;
-                                const isLow = dataAfternoon.oilLevel === '1/2' || dataAfternoon.oilLevel === 'vacio';
-                                html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Tarde):</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'chequeo' && (dataAfternoon.status === 'ok' || dataAfternoon.status === 'no_ok')) {
-                                const chkOk = dataAfternoon.status === 'ok';
-                                html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name} (Tarde):</strong> ${chkOk ? '✅ OK' : '❌ No OK'}${userTag}${timeTag}</p>`;
-                                if (!chkOk) html += `<p style="margin: 0 0 8px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataAfternoon.observations || 'Sin observación'}</p>`;
-                            } else if (dataAfternoon.incomplete) {
-                                html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
-                            } else {
-                                html += `<p style="margin: 8px 0; color: #999;"><strong>${activity.name} (Tarde):</strong> — Sin registro</p>`;
-                            }
-                        }
-                    } else if (activity.frequency === 'Diario') {
-                        const activityData = actData[activity.id];
-                        if (activityData) {
-                            const userTag = activityData.user ? ` <small style="color: #666;">(${activityData.user})</small>` : '';
-                            const timeTag = activityData.timestamp ? ` <small style="color: #999;">${new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</small>` : '';
-                            
-                            if (activity.type === 'parametros' && activityData.value !== undefined && activityData.value !== null && activityData.value !== '' && !isNaN(activityData.value)) {
-                                const val = parseFloat(activityData.value);
-                                const outOfRange = activity.min != null && activity.max != null && (val < activity.min || val > activity.max);
-                                const style = outOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                html += `<p style="margin: 8px 0; ${style}"><strong>${activity.name}:</strong> ${outOfRange ? '⚠️ ' : ''}${activityData.value} ${activity.unit || ''}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'nivel_aceite' && activityData.oilLevel) {
-                                const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[activityData.oilLevel] || activityData.oilLevel;
-                                const isLow = activityData.oilLevel === '1/2' || activityData.oilLevel === 'vacio';
-                                html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
-                            } else if (activity.type === 'chequeo' && (activityData.status === 'ok' || activityData.status === 'no_ok')) {
-                                const chkOk = activityData.status === 'ok';
-                                html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${chkOk ? '✅ OK' : '❌ No OK'}${userTag}${timeTag}</p>`;
-                                if (!chkOk) html += `<p style="margin: 0 0 8px 15px; color: #dc3545; font-size: 13px;">⚠️ ${activityData.observations || 'Sin observación'}</p>`;
-                            } else if (activityData.incomplete) {
-                                html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
-                            } else {
-                                html += `<p style="margin: 8px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
-                            }
+                        });
+                    });
+                }
+
+                // --- Actividades "Diario" ---
+                diario.forEach(activity => {
+                    const activityData = actData[activity.id];
+                    if (activityData) {
+                        const userTag = activityData.user ? ` <small style="color: #666;">(${activityData.user})</small>` : '';
+                        const timeTag = activityData.timestamp ? ` <small style="color: #999;">${new Date(activityData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}</small>` : '';
+
+                        if (activity.type === 'parametros' && activityData.value !== undefined && activityData.value !== null && activityData.value !== '' && !isNaN(activityData.value)) {
+                            const val = parseFloat(activityData.value);
+                            const outOfRange = activity.min != null && activity.max != null && (val < activity.min || val > activity.max);
+                            const style = outOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                            html += `<p style="margin: 8px 0; ${style}"><strong>${activity.name}:</strong> ${outOfRange ? '⚠️ ' : ''}${activityData.value} ${activity.unit || ''}${userTag}${timeTag}</p>`;
+                            if (activityData.observations) html += `<p style="margin: 0 0 8px 15px; color: #666; font-size: 13px; font-style:italic;">📝 ${activityData.observations}</p>`;
+                            html += _rptHistory(activityData, 'parametros');
+                            html += _rptPhotos(activityData);
+                        } else if (activity.type === 'nivel_aceite' && activityData.oilLevel) {
+                            const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[activityData.oilLevel] || activityData.oilLevel;
+                            const isLow = activityData.oilLevel === '1/2' || activityData.oilLevel === 'vacio';
+                            html += `<p style="margin: 8px 0; ${isLow ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${isLow ? '⚠️ ' : ''}${oilText}${userTag}${timeTag}</p>`;
+                            if (activityData.observations) html += `<p style="margin: 0 0 8px 15px; color: #666; font-size: 13px; font-style:italic;">📝 ${activityData.observations}</p>`;
+                            html += _rptHistory(activityData, 'nivel_aceite');
+                            html += _rptPhotos(activityData);
+                        } else if (activity.type === 'nivel' && activityData.nivelValue !== null && activityData.nivelValue !== undefined) {
+                            var _pvd = null;
+                            if (activity.alarmType === 'cambio') { _pvd = getLastNivelValue(activity.id, sectionId, activity.id + '', date); }
+                            else { const _hd = activityData.history || []; _pvd = _hd.length > 0 ? _hd[_hd.length-1].nivelValue : null; }
+                            const nAlarm = checkNivelAlarm(activity, activityData.nivelValue, _pvd);
+                            html += `<p style="margin: 8px 0; ${nAlarm ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${nAlarm ? '⚠️ ' : ''}${activityData.nivelValue}%${userTag}${timeTag}</p>`;
+                            if (activityData.observations) html += `<p style="margin: 0 0 8px 15px; color: #666; font-size: 13px; font-style:italic;">📝 ${activityData.observations}</p>`;
+                            html += _rptHistory(activityData, 'nivel');
+                            html += _rptPhotos(activityData);
+                        } else if (activity.type === 'chequeo' && (activityData.status === 'ok' || activityData.status === 'no_ok')) {
+                            const chkOk = activityData.status === 'ok';
+                            html += `<p style="margin: 8px 0; ${!chkOk ? 'color: #dc3545; font-weight: bold;' : ''}"><strong>${activity.name}:</strong> ${chkOk ? '✅ OK' : '❌ FALLA'}${userTag}${timeTag}</p>`;
+                            if (activityData.observations) html += `<p style="margin: 0 0 8px 15px; color: ${!chkOk ? '#dc3545' : '#666'}; font-size: 13px; ${chkOk ? 'font-style:italic;' : ''}">📝 ${activityData.observations}</p>`;
+                            html += _rptHistory(activityData, 'chequeo');
+                            html += _rptPhotos(activityData);
+                        } else if (activityData.incomplete) {
+                            html += `<p style="margin: 8px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                        } else {
+                            html += `<p style="margin: 8px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
                         }
                     }
                 });
@@ -5043,144 +5580,159 @@
                 sections.forEach(section => {
                     if (!log.sections || !log.sections[section.id]) return;
                     
-                    const sectionActivities = activities.filter(a => a.sectionId === section.id && (a.frequency === '2 veces al dia' || a.frequency === 'Diario'));
-                    
-                    if (sectionActivities.length === 0) return;
-                    
-                    let sectionHTML = '';
-                    
-                    sectionActivities.forEach(activity => {
-                        if (activity.frequency === '2 veces al dia') {
-                            const dataMorning = log.sections[section.id].activities[`${activity.id}_manana`];
-                            const dataAfternoon = log.sections[section.id].activities[`${activity.id}_tarde`];
-                            
-                            // === MAÑANA ===
-                            if (dataMorning) {
-                                const userInfo = dataMorning.user || '';
-                                const timeInfo = dataMorning.timestamp ? new Date(dataMorning.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const metaInfo = userInfo || timeInfo ? ` <small style="color: #999;">(${userInfo}${userInfo && timeInfo ? ' - ' : ''}${timeInfo})</small>` : '';
-                                
-                                if (activity.type === 'parametros') {
-                                    if (dataMorning.value !== undefined && dataMorning.value !== null && dataMorning.value !== '' && !isNaN(dataMorning.value)) {
-                                        const value = parseFloat(dataMorning.value);
-                                        const isOutOfRange = activity.min != null && activity.max != null && (value < activity.min || value > activity.max);
-                                        const alertSymbol = isOutOfRange ? '⚠️ ' : '';
-                                        const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                        sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Mañana):</strong> ${alertSymbol}${dataMorning.value} ${activity.unit || ''}${metaInfo}</p>`;
-                                    } else if (dataMorning.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name} (Mañana):</strong> — Sin registro</p>`;
-                                    }
-                                } else if (activity.type === 'nivel_aceite') {
-                                    if (dataMorning.oilLevel) {
-                                        const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataMorning.oilLevel] || dataMorning.oilLevel;
-                                        const hasAlert = dataMorning.oilLevel === '1/2' || dataMorning.oilLevel === 'vacio';
-                                        const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
-                                        sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Mañana):</strong> ${hasAlert ? '⚠️ ' : ''}${oilText}${metaInfo}</p>`;
-                                    } else if (dataMorning.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name} (Mañana):</strong> — Sin registro</p>`;
-                                    }
-                                } else if (activity.type === 'chequeo') {
-                                    if (dataMorning.status === 'ok') {
-                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Mañana):</strong> ✅ OK${metaInfo}</p>`;
-                                    } else if (dataMorning.status === 'no_ok') {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ❌ No OK${metaInfo}</p>`;
-                                        if (dataMorning.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataMorning.observations}</p>`;
-                                    } else if (dataMorning.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Mañana):</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name} (Mañana):</strong> — Sin registro</p>`;
-                                    }
-                                }
-                            }
+                    const sectionActivities = activities.filter(a => a.sectionId === section.id).sort((a, b) => a.order - b.order);
 
-                            // === TARDE ===
-                            if (dataAfternoon) {
-                                const userInfo = dataAfternoon.user || '';
-                                const timeInfo = dataAfternoon.timestamp ? new Date(dataAfternoon.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const metaInfo = userInfo || timeInfo ? ` <small style="color: #999;">(${userInfo}${userInfo && timeInfo ? ' - ' : ''}${timeInfo})</small>` : '';
-                                
-                                if (activity.type === 'parametros') {
-                                    if (dataAfternoon.value !== undefined && dataAfternoon.value !== null && dataAfternoon.value !== '' && !isNaN(dataAfternoon.value)) {
-                                        const value = parseFloat(dataAfternoon.value);
-                                        const isOutOfRange = activity.min != null && activity.max != null && (value < activity.min || value > activity.max);
-                                        const alertSymbol = isOutOfRange ? '⚠️ ' : '';
-                                        const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                        sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Tarde):</strong> ${alertSymbol}${dataAfternoon.value} ${activity.unit || ''}${metaInfo}</p>`;
-                                    } else if (dataAfternoon.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name} (Tarde):</strong> — Sin registro</p>`;
+                    if (sectionActivities.length === 0) return;
+
+                    let sectionHTML = '';
+
+                    // Separar actividades por frecuencia
+                    const multiTurno = sectionActivities.filter(a => isMultiTurno(a.frequency));
+                    const diario = sectionActivities.filter(a => !isMultiTurno(a.frequency));
+
+                    // === ACTIVIDADES MULTI-TURNO (agrupadas por turno dinámico) ===
+                    if (multiTurno.length > 0) {
+                        ALL_TURNOS.forEach(function(turno) {
+                            var actsForTurno = multiTurno.filter(function(a) { return getActivityTurnos(a.frequency).indexOf(turno) !== -1; });
+                            if (actsForTurno.length === 0) return;
+                            var ti = TURNO_INFO[turno];
+                            sectionHTML += '<div style="margin:6px 0 2px;padding:3px 6px;background:' + ti.bg + ';border-radius:4px;font-size:12px;font-weight:bold;color:' + ti.color + ';">' + ti.emoji + ' ' + ti.label + '</div>';
+                            actsForTurno.forEach(activity => {
+                                const turnoData = log.sections[section.id].activities[`${activity.id}_${turno}`];
+                                if (turnoData) {
+                                    const userInfo = turnoData.user || '';
+                                    const timeInfo = turnoData.timestamp ? new Date(turnoData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                                    const metaInfo = userInfo || timeInfo ? ` <small style="color: #999;">(${userInfo}${userInfo && timeInfo ? ' - ' : ''}${timeInfo})</small>` : '';
+
+                                    if (activity.type === 'parametros') {
+                                        if (turnoData.value !== undefined && turnoData.value !== null && turnoData.value !== '' && !isNaN(turnoData.value)) {
+                                            const value = parseFloat(turnoData.value);
+                                            const isOutOfRange = activity.min != null && activity.max != null && (value < activity.min || value > activity.max);
+                                            const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                                            const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                            sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${alertSymbol}${turnoData.value} ${activity.unit || ''}${metaInfo}</p>`;
+                                            sectionHTML += _rptHistory(turnoData, 'parametros');
+                                            sectionHTML += _rptPhotos(turnoData);
+                                        } else if (turnoData.incomplete) {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                        } else {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                        }
+                                    } else if (activity.type === 'nivel_aceite') {
+                                        if (turnoData.oilLevel) {
+                                            const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[turnoData.oilLevel] || turnoData.oilLevel;
+                                            const hasAlert = turnoData.oilLevel === '1/2' || turnoData.oilLevel === 'vacio';
+                                            const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
+                                            sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${hasAlert ? '⚠️ ' : ''}${oilText}${metaInfo}</p>`;
+                                            sectionHTML += _rptHistory(turnoData, 'nivel_aceite');
+                                            sectionHTML += _rptPhotos(turnoData);
+                                        } else if (turnoData.incomplete) {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                        } else {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                        }
+                                    } else if (activity.type === 'nivel') {
+                                        if (turnoData.nivelValue !== null && turnoData.nivelValue !== undefined) {
+                                            var _pvt2 = null;
+                                            if (activity.alarmType === 'cambio') { _pvt2 = getLastNivelValue(activity.id, section.id, activity.id + '_' + turno, date); }
+                                            else { const _ht2 = turnoData.history || []; _pvt2 = _ht2.length > 0 ? _ht2[_ht2.length-1].nivelValue : null; }
+                                            const nAlarm = checkNivelAlarm(activity, turnoData.nivelValue, _pvt2);
+                                            const textColor = nAlarm ? 'color: #dc3545; font-weight: bold;' : '';
+                                            sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${nAlarm ? '⚠️ ' : ''}${turnoData.nivelValue}%${metaInfo}</p>`;
+                                            sectionHTML += _rptHistory(turnoData, 'nivel');
+                                            sectionHTML += _rptPhotos(turnoData);
+                                        } else if (turnoData.incomplete) {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                        } else {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                        }
+                                    } else if (activity.type === 'chequeo') {
+                                        if (turnoData.status === 'ok') {
+                                            sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name}:</strong> ✅ OK${metaInfo}</p>`;
+                                            sectionHTML += _rptHistory(turnoData, 'chequeo');
+                                            sectionHTML += _rptPhotos(turnoData);
+                                        } else if (turnoData.status === 'no_ok') {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ❌ FALLA${metaInfo}</p>`;
+                                            if (turnoData.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${turnoData.observations}</p>`;
+                                            sectionHTML += _rptHistory(turnoData, 'chequeo');
+                                            sectionHTML += _rptPhotos(turnoData);
+                                        } else if (turnoData.incomplete) {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                        } else {
+                                            sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                        }
                                     }
-                                } else if (activity.type === 'nivel_aceite') {
-                                    if (dataAfternoon.oilLevel) {
-                                        const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[dataAfternoon.oilLevel] || dataAfternoon.oilLevel;
-                                        const hasAlert = dataAfternoon.oilLevel === '1/2' || dataAfternoon.oilLevel === 'vacio';
-                                        const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
-                                        sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name} (Tarde):</strong> ${hasAlert ? '⚠️ ' : ''}${oilText}${metaInfo}</p>`;
-                                    } else if (dataAfternoon.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name} (Tarde):</strong> — Sin registro</p>`;
-                                    }
-                                } else if (activity.type === 'chequeo') {
-                                    if (dataAfternoon.status === 'ok') {
-                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name} (Tarde):</strong> ✅ OK${metaInfo}</p>`;
-                                    } else if (dataAfternoon.status === 'no_ok') {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ❌ No OK${metaInfo}</p>`;
-                                        if (dataAfternoon.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${dataAfternoon.observations}</p>`;
-                                    } else if (dataAfternoon.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name} (Tarde):</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name} (Tarde):</strong> — Sin registro</p>`;
-                                    }
+                                } else {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
                                 }
-                            }
-                        } else if (activity.frequency === 'Diario') {
-                            // === ACTIVIDADES DIARIAS ===
-                            const actData = log.sections[section.id].activities[activity.id];
-                            if (actData) {
-                                const userInfo = actData.user || '';
-                                const timeInfo = actData.timestamp ? new Date(actData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
-                                const metaInfo = userInfo || timeInfo ? ` <small style="color: #999;">(${userInfo}${userInfo && timeInfo ? ' - ' : ''}${timeInfo})</small>` : '';
-                                
-                                if (activity.type === 'parametros') {
-                                    if (actData.value !== undefined && actData.value !== null && actData.value !== '' && !isNaN(actData.value)) {
-                                        const value = parseFloat(actData.value);
-                                        const isOutOfRange = activity.min != null && activity.max != null && (value < activity.min || value > activity.max);
-                                        const alertSymbol = isOutOfRange ? '⚠️ ' : '';
-                                        const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
-                                        sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${alertSymbol}${actData.value} ${activity.unit || ''}${metaInfo}</p>`;
-                                    } else if (actData.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
-                                    }
-                                } else if (activity.type === 'nivel_aceite') {
-                                    if (actData.oilLevel) {
-                                        const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[actData.oilLevel] || actData.oilLevel;
-                                        const hasAlert = actData.oilLevel === '1/2' || actData.oilLevel === 'vacio';
-                                        const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
-                                        sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${hasAlert ? '⚠️ ' : ''}${oilText}${metaInfo}</p>`;
-                                    } else if (actData.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
-                                    }
-                                } else if (activity.type === 'chequeo') {
-                                    if (actData.status === 'ok') {
-                                        sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name}:</strong> ✅ OK${metaInfo}</p>`;
-                                    } else if (actData.status === 'no_ok') {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ❌ No OK${metaInfo}</p>`;
-                                        if (actData.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${actData.observations}</p>`;
-                                    } else if (actData.incomplete) {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
-                                    } else {
-                                        sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
-                                    }
+                            });
+                        });
+                    }
+
+                    // === ACTIVIDADES DIARIAS ===
+                    diario.forEach(activity => {
+                        const actData = log.sections[section.id].activities[activity.id];
+                        if (actData) {
+                            const userInfo = actData.user || '';
+                            const timeInfo = actData.timestamp ? new Date(actData.timestamp).toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'}) : '';
+                            const metaInfo = userInfo || timeInfo ? ` <small style="color: #999;">(${userInfo}${userInfo && timeInfo ? ' - ' : ''}${timeInfo})</small>` : '';
+
+                            if (activity.type === 'parametros') {
+                                if (actData.value !== undefined && actData.value !== null && actData.value !== '' && !isNaN(actData.value)) {
+                                    const value = parseFloat(actData.value);
+                                    const isOutOfRange = activity.min != null && activity.max != null && (value < activity.min || value > activity.max);
+                                    const alertSymbol = isOutOfRange ? '⚠️ ' : '';
+                                    const textColor = isOutOfRange ? 'color: #dc3545; font-weight: bold;' : '';
+                                    sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${alertSymbol}${actData.value} ${activity.unit || ''}${metaInfo}</p>`;
+                                    sectionHTML += _rptHistory(actData, 'parametros');
+                                    sectionHTML += _rptPhotos(actData);
+                                } else if (actData.incomplete) {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                } else {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                }
+                            } else if (activity.type === 'nivel_aceite') {
+                                if (actData.oilLevel) {
+                                    const oilText = {'full': '🟢 Full', '3/4': '🟡 3/4', '1/2': '🟠 1/2', 'vacio': '🔴 Vacío'}[actData.oilLevel] || actData.oilLevel;
+                                    const hasAlert = actData.oilLevel === '1/2' || actData.oilLevel === 'vacio';
+                                    const textColor = hasAlert ? 'color: #dc3545; font-weight: bold;' : '';
+                                    sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${hasAlert ? '⚠️ ' : ''}${oilText}${metaInfo}</p>`;
+                                    sectionHTML += _rptHistory(actData, 'nivel_aceite');
+                                    sectionHTML += _rptPhotos(actData);
+                                } else if (actData.incomplete) {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                } else {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                }
+                            } else if (activity.type === 'nivel') {
+                                if (actData.nivelValue !== null && actData.nivelValue !== undefined) {
+                                    var _pvd2 = null;
+                                    if (activity.alarmType === 'cambio') { _pvd2 = getLastNivelValue(activity.id, section.id, activity.id + '', date); }
+                                    else { const _hd2 = actData.history || []; _pvd2 = _hd2.length > 0 ? _hd2[_hd2.length-1].nivelValue : null; }
+                                    const nAlarm = checkNivelAlarm(activity, actData.nivelValue, _pvd2);
+                                    const textColor = nAlarm ? 'color: #dc3545; font-weight: bold;' : '';
+                                    sectionHTML += `<p style="margin: 5px 0; ${textColor}"><strong>${activity.name}:</strong> ${nAlarm ? '⚠️ ' : ''}${actData.nivelValue}%${metaInfo}</p>`;
+                                    sectionHTML += _rptHistory(actData, 'nivel');
+                                    sectionHTML += _rptPhotos(actData);
+                                } else if (actData.incomplete) {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                } else {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
+                                }
+                            } else if (activity.type === 'chequeo') {
+                                if (actData.status === 'ok') {
+                                    sectionHTML += `<p style="margin: 5px 0;"><strong>${activity.name}:</strong> ✅ OK${metaInfo}</p>`;
+                                    sectionHTML += _rptHistory(actData, 'chequeo');
+                                    sectionHTML += _rptPhotos(actData);
+                                } else if (actData.status === 'no_ok') {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ❌ FALLA${metaInfo}</p>`;
+                                    if (actData.observations) sectionHTML += `<p style="margin: 0 0 5px 15px; color: #dc3545; font-size: 13px;">⚠️ ${actData.observations}</p>`;
+                                    sectionHTML += _rptHistory(actData, 'chequeo');
+                                    sectionHTML += _rptPhotos(actData);
+                                } else if (actData.incomplete) {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #dc3545; font-weight: bold;"><strong>${activity.name}:</strong> ⚠️ No realizada</p>`;
+                                } else {
+                                    sectionHTML += `<p style="margin: 5px 0; color: #999;"><strong>${activity.name}:</strong> — Sin registro</p>`;
                                 }
                             }
                         }
@@ -5303,11 +5855,12 @@
                 </div>
             `;
             
-            // Mostrar tab de usuarios por defecto
-            showConfigTab('users');
+            // Mostrar tab actual o usuarios por defecto
+            showConfigTab(window._currentConfigTab || 'users');
         }
         
         function showConfigTab(tabName) {
+            window._currentConfigTab = tabName;
             // Actualizar botones
             ['users', 'sections', 'activities', 'novedades', 'operadores', 'clientes', 'precios'].forEach(tab => {
                 const btn = document.getElementById(`configTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
@@ -5433,7 +5986,16 @@
             const canViewHistorial = document.getElementById('newUserCanViewHistorial').checked;
             const canViewConfig = document.getElementById('newUserCanViewConfig').checked;
             const canApprovePlan = document.getElementById('newUserCanApprovePlan').checked;
-            
+
+            // Leer permisos de producción
+            const canStartProd = document.getElementById('newUserCanStartProd').checked;
+            const canPartialLoad = document.getElementById('newUserCanPartialLoad').checked;
+            const canEndProd = document.getElementById('newUserCanEndProd').checked;
+            const canConfirmProd = document.getElementById('newUserCanConfirmProd').checked;
+
+            // Leer permisos de ventas
+            const canDeleteSale = document.getElementById('newUserCanDeleteSale').checked;
+
             // Validaciones
             if (!fullName) {
                 alert('⚠️ Ingresa el nombre completo');
@@ -5488,6 +6050,15 @@
                 planPermissions: {
                     canView: permissions.includes('plan'),
                     canApprove: canApprovePlan
+                },
+                productionPermissions: {
+                    canStartProduction: canStartProd,
+                    canPartialLoad: canPartialLoad,
+                    canEndProduction: canEndProd,
+                    canConfirmProduction: canConfirmProd
+                },
+                salesPermissions: {
+                    canDeleteSale: canDeleteSale
                 }
             };
 
@@ -5527,7 +6098,22 @@
             // Cargar permiso especial
             const canApprove = user.planPermissions?.canApprove || false;
             document.getElementById('editUserCanApprovePlan').checked = canApprove;
-            
+
+            // Cargar permisos de producción
+            const hasProdTab = perms.includes('produccion');
+            document.getElementById('editProdSubPerms').style.display = hasProdTab ? 'block' : 'none';
+            const pp = user.productionPermissions || {};
+            document.getElementById('editUserCanStartProd').checked = pp.canStartProduction === true;
+            document.getElementById('editUserCanPartialLoad').checked = pp.canPartialLoad === true;
+            document.getElementById('editUserCanEndProd').checked = pp.canEndProduction === true;
+            document.getElementById('editUserCanConfirmProd').checked = pp.canConfirmProduction === true;
+
+            // Cargar permisos de ventas
+            const hasVentasTab = perms.includes('ventas');
+            document.getElementById('editSalesSubPerms').style.display = hasVentasTab ? 'block' : 'none';
+            const sp = user.salesPermissions || {};
+            document.getElementById('editUserCanDeleteSale').checked = sp.canDeleteSale === true;
+
             document.getElementById('editUserModal').style.display = 'block';
         }
         
@@ -5551,6 +6137,15 @@
             const canViewHistorial = document.getElementById('editUserCanViewHistorial').checked;
             const canViewConfig = document.getElementById('editUserCanViewConfig').checked;
             const canApprovePlan = document.getElementById('editUserCanApprovePlan').checked;
+
+            // Leer permisos de producción
+            const canStartProd = document.getElementById('editUserCanStartProd').checked;
+            const canPartialLoad = document.getElementById('editUserCanPartialLoad').checked;
+            const canEndProd = document.getElementById('editUserCanEndProd').checked;
+            const canConfirmProd = document.getElementById('editUserCanConfirmProd').checked;
+
+            // Leer permisos de ventas
+            const canDeleteSale = document.getElementById('editUserCanDeleteSale').checked;
 
             const userIndex = users.findIndex(u => u.id === userId);
             if (userIndex === -1) {
@@ -5608,7 +6203,16 @@
                 canView: permissions.includes('plan'),
                 canApprove: canApprovePlan
             };
-            
+            users[userIndex].productionPermissions = {
+                canStartProduction: canStartProd,
+                canPartialLoad: canPartialLoad,
+                canEndProduction: canEndProd,
+                canConfirmProduction: canConfirmProd
+            };
+            users[userIndex].salesPermissions = {
+                canDeleteSale: canDeleteSale
+            };
+
             try {
                 showSyncIndicator('💾 Guardando cambios...', 'syncing');
                 await usersRef.set(users);
@@ -5912,6 +6516,7 @@
                                             Tipo: ${activity.type} | Frecuencia: ${activity.frequency}
                                             ${activity.min !== null && activity.min !== undefined ? ` | Min: ${activity.min}` : ''}
                                             ${activity.max !== null && activity.max !== undefined ? ` | Max: ${activity.max}` : ''}
+                                            ${activity.type === 'nivel' && activity.alarmType && activity.alarmType !== 'none' ? ` | Alarma: ${activity.alarmType}${activity.alarmMin != null ? ' Min:' + activity.alarmMin + '%' : ''}${activity.alarmMax != null ? ' Max:' + activity.alarmMax + '%' : ''}` : ''}
                                         </p>
                                     </div>
                                     <div style="white-space: nowrap;">
@@ -5981,16 +6586,30 @@
             document.getElementById('activityMax').value = '';
             document.getElementById('activityFrequency').value = '';
             document.getElementById('parametrosFields').style.display = 'none';
+            // Reset campos nivel
+            document.getElementById('nivelFields').style.display = 'none';
+            document.getElementById('nivelAlarmType').value = 'none';
+            document.getElementById('nivelAlarmMin').value = '';
+            document.getElementById('nivelAlarmMax').value = '';
+            document.getElementById('nivelAlarmMinField').style.display = 'none';
+            document.getElementById('nivelAlarmMaxField').style.display = 'none';
         }
         
         function closeAddActivityModal() {
             document.getElementById('addActivityModal').style.display = 'none';
+            // Restaurar estado si estábamos editando
+            if (window._editingActivityId) {
+                window._editingActivityId = null;
+                document.querySelector('#addActivityModal .modal-header h2').textContent = '➕ Agregar Nueva Actividad';
+                var saveBtn = document.querySelector('#addActivityModal .btn[onclick="saveNewActivity()"]');
+                if (saveBtn) saveBtn.textContent = '✓ Guardar Actividad';
+            }
         }
         
         function toggleActivityFields() {
             const type = document.getElementById('activityType').value;
-            const parametrosFields = document.getElementById('parametrosFields');
-            parametrosFields.style.display = type === 'parametros' ? 'block' : 'none';
+            document.getElementById('parametrosFields').style.display = type === 'parametros' ? 'block' : 'none';
+            document.getElementById('nivelFields').style.display = type === 'nivel' ? 'block' : 'none';
         }
         
         async function saveNewActivity() {
@@ -6027,62 +6646,97 @@
             }
             
             let unit = null, min = null, max = null;
-            
+            let alarmType = null, alarmMin = null, alarmMax = null;
+
             if (type === 'parametros') {
                 unit = document.getElementById('activityUnit').value.trim() || '';
                 const minStr = document.getElementById('activityMin').value;
                 const maxStr = document.getElementById('activityMax').value;
                 min = minStr ? parseFloat(minStr) : null;
                 max = maxStr ? parseFloat(maxStr) : null;
+            } else if (type === 'nivel') {
+                unit = '%';
+                alarmType = document.getElementById('nivelAlarmType').value || 'none';
+                if (alarmType === 'min' || alarmType === 'range') {
+                    const aMinVal = document.getElementById('nivelAlarmMin').value;
+                    alarmMin = aMinVal ? parseInt(aMinVal) : null;
+                }
+                if (alarmType === 'max' || alarmType === 'range') {
+                    const aMaxVal = document.getElementById('nivelAlarmMax').value;
+                    alarmMax = aMaxVal ? parseInt(aMaxVal) : null;
+                }
             }
-            
-            // Crear actividad
-            const newId = Math.max(...activities.map(a => a.id), 0) + 1;
-            const newOrder = Math.max(...activities.filter(a => a.sectionId === section.id).map(a => a.order), 0) + 1;
-            
-            const newActivity = {
-                id: newId,
-                sectionId: section.id,
-                name: name,
-                type: type,
-                frequency: frequency,
-                unit: unit,
-                min: min,
-                max: max,
-                order: newOrder,
-                showInSummary: 'detalle'
-            };
-            
-            activities.push(newActivity);
-            await activitiesRef.set(activities);
-            
-            // CORRECCIÓN: Inicializar la nueva actividad en el dailyLog actual
-            if (!dailyLogs[currentDate].sections[section.id]) {
-                dailyLogs[currentDate].sections[section.id] = { activities: {} };
-            }
-            
-            if (frequency === '2 veces al dia') {
-                // Inicializar turnos mañana y tarde
-                dailyLogs[currentDate].sections[section.id].activities[`${newId}_manana`] = {
-                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
-                };
-                dailyLogs[currentDate].sections[section.id].activities[`${newId}_tarde`] = {
-                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
-                };
+
+            // === MODO EDICIÓN vs CREACIÓN ===
+            if (window._editingActivityId) {
+                // EDITAR actividad existente
+                var editId = window._editingActivityId;
+                var existingAct = activities.find(function(a) { return a.id === editId; });
+                if (!existingAct) { alert('Actividad no encontrada'); return; }
+
+                existingAct.sectionId = section.id;
+                existingAct.name = name;
+                existingAct.type = type;
+                existingAct.frequency = frequency;
+                existingAct.unit = unit;
+                existingAct.min = min;
+                existingAct.max = max;
+                existingAct.alarmType = type === 'nivel' ? alarmType : null;
+                existingAct.alarmMin = type === 'nivel' ? alarmMin : null;
+                existingAct.alarmMax = type === 'nivel' ? alarmMax : null;
+
+                await activitiesRef.set(activities);
+                window._editingActivityId = null;
+                showSyncIndicator('✓ Actividad editada', 'synced');
             } else {
-                // Inicializar actividad única
-                dailyLogs[currentDate].sections[section.id].activities[newId] = {
-                    value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                // CREAR actividad nueva
+                const newId = Math.max(...activities.map(a => a.id), 0) + 1;
+                const newOrder = Math.max(...activities.filter(a => a.sectionId === section.id).map(a => a.order), 0) + 1;
+
+                const newActivity = {
+                    id: newId,
+                    sectionId: section.id,
+                    name: name,
+                    type: type,
+                    frequency: frequency,
+                    unit: unit,
+                    min: min,
+                    max: max,
+                    alarmType: type === 'nivel' ? alarmType : null,
+                    alarmMin: type === 'nivel' ? alarmMin : null,
+                    alarmMax: type === 'nivel' ? alarmMax : null,
+                    order: newOrder,
+                    showInSummary: 'detalle'
                 };
+
+                activities.push(newActivity);
+                await activitiesRef.set(activities);
+
+                // Inicializar la nueva actividad en el dailyLog actual
+                if (!dailyLogs[currentDate].sections[section.id]) {
+                    dailyLogs[currentDate].sections[section.id] = { activities: {} };
+                }
+
+                var newTurnos = getActivityTurnos(frequency);
+                if (newTurnos.length > 0) {
+                    newTurnos.forEach(function(t) {
+                        dailyLogs[currentDate].sections[section.id].activities[`${newId}_${t}`] = {
+                            value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                        };
+                    });
+                } else {
+                    dailyLogs[currentDate].sections[section.id].activities[newId] = {
+                        value: null, status: null, oilLevel: null, observations: '', photos: [], user: null, timestamp: null
+                    };
+                }
+
+                await database.ref(`dailyLogs/${currentDate}`).set(dailyLogs[currentDate]);
+                showSyncIndicator('✓ Actividad agregada', 'synced');
             }
-            
-            // Guardar en Firebase
-            await database.ref(`dailyLogs/${currentDate}`).set(dailyLogs[currentDate]);
-            
-            showSyncIndicator('✓ Actividad agregada', 'synced');
+
             closeAddActivityModal();
             renderConfiguracion();
-            renderSections(); // Re-renderizar secciones para mostrar la nueva actividad
+            renderSections();
         }
         
         function renderNovedadesConfig(container) {
@@ -6224,30 +6878,49 @@
             renderConfiguracion();
         }
         
-        async function editActivity(activityId) {
+        function editActivity(activityId) {
             const activity = activities.find(a => a.id === activityId);
             if (!activity) return;
-            
-            // Editar nombre
-            const newName = prompt('Nombre de la actividad:', activity.name);
-            if (!newName || newName.trim() === '') return;
-            
-            activity.name = newName.trim();
-            
-            // Si es parámetros, permitir editar rango
+
+            // Marcar modo edición
+            window._editingActivityId = activityId;
+
+            // Abrir modal
+            const modal = document.getElementById('addActivityModal');
+            modal.style.display = 'block';
+
+            // Cambiar título y botón
+            document.querySelector('#addActivityModal .modal-header h2').textContent = '✏️ Editar Actividad';
+            var saveBtn = document.querySelector('#addActivityModal .btn[onclick="saveNewActivity()"]');
+            if (saveBtn) saveBtn.textContent = '✓ Guardar Cambios';
+
+            // Llenar selector de secciones
+            const sectionSelect = document.getElementById('activitySection');
+            sectionSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            sections.forEach(function(s) {
+                sectionSelect.innerHTML += '<option value="' + s.id + '">' + s.icon + ' ' + s.name + '</option>';
+            });
+
+            // Pre-llenar campos con valores actuales
+            document.getElementById('activitySection').value = activity.sectionId;
+            document.getElementById('activityName').value = activity.name || '';
+            document.getElementById('activityType').value = activity.type || '';
+            document.getElementById('activityFrequency').value = activity.frequency || '';
+
+            // Mostrar campos condicionales
+            toggleActivityFields();
+
+            // Pre-llenar campos tipo-específicos
             if (activity.type === 'parametros') {
-                const newUnit = prompt('Unidad:', activity.unit || '');
-                const newMin = prompt('Valor mínimo:', activity.min !== null && activity.min !== undefined ? activity.min : '');
-                const newMax = prompt('Valor máximo:', activity.max !== null && activity.max !== undefined ? activity.max : '');
-                
-                activity.unit = newUnit ? newUnit.trim() : '';
-                activity.min = newMin !== '' ? parseFloat(newMin) : null;
-                activity.max = newMax !== '' ? parseFloat(newMax) : null;
+                document.getElementById('activityUnit').value = activity.unit || '';
+                document.getElementById('activityMin').value = (activity.min !== null && activity.min !== undefined) ? activity.min : '';
+                document.getElementById('activityMax').value = (activity.max !== null && activity.max !== undefined) ? activity.max : '';
+            } else if (activity.type === 'nivel') {
+                document.getElementById('nivelAlarmType').value = activity.alarmType || 'none';
+                toggleNivelAlarmFields();
+                document.getElementById('nivelAlarmMin').value = (activity.alarmMin !== null && activity.alarmMin !== undefined) ? activity.alarmMin : '';
+                document.getElementById('nivelAlarmMax').value = (activity.alarmMax !== null && activity.alarmMax !== undefined) ? activity.alarmMax : '';
             }
-            
-            await activitiesRef.set(activities);
-            showSyncIndicator('✓ Actividad editada', 'synced');
-            renderConfiguracion();
         }
 
         // ==================== INITIALIZE APP ====================
@@ -6305,27 +6978,50 @@
         
         async function checkAndRenewDay() {
             const newDate = getOperationalDate();
-            
+
             if (newDate !== currentDate) {
                 console.log(`🔄 Cambio de día detectado: ${currentDate} → ${newDate}`);
-                
+
                 // Marcar actividades no completadas del día anterior
                 await markIncompleteActivities(currentDate);
-                
+
                 // Actualizar fecha actual
                 currentDate = newDate;
-                
+
                 // Inicializar estructura para el nuevo día
                 await initializeDailyStructure();
-                
+
+                // Snapshot de inventario para el nuevo día
+                await ensureInventorySnapshot(currentDate);
+
                 // Refrescar interfaz
                 if (currentUser) {
                     renderSections();
                     renderReporteDiario();
                 }
-                
+
                 console.log(`✅ Día renovado: ${currentDate}`);
             }
+        }
+
+        // Guarda snapshot del inventario actual si no existe para la fecha
+        async function ensureInventorySnapshot(dateStr) {
+            try {
+                const snap = await salesInvSnapshotsRef.child(dateStr).once('value');
+                if (!snap.exists()) {
+                    const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+                    const tiras = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+                    await salesInvSnapshotsRef.child(dateStr).set({
+                        available: avail,
+                        tirasDisponibles: tiras,
+                        timestamp: new Date().toISOString()
+                    });
+                    window.salesInvSnapshots[dateStr] = { available: avail, tirasDisponibles: tiras };
+                    console.log('📦 Snapshot inventario inicial guardado:', avail, 'moldes,', tiras, 'tiras');
+                } else {
+                    window.salesInvSnapshots[dateStr] = snap.val();
+                }
+            } catch(e) { console.error('Error guardando snapshot inventario:', e); }
         }
         
         async function markIncompleteActivities(date) {
@@ -6340,71 +7036,28 @@
                 
                 const sectionActivities = activities.filter(a => a.sectionId === section.id);
                 
+                var TURNO_LABELS = { manana: 'Mañana', tarde: 'Tarde', noche: 'Noche', madrugada: 'Madrugada' };
                 sectionActivities.forEach(activity => {
-                    if (activity.frequency === '2 veces al dia') {
-                        // Verificar turno mañana
-                        const activityKeyMorning = `${activity.id}_manana`;
-                        const dataMorning = dailyLogs[date].sections[section.id].activities[activityKeyMorning];
-                        
-                        if (dataMorning) {
-                            let isComplete = false;
-                            if (activity.type === 'parametros') {
-                                isComplete = dataMorning.value !== undefined && dataMorning.value !== null && dataMorning.value !== '' && !isNaN(dataMorning.value);
-                            } else if (activity.type === 'nivel_aceite') {
-                                isComplete = !!dataMorning.oilLevel;
-                            } else if (activity.type === 'chequeo') {
-                                isComplete = dataMorning.status === 'ok' || dataMorning.status === 'no_ok';
-                            }
-                            
-                            if (!isComplete) {
-                                dailyLogs[date].sections[section.id].activities[activityKeyMorning].incomplete = true;
-                                dailyLogs[date].sections[section.id].activities[activityKeyMorning].incompleteAlert = '⚠️ No realizada';
-                                
-                                // Registrar en lista de no completadas
+                    var turnos = getActivityTurnos(activity.frequency);
+                    if (turnos.length > 0) {
+                        turnos.forEach(function(t) {
+                            var aKey = `${activity.id}_${t}`;
+                            var d = dailyLogs[date].sections[section.id].activities[aKey];
+                            if (d && !_isFieldComplete(activity, d)) {
+                                dailyLogs[date].sections[section.id].activities[aKey].incomplete = true;
+                                dailyLogs[date].sections[section.id].activities[aKey].incompleteAlert = '⚠️ No realizada';
                                 notCompletedList.push({
                                     id: Date.now() + Math.random(),
                                     date: date,
                                     sectionId: section.id,
                                     sectionName: section.name,
                                     activityId: activity.id,
-                                    activityName: `${activity.name} (Mañana)`,
+                                    activityName: `${activity.name} (${TURNO_LABELS[t]})`,
                                     activityType: activity.type,
                                     timestamp: new Date().toISOString()
                                 });
                             }
-                        }
-                        
-                        // Verificar turno tarde
-                        const activityKeyAfternoon = `${activity.id}_tarde`;
-                        const dataAfternoon = dailyLogs[date].sections[section.id].activities[activityKeyAfternoon];
-                        
-                        if (dataAfternoon) {
-                            let isComplete = false;
-                            if (activity.type === 'parametros') {
-                                isComplete = dataAfternoon.value !== undefined && dataAfternoon.value !== null && dataAfternoon.value !== '' && !isNaN(dataAfternoon.value);
-                            } else if (activity.type === 'nivel_aceite') {
-                                isComplete = !!dataAfternoon.oilLevel;
-                            } else if (activity.type === 'chequeo') {
-                                isComplete = dataAfternoon.status === 'ok' || dataAfternoon.status === 'no_ok';
-                            }
-                            
-                            if (!isComplete) {
-                                dailyLogs[date].sections[section.id].activities[activityKeyAfternoon].incomplete = true;
-                                dailyLogs[date].sections[section.id].activities[activityKeyAfternoon].incompleteAlert = '⚠️ No realizada';
-                                
-                                // Registrar en lista de no completadas
-                                notCompletedList.push({
-                                    id: Date.now() + Math.random(),
-                                    date: date,
-                                    sectionId: section.id,
-                                    sectionName: section.name,
-                                    activityId: activity.id,
-                                    activityName: `${activity.name} (Tarde)`,
-                                    activityType: activity.type,
-                                    timestamp: new Date().toISOString()
-                                });
-                            }
-                        }
+                        });
                     }
                 });
             });
@@ -6503,31 +7156,31 @@
 
         // ==================== MÓDULO DE PRODUCCIÓN ====================
         // Constantes de la cuba
-        const CUBA_ROWS = 24;
+        const CUBA_ROWS = 25;
         const CUBA_COLS = ['A', 'B', 'C', 'D'];
         const MOLDS_PER_MODULE = 6;
         const COL_INDEX_MAP = { A: 1, B: 2, C: 3, D: 4 };
 
         // Secuencia alternada par/impar
-        const ODD_ROWS = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
+        const ODD_ROWS = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25];
         const EVEN_ROWS = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
 
         /** Retorna la siguiente fila en la secuencia circular alternada */
         function getNextSequenceRow(row) {
             if (row % 2 !== 0) {
-                // Impar: siguiente impar, o cruza a par
-                return row < 23 ? row + 2 : 2;
+                // Impar: siguiente impar, o cruza a par (1→3→...→23→25→2)
+                return row < 25 ? row + 2 : 2;
             } else {
-                // Par: siguiente par, o cruza a impar
+                // Par: siguiente par, o cruza a impar (2→4→...→24→1)
                 return row < 24 ? row + 2 : 1;
             }
         }
 
-        /** Genera la secuencia circular completa de 24 filas empezando desde startRow */
+        /** Genera la secuencia circular completa de 25 filas empezando desde startRow */
         function buildFullSequenceFromRow(startRow) {
             const seq = [startRow];
             let current = startRow;
-            for (let i = 1; i < 24; i++) {
+            for (let i = 1; i < 25; i++) {
                 current = getNextSequenceRow(current);
                 seq.push(current);
             }
@@ -6746,6 +7399,22 @@
             }
         }
 
+        // ========== PERMISOS DE PRODUCCIÓN ==========
+        function getProdPermission(permName) {
+            if (!currentUser) return false;
+            const pp = currentUser.productionPermissions;
+            if (!pp) return currentUser.role === 'admin';
+            return pp[permName] === true;
+        }
+
+        // ========== PERMISOS DE VENTAS ==========
+        function getSalesPermission(permName) {
+            if (!currentUser) return false;
+            const sp = currentUser.salesPermissions;
+            if (!sp) return currentUser.role === 'admin';
+            return sp[permName] === true;
+        }
+
         // ========== RENDER PRODUCCIÓN (Estados A-D) ==========
         function renderProduccion() {
             const container = document.getElementById('produccionContent');
@@ -6759,9 +7428,9 @@
                         <h2 style="color:#1e3c72; margin-bottom:10px;">Producción del Día</h2>
                         <p style="color:#666; margin-bottom:5px;">${new Date(currentDate+'T12:00:00').toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
                         <p style="color:#999; margin-bottom:30px;">No se ha iniciado la producción de hoy</p>
-                        <button onclick="openProdStartModal()" class="btn" style="font-size:18px; padding:15px 40px;">
+                        ${getProdPermission('canStartProduction') ? `<button onclick="openProdStartModal()" class="btn" style="font-size:18px; padding:15px 40px;">
                             ▶️ Iniciar Producción
-                        </button>
+                        </button>` : `<p style="color:#999; font-size:13px;">No tienes permiso para iniciar producción</p>`}
                     </div>`;
                 return;
             }
@@ -6828,12 +7497,12 @@
                     </div>
                     ${partialsHTML}
                     <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:20px;">
-                        <button onclick="openPartialModal()" class="btn" style="background:linear-gradient(135deg,#ff9800,#f57c00); font-size:15px; padding:14px 30px;">
+                        ${getProdPermission('canPartialLoad') ? `<button onclick="openPartialModal()" class="btn" style="background:linear-gradient(135deg,#ff9800,#f57c00); font-size:15px; padding:14px 30px;">
                             📦 Producción Parcial
-                        </button>
-                        <button onclick="openProdEndModal()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:15px; padding:14px 30px;">
+                        </button>` : ''}
+                        ${getProdPermission('canEndProduction') ? `<button onclick="openProdEndModal()" class="btn" style="background:linear-gradient(135deg,#dc3545,#c82333); font-size:15px; padding:14px 30px;">
                             ⏹️ Finalizar Producción
-                        </button>
+                        </button>` : ''}
                     </div>
                 </div>`;
         }
@@ -6875,8 +7544,8 @@
                         ${partialsHTML}
                     </div>
                     <div style="text-align:center; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                        <button onclick="openProdEditModal()" class="btn" style="background:#ffc107; color:#333;">✏️ Editar</button>
-                        <button onclick="confirmProduction()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">✅ Confirmar Producción</button>
+                        ${getProdPermission('canEndProduction') ? `<button onclick="openProdEditModal()" class="btn" style="background:#ffc107; color:#333;">✏️ Editar</button>` : ''}
+                        ${getProdPermission('canConfirmProduction') ? `<button onclick="confirmProduction()" class="btn btn-secondary" style="font-size:16px; padding:14px 35px;">✅ Confirmar Producción</button>` : ''}
                     </div>
                 </div>`;
         }
@@ -6909,6 +7578,7 @@
 
         // ========== MODALES DE PRODUCCIÓN ==========
         function openProdStartModal() {
+            if (!getProdPermission('canStartProduction')) { alert('No tienes permiso para iniciar producción'); return; }
             document.getElementById('prodStartTime').value = getCurrentTimeStr();
             document.getElementById('prodStartTemp').value = '';
             document.getElementById('prodEstimatedRows').value = '';
@@ -6974,6 +7644,7 @@
         }
 
         function openProdEndModal() {
+            if (!getProdPermission('canEndProduction')) { alert('No tienes permiso para finalizar producción'); return; }
             const rec = productionRecords[currentDate];
             document.getElementById('prodEndTime').value = getCurrentTimeStr();
             document.getElementById('prodEndTemp').value = '';
@@ -7019,6 +7690,7 @@
         }
 
         function openProdEditModal() {
+            if (!getProdPermission('canEndProduction')) { alert('No tienes permiso para editar producción'); return; }
             const rec = productionRecords[currentDate];
             if (!rec) return;
             document.getElementById('prodEditStartTime').value = rec.startTime;
@@ -7073,6 +7745,7 @@
         }
 
         async function confirmProduction() {
+            if (!getProdPermission('canConfirmProduction')) { alert('No tienes permiso para confirmar producción'); return; }
             const rec = productionRecords[currentDate];
             if (!rec || !rec.endTime) return alert('Debe finalizar la producción primero');
             if (!confirm('¿Confirmar producción? Esta acción no se puede deshacer.')) return;
@@ -7167,6 +7840,7 @@
         }
 
         function openPartialModal() {
+            if (!getProdPermission('canPartialLoad')) { alert('No tienes permiso para hacer cargas parciales'); return; }
             const rec = productionRecords[currentDate];
             if (!rec) return;
 
@@ -7428,12 +8102,22 @@
             const todayDonacionesTiras = todayDispatches.filter(d => d.status === 'donacion').reduce((s, d) => s + (d.donacionTiras || 0), 0);
             const todayPending = todayDispatches.filter(d => d.status === 'pending_approval');
             
+            // Inventario inicial del día
+            const invSnap = window.salesInvSnapshots[currentDate];
+            const invInicialMoldes = invSnap ? invSnap.available : '—';
+            const invInicialTiras = invSnap ? (invSnap.tirasDisponibles || 0) : 0;
+
             let html = `
                 <div class="stats-grid" style="margin-bottom:20px;">
                     <div class="stat-card" style="border-top:3px solid #667eea;">
                         <div class="stat-number" style="color:#667eea; font-size:28px;">${avail}</div>
                         <div class="stat-label">Moldes Disponibles</div>
                         ${(salesInventory && salesInventory.tirasDisponibles > 0) ? `<div style="color:#17a2b8; font-size:12px; margin-top:4px;">+ ${salesInventory.tirasDisponibles} tiras sueltas</div>` : ''}
+                    </div>
+                    <div class="stat-card" style="border-top:3px solid #1565c0;">
+                        <div class="stat-number" style="color:#1565c0; font-size:28px;">${invInicialMoldes}</div>
+                        <div class="stat-label">📦 Inv. Inicial</div>
+                        ${invInicialTiras > 0 ? `<div style="color:#0d47a1; font-size:12px; margin-top:4px;">+ ${invInicialTiras} tiras</div>` : ''}
                     </div>
                     <div class="stat-card" style="border-top:3px solid #28a745;">
                         <div class="stat-number" style="color:#28a745;">${todayMolds}</div>
@@ -7488,20 +8172,38 @@
                     <h4 style="color:#1e3c72; margin-bottom:10px;">✅ Despachos de Hoy (${todayCompleted.length})</h4>`;
                 todayCompleted.forEach(d => {
                     const cli = salesClients[d.clientId] || {};
-                    /* COMENTADO: Tipo de precio — se usará más adelante
-                    const pt = salesPriceTypes[d.priceTypeId] || {};
-                    */
                     const dIsTiras = d.dispatchUnit === 'tiras';
                     const dQtyDisplay = dIsTiras ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
-                    html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px;">
-                        <strong>${cli.name || 'N/A'}</strong> — ${dQtyDisplay}
-                        ${d.merma > 0 ? ` | Merma: ${d.merma}` : ''}
-                        ${d.dispatchObs ? `<br><small style="color:#666;">${d.dispatchObs}</small>` : ''}
+                    html += `<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${cli.name || 'N/A'}</strong> — ${dQtyDisplay}
+                            ${d.merma > 0 ? ` | Merma: ${d.merma}` : ''}
+                            ${d.dispatchObs ? `<br><small style="color:#666;">${d.dispatchObs}</small>` : ''}
+                        </div>
+                        ${getSalesPermission('canDeleteSale') ? `<button onclick="deleteDispatch('${d._key}')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:12px; flex-shrink:0;">🗑️</button>` : ''}
                     </div>`;
                 });
                 html += `</div>`;
             }
-            
+
+            // Despachos eliminados de hoy
+            const todayEliminated = todayDispatches.filter(d => d.status === 'eliminada' && d.previousStatus === 'dispatched');
+            if (todayEliminated.length > 0) {
+                html += `<div class="report-summary" style="border-left:4px solid #999; margin-bottom:15px; opacity:0.6;">
+                    <h4 style="color:#999; margin-bottom:10px;">🗑️ Eliminados (${todayEliminated.length})</h4>`;
+                todayEliminated.forEach(d => {
+                    const cli = salesClients[d.clientId] || {};
+                    const dIsTiras = d.dispatchUnit === 'tiras';
+                    const dQtyDisplay = dIsTiras ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
+                    html += `<div style="background:#f5f5f5; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px; text-decoration:line-through;">
+                        <strong>${cli.name || 'N/A'}</strong> — ${dQtyDisplay}
+                        <span style="color:red; font-size:11px; text-decoration:none; display:inline-block;"> ELIMINADA</span>
+                        <br><small style="color:#999; text-decoration:none; display:inline-block;">Eliminado por ${d.deletedBy || ''}</small>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
             // Donaciones de hoy
             const todayDonacionesList = todayDispatches.filter(d => d.status === 'donacion' || d.status === 'merma');
             if (todayDonacionesList.length > 0) {
@@ -7518,8 +8220,24 @@
                                 🎁 <strong>${displayQty}</strong> — ${d.observations || 'Sin detalle'}
                                 <br><small style="color:#666;">${d.createdBy || ''}${hora ? ' | 🕐 ' + hora : ''}</small>
                             </div>
-                            ${d.photoURL ? `<img src="${d.photoURL}" onclick="window.open('${d.photoURL}','_blank')" style="width:50px; height:50px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid #17a2b8;">` : ''}
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                ${d.photoURL ? `<img src="${d.photoURL}" onclick="window.open('${d.photoURL}','_blank')" style="width:50px; height:50px; object-fit:cover; border-radius:6px; cursor:pointer; border:1px solid #17a2b8;">` : ''}
+                                ${getSalesPermission('canDeleteSale') ? `<button onclick="deleteDispatch('${d._key}')" style="background:#dc3545; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:12px; flex-shrink:0;">🗑️</button>` : ''}
+                            </div>
                         </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            // Donaciones eliminadas de hoy
+            const todayElimDonaciones = todayDispatches.filter(d => d.status === 'eliminada' && d.previousStatus === 'donacion');
+            if (todayElimDonaciones.length > 0) {
+                html += `<div class="report-summary" style="border-left:4px solid #999; margin-bottom:15px; opacity:0.6;">`;
+                todayElimDonaciones.forEach(d => {
+                    html += `<div style="background:#f5f5f5; padding:10px; border-radius:8px; margin-bottom:6px; font-size:14px; text-decoration:line-through;">
+                        🎁 ${d.donacionTiras || 0} tiras — ${d.observations || 'Sin detalle'}
+                        <span style="color:red; font-size:11px; text-decoration:none; display:inline-block;"> ELIMINADA</span>
                     </div>`;
                 });
                 html += `</div>`;
@@ -7798,12 +8516,21 @@
             const files = Array.from(input.files).slice(0, 3);
             const urls = [];
             for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const fileName = `despacho_${dateStr}_${timestamp}_${i+1}_${file.name}`;
-                const storageRef = firebase.storage().ref('dispatch_photos/' + fileName);
-                await storageRef.put(file);
-                const url = await storageRef.getDownloadURL();
-                urls.push(url);
+                try {
+                    const file = files[i];
+                    const fileName = `despacho_${dateStr}_${timestamp}_${i+1}_${file.name}`;
+                    const stRef = firebase.storage().ref('dispatch_photos/' + fileName);
+                    const uploadPromise = stRef.put(file).then(async () => {
+                        return await stRef.getDownloadURL();
+                    });
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Timeout subiendo foto')), 15000)
+                    );
+                    const url = await Promise.race([uploadPromise, timeoutPromise]);
+                    urls.push(url);
+                } catch (photoErr) {
+                    console.error('Error subiendo foto de despacho:', photoErr);
+                }
             }
             return urls;
         }
@@ -8108,13 +8835,26 @@
                 // Subir foto si existe
                 let photoURL = null;
                 const photoInput = document.getElementById('donacionPhoto');
-                if (photoInput.files && photoInput.files[0]) {
-                    const file = photoInput.files[0];
-                    const timestamp = Date.now();
-                    const fileName = `donacion_${currentDate}_${timestamp}_${file.name}`;
-                    const storageRef = storage.ref(`donations/${currentDate}/${fileName}`);
-                    await storageRef.put(file);
-                    photoURL = await storageRef.getDownloadURL();
+                if (photoInput && photoInput.files && photoInput.files[0]) {
+                    try {
+                        showSyncIndicator('📷 Subiendo foto...', 'syncing');
+                        const file = photoInput.files[0];
+                        const timestamp = Date.now();
+                        const fileName = `donacion_${currentDate}_${timestamp}_${file.name}`;
+                        const storageRefPhoto = storage.ref(`donations/${currentDate}/${fileName}`);
+                        // Upload con timeout de 15 segundos
+                        const uploadPromise = storageRefPhoto.put(file).then(async () => {
+                            return await storageRefPhoto.getDownloadURL();
+                        });
+                        const timeoutPromise = new Promise((_, reject) =>
+                            setTimeout(() => reject(new Error('Timeout: la carga de la foto tardó más de 15 segundos')), 15000)
+                        );
+                        photoURL = await Promise.race([uploadPromise, timeoutPromise]);
+                    } catch (photoErr) {
+                        console.error('Error subiendo foto de donación:', photoErr);
+                        alert('⚠️ No se pudo subir la foto, pero la donación se guardará sin ella.\n\nError: ' + photoErr.message);
+                        photoURL = null;
+                    }
                 }
 
                 const now = new Date();
@@ -8144,6 +8884,66 @@
             } catch (err) {
                 console.error(err);
                 showSyncIndicator('✗ Error', 'error');
+            }
+        }
+
+        // ========== ELIMINAR DESPACHO / DONACIÓN (BORRADO SUAVE) ==========
+        async function deleteDispatch(key) {
+            if (!getSalesPermission('canDeleteSale')) {
+                alert('No tienes permiso para eliminar ventas');
+                return;
+            }
+            const d = salesDispatches[key];
+            if (!d) return;
+
+            const descr = d.status === 'donacion'
+                ? `Donación: ${d.donacionTiras || 0} tiras`
+                : `Despacho: ${d.dispatchUnit === 'tiras' ? (d.dispatchTiras || 0) + ' tiras' : (d.moldsDispatched || 0) + ' moldes'} — ${d.clientName || 'N/A'}`;
+
+            if (!confirm(`¿Eliminar "${descr}"?\n\nEl inventario será restaurado automáticamente.`)) return;
+
+            try {
+                showSyncIndicator('🗑️ Eliminando...', 'syncing');
+                const avail = (salesInventory && salesInventory.available) ? salesInventory.available : 0;
+                const tirasDisp = (salesInventory && salesInventory.tirasDisponibles) ? salesInventory.tirasDisponibles : 0;
+                let newAvail = avail;
+                let newTiras = tirasDisp;
+
+                if (d.status === 'dispatched') {
+                    if (d.dispatchUnit === 'tiras') {
+                        newAvail += (d.dispatchMoldesDescontados || 0) + (d.merma || 0);
+                        const moldesRest = d.dispatchMoldesDescontados || 0;
+                        const tirasFromMolds = moldesRest * 5; // TIRAS_PER_MOLD
+                        const tirasUsed = d.dispatchTiras || 0;
+                        const tirasReturnedToSueltas = tirasFromMolds - tirasUsed;
+                        newTiras = Math.max(0, tirasDisp - tirasReturnedToSueltas);
+                    } else {
+                        newAvail += (d.moldsDispatched || 0) + (d.merma || 0);
+                    }
+                } else if (d.status === 'donacion') {
+                    newAvail += (d.donacionMoldesDescontados || d.donacion || 0);
+                    const moldesRest = d.donacionMoldesDescontados || 0;
+                    const tirasFromMolds = moldesRest * 5;
+                    const tirasUsed = d.donacionTiras || 0;
+                    const tirasReturnedToSueltas = tirasFromMolds - tirasUsed;
+                    newTiras = Math.max(0, tirasDisp - tirasReturnedToSueltas);
+                }
+
+                await salesDispatchesRef.child(key).update({
+                    status: 'eliminada',
+                    previousStatus: d.status,
+                    deletedBy: currentUser.fullName,
+                    deletedAt: new Date().toISOString()
+                });
+                await salesInventoryRef.update({
+                    available: newAvail,
+                    tirasDisponibles: newTiras,
+                    lastUpdated: new Date().toISOString()
+                });
+                showSyncIndicator('✅ Eliminada — inventario restaurado', 'synced');
+            } catch (err) {
+                console.error('Error eliminando despacho:', err);
+                showSyncIndicator('✗ Error al eliminar', 'error');
             }
         }
 
@@ -8387,6 +9187,7 @@
                         html += `<div style="${i > 0 ? 'border-top:1px solid #eee; margin-top:4px; padding-top:4px;' : ''}">
                             📦 ${hQtyDisp}${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}
                             ${d.dispatchObs ? '<br><small style="color:#666;">' + d.dispatchObs + '</small>' : ''}
+                            ${d.photoURLs && d.photoURLs.length > 0 ? '<div style="display:flex; gap:4px; margin-top:4px;">' + d.photoURLs.map(url => '<img src="' + url + '" onclick="window.open(\'' + url + '\',\'_blank\')" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #ddd;">').join('') + '</div>' : ''}
                         </div>`;
                     });
                     html += `</div></div>`;
@@ -8397,7 +9198,9 @@
                     html += `<div style="background:#e0f7fa; padding:8px 12px; border-radius:6px; font-size:13px; margin-top:6px;">`;
                     donaciones.forEach(d => {
                         const dTiras = d.donacionTiras || 0;
-                        html += `<div style="padding:2px 0;">🎁 Donación: ${dTiras} tiras — ${d.observations || 'Sin detalle'}</div>`;
+                        html += `<div style="padding:2px 0;">🎁 Donación: ${dTiras} tiras — ${d.observations || 'Sin detalle'}
+                            ${d.photoURL ? '<br><img src="' + d.photoURL + '" onclick="window.open(\'' + d.photoURL + '\',\'_blank\')" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #17a2b8;margin-top:4px;">' : ''}
+                        </div>`;
                     });
                     html += `</div>`;
                 }
@@ -8479,10 +9282,14 @@
                         <div style="font-size:12px; font-weight:bold; color:#667eea; margin-bottom:3px;">📅 ${dLabel}</div>`;
                     dayDispatches.forEach(d => {
                         if (d.status === 'donacion') {
-                            html += `<div style="font-size:13px; padding:3px 0;">🎁 ${d.donacionTiras || 0} tiras — ${d.observations || 'Sin detalle'}</div>`;
+                            html += `<div style="font-size:13px; padding:3px 0;">🎁 ${d.donacionTiras || 0} tiras — ${d.observations || 'Sin detalle'}
+                                ${d.photoURL ? '<br><img src="' + d.photoURL + '" onclick="window.open(\'' + d.photoURL + '\',\'_blank\')" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #17a2b8;margin-top:4px;">' : ''}
+                            </div>`;
                         } else {
                             const qDisp = d.dispatchUnit === 'tiras' ? `${d.dispatchTiras || 0} tiras` : `${d.moldsDispatched} moldes`;
-                            html += `<div style="font-size:13px; padding:3px 0;">📦 ${qDisp}${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}${d.dispatchObs ? ' — <small style="color:#666;">' + d.dispatchObs + '</small>' : ''}</div>`;
+                            html += `<div style="font-size:13px; padding:3px 0;">📦 ${qDisp}${d.merma > 0 ? ' + ' + d.merma + ' merma' : ''}${d.dispatchObs ? ' — <small style="color:#666;">' + d.dispatchObs + '</small>' : ''}
+                                ${d.photoURLs && d.photoURLs.length > 0 ? '<div style="display:flex; gap:4px; margin-top:4px;">' + d.photoURLs.map(url => '<img src="' + url + '" onclick="window.open(\'' + url + '\',\'_blank\')" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #ddd;">').join('') + '</div>' : ''}
+                            </div>`;
                         }
                     });
                     html += `</div>`;
@@ -8526,11 +9333,17 @@
             if (totalTirasVendidas > 0) html += '<div style="background:#e8f5e9; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#2e7d32; font-size:20px;">' + totalTirasVendidas + '</strong><br><small style="color:#555;">Tiras Vendidas</small></div>';
             html += '<div style="background:#e0f7fa; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#00838f; font-size:20px;">' + totalDonacionesTiras + '</strong><br><small style="color:#555;">Tiras Donadas</small></div>';
             html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + avail + '</strong><br><small style="color:#555;">Disponibles</small></div>';
+            var rptInvSnap = window.salesInvSnapshots[dateStr];
+            if (rptInvSnap) {
+                var invTxt = (rptInvSnap.available || 0) + '';
+                if (rptInvSnap.tirasDisponibles) invTxt += '<br><small style="color:#0d47a1;font-size:10px;">+ ' + rptInvSnap.tirasDisponibles + ' tiras</small>';
+                html += '<div style="background:#e3f2fd; border-radius:8px; padding:8px; text-align:center;"><strong style="color:#1565c0; font-size:20px;">' + (rptInvSnap.available || 0) + '</strong><br><small style="color:#555;">Inv. Inicial</small>' + (rptInvSnap.tirasDisponibles ? '<br><small style="color:#0d47a1;font-size:10px;">+ ' + rptInvSnap.tirasDisponibles + ' tiras</small>' : '') + '</div>';
+            }
             html += '</div></div>';
             
             // Detalle expandible
             html += '<div id="' + vToggle + '" style="display:none; border-top:1px solid #eee; font-size:12px;">';
-            
+
             // Agrupar ventas por cliente
             var byClient = {};
             sales.forEach(function(d) {
@@ -8563,21 +9376,42 @@
                 client.dispatches.forEach(function(d) {
                     var dIsTiras = d.dispatchUnit === 'tiras';
                     var dQty = dIsTiras ? (d.dispatchTiras || 0) + ' tiras' : (d.moldsDispatched || 0) + ' moldes';
+                    var timeStr = '';
+                    if (d.hora) {
+                        timeStr = ' 🕐 ' + d.hora;
+                    } else if (d.dispatchedAt) {
+                        try { timeStr = ' 🕐 ' + new Date(d.dispatchedAt).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); } catch(e) {}
+                    } else if (d.createdAt) {
+                        try { timeStr = ' 🕐 ' + new Date(d.createdAt).toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); } catch(e) {}
+                    }
                     html += '<div style="padding:4px 0; border-top:1px solid #f5f5f5; font-size:12px;">';
-                    html += '📦 ' + dQty;
+                    html += '📦 ' + dQty + timeStr;
                     if (d.merma > 0) html += ' + ' + d.merma + ' merma';
+                    if (d.dispatchObs) html += '<br><small style="color:#666;">' + d.dispatchObs + '</small>';
+                    var photoArr = (d.photoURLs && Array.isArray(d.photoURLs)) ? d.photoURLs : (d.photoURL ? [d.photoURL] : []);
+                    if (photoArr.length > 0) {
+                        html += '<div style="display:flex; gap:4px; margin-top:4px;">';
+                        photoArr.forEach(function(url) {
+                            html += '<img src="' + url + '" onclick="window.open(\'' + url + '\',\'_blank\')" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #ddd;">';
+                        });
+                        html += '</div>';
+                    }
                     html += '</div>';
                 });
                 html += '</div></div>';
             });
-            
+
             // Donaciones
             if (donaciones.length > 0) {
                 html += '<div style="background:#e0f7fa; padding:8px 12px; border-top:1px solid #eee;">';
                 donaciones.forEach(function(d) {
                     var dTiras = d.donacionTiras || 0;
                     var dDisplay = dTiras > 0 ? dTiras + ' tiras' : (d.donacion || d.merma || 0) + ' moldes';
-                    html += '<div style="padding:2px 0;">🎁 Donación: ' + dDisplay + ' — ' + (d.observations || 'Sin detalle') + '</div>';
+                    html += '<div style="padding:2px 0;">🎁 Donación: ' + dDisplay + ' — ' + (d.observations || 'Sin detalle');
+                    if (d.photoURL) {
+                        html += '<br><img src="' + d.photoURL + '" onclick="window.open(\'' + d.photoURL + '\',\'_blank\')" style="width:45px;height:45px;object-fit:cover;border-radius:4px;cursor:pointer;border:1px solid #17a2b8;margin-top:4px;">';
+                    }
+                    html += '</div>';
                 });
                 html += '</div>';
             }

@@ -1,10 +1,10 @@
 // ==================== SERVICE WORKER - HSB APP ====================
 // Versión del cache - CAMBIA ESTO cada vez que actualices la app
-const CACHE_VERSION = 'hsb-app-v4.4';
+const CACHE_VERSION = 'hsb-app-v3.3';
 
 // Tipo de actualización (cambia según el tipo de cambio)
 // 'minor' = silencioso, 'major' = notificar, 'critical' = forzar
-const UPDATE_TYPE = 'major';
+const UPDATE_TYPE = 'critical';
 
 // Archivos que se guardarán en cache (para funcionar offline)
 const CACHE_FILES = [
@@ -71,11 +71,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
-    // NO cachear Firebase ni extensiones del navegador
+    // NO cachear Firebase (debe ser siempre en tiempo real)
     if (url.hostname.includes('firebase') || 
         url.hostname.includes('firebaseio') ||
-        url.hostname.includes('googleapis') ||
-        url.protocol === 'chrome-extension:') {
+        url.hostname.includes('googleapis')) {
         return; // Dejar pasar sin cachear
     }
     
@@ -87,7 +86,7 @@ self.addEventListener('fetch', (event) => {
                 if (response && response.status === 200) {
                     const responseClone = response.clone();
                     caches.open(CACHE_VERSION).then((cache) => {
-                        try { cache.put(event.request, responseClone); } catch(e) { /* ignore unsupported schemes */ }
+                        cache.put(event.request, responseClone);
                     });
                 }
                 return response;
